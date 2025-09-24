@@ -3,6 +3,7 @@ from _painting import Painting
 from _settings import Settings
 
 
+# _________________________- Painting -_________________________
 class Main:
 
     def __init__(self):
@@ -47,7 +48,7 @@ class Main:
             
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    self.painting.draw("koch", 800, centered=True, sides=3, max_depth=11)
+                    self.painting.draw("dragon_curve", 400, centered=True, max_depth=16)
 
     def blit_screen_resized(self):
         """redimensionne l'écran virtuel sur l'écran réel"""
