@@ -47,7 +47,7 @@ class Main:
             
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    self.painting.draw("square", 100)
+                    self.painting.draw("koch", 800, centered=True, sides=3, max_depth=11)
 
     def blit_screen_resized(self):
         """redimensionne l'écran virtuel sur l'écran réel"""
