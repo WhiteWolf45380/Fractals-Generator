@@ -48,7 +48,7 @@ class Main:
             
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    self.painting.draw("dragon_curve", 400, centered=True, max_depth=16)
+                    self.painting.draw("circle_limit_hyperbolic", 400, centered=True, max_depth=10)
 
     def blit_screen_resized(self):
         """redimensionne l'écran virtuel sur l'écran réel"""

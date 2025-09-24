@@ -32,6 +32,7 @@ class Painting:
             "koch": self.draw_koch_flake,
             "koch_squares": self.draw_koch_squares_flake,
             "dragon_curve": self.draw_dragon_curve,
+            "circle_limit": self.draw_circle_limit,
         }
 
         # générateur courant (dessin en cours)
@@ -229,3 +230,31 @@ class Painting:
             self.do_left(90)
         yield
         yield from self.draw_dragon_segment(size / 1.4142, depth - 1, -1)
+    
+    # _________________- Circle Limit (type Escher) -_________________
+    def draw_circle_limit(self, size, **kwargs):
+        """Dessine un Circle Limit progressif"""
+        max_depth = kwargs.get("max_depth", 4)
+        centered = kwargs.get("centered", True)
+
+        yield from self.draw_circle_limit_recursive(0, 0, size, max_depth)
+
+    def draw_circle_limit_recursive(self, x, y, radius, depth):
+        """Récursion pour dessiner le Circle Limit"""
+        if depth == 0:
+            # Dessine un cercle
+            cx, cy = self.get_pos(x, y)
+            pygame.draw.circle(self.surface, self.get("color"), (int(cx), int(cy)), int(radius), width=self.get("width"))
+            yield
+            return
+        
+        # Dessine le cercle principal
+        cx, cy = self.get_pos(x, y)
+        pygame.draw.circle(self.surface, self.get("color"), (int(cx), int(cy)), int(radius), width=self.get("width"))
+        yield
+
+        # Subdivision en 4 cercles autour
+        new_radius = radius / 2
+        offsets = [(-new_radius, -new_radius), (-new_radius, new_radius), (new_radius, -new_radius), (new_radius, new_radius)]
+        for dx, dy in offsets:
+            yield from self.draw_circle_limit_recursive(x + dx, y + dy, new_radius, depth - 1)
