@@ -34,7 +34,7 @@ class Settings:
         self.settings_surface_absolute = pygame.Surface((self.surface_rect.width - 2 * self.settings_x_offset, self.surface_rect.height * 0.75)) # surface fixe
         self.settings_surface_absolute_rect = self.settings_surface_absolute.get_rect(topleft=(self.settings_x_offset, self.surface_rect.height * 0.125))
         self.settings_surface_relative = pygame.Surface((self.surface_rect.width - 2 * self.settings_x_offset, self.surface_rect.height * 2)) # surface mobile
-        self.settings_surface_relative_rect = self.settings_surface_absolute.get_rect(topleft=self.settings_surface_absolute_rect.topleft)
+        self.settings_surface_relative_rect = self.settings_surface_absolute.get_rect()
 
         # ensemble des paramètres
         self.settings = {
@@ -80,7 +80,7 @@ class Settings:
                 self.settings_following = setting
         
         # blit des surfaces de paramètres
-        self.settings_surface_relative_rect.top = self.settings_surface_absolute_rect.top - self.settings_y_offset
+        self.settings_surface_relative_rect.top = -self.settings_y_offset
         self.settings_surface_absolute.blit(self.settings_surface_relative, self.settings_surface_relative_rect)
         self.surface.blit(self.settings_surface_absolute, self.settings_surface_absolute_rect)
 
@@ -115,8 +115,14 @@ class Settings:
         # texte
         self.settings_surface_relative.blit(package["text"], package["text_rect"])
         # barre
-        following = package["bar"].collidepoint(self.main.get_relative_pos(self.settings_surface_relative_rect))
+        following = package["bar"].collidepoint(self.get_settings_mouse_pos())
         pygame.draw.rect(self.settings_surface_relative, (255, 255, 255), package["bar_back"], border_radius=10)
         pygame.draw.rect(self.settings_surface_relative, (80, 80, 80) if following else (100, 100, 100), package["bar"], border_radius=10)
         # vérifie  le curseur se trouve sur la barre
         return following
+    
+    def get_settings_mouse_pos(self):
+        step = self.main.get_relative_pos(self.surface_rect)
+        step = self.main.get_relative_pos(self.settings_surface_absolute_rect, x=step[0], y=step[1])
+        step = self.main.get_relative_pos(self.settings_surface_relative_rect, x=step[0], y=step[1])
+        return step
