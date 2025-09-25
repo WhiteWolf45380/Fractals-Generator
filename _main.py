@@ -17,6 +17,7 @@ class Main:
         self.screen_width = 1920
         self.screen_height = 1080
         self.screen = pygame.Surface((self.screen_width, self.screen_height))
+        self.screen.fill((255, 255, 255))
 
         # écran réel
         self.screen_resized_width = 1280
@@ -48,7 +49,7 @@ class Main:
             
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    self.painting.draw("circle_limit_hyperbolic", 400, centered=True, max_depth=10)
+                    self.painting.draw("koch", 800, centered=True, max_depth=10, color=(15, 15, 220))
 
     def blit_screen_resized(self):
         """redimensionne l'écran virtuel sur l'écran réel"""

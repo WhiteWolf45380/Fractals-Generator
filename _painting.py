@@ -114,6 +114,9 @@ class Painting:
     def draw(self, name: str, size: int, **kwargs):
         """prépare un dessin progressif"""
         self.do_reset()
+
+        self.change("color", kwargs.get("color", self.get("color")))
+                
         try:
             self.current_generator = self.available_draws[name](size, **kwargs)
         except Exception as e:
