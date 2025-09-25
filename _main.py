@@ -23,6 +23,10 @@ class Main:
         self.screen_resized_width = 1280
         self.screen_resized_height = 720
         self.screen_resized = pygame.display.set_mode((self.screen_resized_width, self.screen_resized_height))
+        
+        # curseur
+        self.mouse_x = 0
+        self.mouse_y = 0
 
         """sous classes"""
         self.painting = Painting(self)
@@ -31,6 +35,11 @@ class Main:
     def loop(self):
         """loop principal du logiciel"""
         while self.running:
+            # souris
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            self.mouse_x = mouse_x / (self.screen_resized_width / self.screen_width) # conversion de la coordonée x
+            self.mouse_y = mouse_y / (self.screen_resized_height / self.screen_height) # conversion de la coordonée y
+
             # vérification des entrées utilisateur
             self.check_inputs()
 
@@ -71,7 +80,14 @@ class Main:
         new_screen = pygame.transform.smoothscale(self.screen, (new_width, new_height))
         self.screen_resized.blit(new_screen, (x_offset, y_offset))
     
+    def get_relative_pos(self, rect: pygame.Rect, x: int =None, y: int=None) -> tuple:
+        """renvoie la position relative de la souris sur un rect"""
+        relative_x = (x if x is not None else self.mouse_x) - rect.left
+        relative_y = (y if y is not None else self.mouse_y) - rect.top
+        return relative_x, relative_y
+    
     def close_window(self):
+        """fonction de fermeture du logiciel"""
         pygame.display.quit()
         self.running = False
         exit()

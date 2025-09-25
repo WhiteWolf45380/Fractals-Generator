@@ -32,17 +32,20 @@ class Settings:
         self.settings_x_offset = 20 # décalage du texte des paramètres
         self.settings_y_offset = 0 # écart entre relative et absolute
         self.settings_surface_absolute = pygame.Surface((self.surface_rect.width - 2 * self.settings_x_offset, self.surface_rect.height * 0.75)) # surface fixe
+        self.settings_surface_absolute_rect = self.settings_surface_absolute.get_rect(topleft=(self.settings_x_offset, self.surface_rect.height * 0.125))
         self.settings_surface_relative = pygame.Surface((self.surface_rect.width - 2 * self.settings_x_offset, self.surface_rect.height * 2)) # surface mobile
-        self.settings_surface_rect = self.settings_surface_absolute.get_rect(topleft=(self.settings_x_offset, self.surface_rect.height * 0.125))
+        self.settings_surface_relative_rect = self.settings_surface_absolute.get_rect(topleft=self.settings_surface_absolute_rect.topleft)
 
         # ensemble des paramètres
         self.settings = {
             "size": {"name": "Taille :", "type": "bar", "value_min": 100, "value_max": 1000, "value_init": 400}
         }
+        self.settings_following = None # curseur sur le paramètre
 
         # raccourcis vers les fonctions
         self.functions = {
             "generate_setting_bar": self.generate_setting_bar,
+            "update_setting_bar": self.update_setting_bar,
         }
 
         """pygame"""
@@ -67,21 +70,23 @@ class Settings:
     def update(self):
         """met à jour les paramètres"""
         self.surface.blit(self.surface_init, (0, 0))
-        pygame.draw.rect(self.surface, (200, 200, 200), self.settings_surface_rect)
 
         # actualisation des paramètres
         self.settings_surface_relative.fill(self.surface_color)
+        self.settings_following = None
         for setting in self.settings:
-            package = self.settings[setting]["package"]
-            self.settings_surface_relative.blit(package["text"], package["text_rect"])
+            if self.functions[f"update_setting_{self.settings[setting]['type']}"](setting):
+                print("ok")
+                self.settings_following = setting
         
         # blit des surfaces de paramètres
-        self.settings_surface_absolute.blit(self.settings_surface_relative, (0, -self.settings_y_offset))
-        self.surface.blit(self.settings_surface_absolute, self.settings_surface_rect)
+        self.settings_surface_relative_rect.top = self.settings_surface_absolute_rect.top - self.settings_y_offset
+        self.settings_surface_absolute.blit(self.settings_surface_relative, self.settings_surface_relative_rect)
+        self.surface.blit(self.settings_surface_absolute, self.settings_surface_absolute_rect)
 
         self.main.screen.blit(self.surface, self.surface_rect)
     
-    def generate_setting_bar(self, setting, offset):
+    def generate_setting_bar(self, setting: str, offset: int):
         """génère un paramètre en barre"""
         # paramètres généraux du type barre
         parameters = {
@@ -96,8 +101,22 @@ class Settings:
         package["text"] = self.font_text.render(setting["name"], 1, (255, 255, 255))
         package["text_rect"] = package["text"].get_rect(topleft=(0, offset))
 
-        bar_back = pygame.Rect(0, 0, parameters["width"], parameters["height"])
-        bar = bar_back.copy()
-        bar.width = bar_back.width() * (setting["value_max"] - setting["value_min"]) / setting["value_max"]
+        # barre
+        package["bar_back"] = pygame.Rect(0, 0, parameters["width"], parameters["height"])
+        package["bar_back"].midleft = (self.settings_surface_relative_rect.width * 0.5, (package["text_rect"].centery))
+        package["bar"] = package["bar_back"].copy()
+        package["bar"].width = package["bar_back"].width * 0.3
+        package["bar"].midleft = package["bar_back"].midleft
 
-        return package, package["text_rect"].bottom + 50
+        return package, package["text_rect"].bottom + 20
+    
+    def update_setting_bar(self, setting: str):
+        package = self.settings[setting]["package"] # raccourci
+        # texte
+        self.settings_surface_relative.blit(package["text"], package["text_rect"])
+        # barre
+        following = package["bar"].collidepoint(self.main.get_relative_pos(self.settings_surface_relative_rect))
+        pygame.draw.rect(self.settings_surface_relative, (255, 255, 255), package["bar_back"], border_radius=10)
+        pygame.draw.rect(self.settings_surface_relative, (80, 80, 80) if following else (100, 100, 100), package["bar"], border_radius=10)
+        # vérifie  le curseur se trouve sur la barre
+        return following
