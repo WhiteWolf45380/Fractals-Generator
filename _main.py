@@ -1,6 +1,9 @@
 import pygame
-from _painting import Painting
-from _settings import Settings
+from _ui_manager import UIManager
+from _turtle import Turtle
+from _tools_bar import ToolsBar
+from _fractals_menu import FractalsMenu
+from _settings_menu import SettingsMenu
 
 
 # _________________________- Painting -_________________________
@@ -29,8 +32,11 @@ class Main:
         self.mouse_y = 0
 
         """sous classes"""
-        self.painting = Painting(self)
-        self.settings = Settings(self)
+        self.ui_manager = UIManager(self)
+        self.tools_bar = ToolsBar(self)
+        self.fractals_menu = FractalsMenu(self)
+        self.settings_menu = SettingsMenu(self)
+        self.turtle = Turtle(self)
 
     def loop(self):
         """loop principal du logiciel"""
@@ -43,11 +49,15 @@ class Main:
             # vérification des entrées utilisateur
             self.check_inputs()
 
-            # update des sous classes
-            self.settings.update()
-            self.painting.update()            
+            # update de turtle
+            self.turtle.update()
 
-            # mise à jour
+            # update des menus 
+            self.fractals_menu.update()
+            self.settings_menu.update()
+            self.tools_bar.update()         
+
+            # mise à jour de l'écran
             self.blit_screen_resized()
             pygame.display.update()
 
@@ -58,7 +68,7 @@ class Main:
             
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    self.painting.draw("koch", 800, centered=True, max_depth=10, color=(15, 15, 220))
+                    self.turtle.draw("koch", 800, centered=True, max_depth=10, color=(15, 15, 220))
 
     def blit_screen_resized(self):
         """redimensionne l'écran virtuel sur l'écran réel"""

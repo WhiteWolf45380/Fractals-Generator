@@ -1,13 +1,14 @@
 import pygame
 
 
-class Settings:
+class SettingsMenu:
     
     def __init__(self, main):
-        """passerelles"""
+        """formalités"""
         self.main = main
+        self.name = "settings_menu"
 
-        """surface"""
+        """Base du menu"""
         # définition
         self.surface_offset = 10
         self.surface_width = self.main.screen_width // 3 - self.surface_offset
@@ -76,7 +77,6 @@ class Settings:
         self.settings_following = None
         for setting in self.settings:
             if self.functions[f"update_setting_{self.settings[setting]['type']}"](setting):
-                print("ok")
                 self.settings_following = setting
         
         # blit des surfaces de paramètres
@@ -90,8 +90,8 @@ class Settings:
         """génère un paramètre en barre"""
         # paramètres généraux du type barre
         parameters = {
-            "width": 200,
-            "height": 50
+            "width": 300,
+            "height": 35
         }
 
         # package à renvoyer
@@ -103,7 +103,7 @@ class Settings:
 
         # barre
         package["bar_back"] = pygame.Rect(0, 0, parameters["width"], parameters["height"])
-        package["bar_back"].midleft = (self.settings_surface_relative_rect.width * 0.5, (package["text_rect"].centery))
+        package["bar_back"].midleft = (self.settings_surface_relative_rect.width * 0.35, (package["text_rect"].centery))
         package["bar"] = package["bar_back"].copy()
         package["bar"].width = package["bar_back"].width * 0.3
         package["bar"].midleft = package["bar_back"].midleft
@@ -116,8 +116,8 @@ class Settings:
         self.settings_surface_relative.blit(package["text"], package["text_rect"])
         # barre
         following = package["bar"].collidepoint(self.get_settings_mouse_pos())
-        pygame.draw.rect(self.settings_surface_relative, (255, 255, 255), package["bar_back"], border_radius=10)
-        pygame.draw.rect(self.settings_surface_relative, (80, 80, 80) if following else (100, 100, 100), package["bar"], border_radius=10)
+        pygame.draw.rect(self.settings_surface_relative, (255, 255, 255), package["bar_back"], border_radius=15)
+        pygame.draw.rect(self.settings_surface_relative, (80, 80, 80) if following else (100, 100, 100), package["bar"], border_radius=15)
         # vérifie  le curseur se trouve sur la barre
         return following
     
