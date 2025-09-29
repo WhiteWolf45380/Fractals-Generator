@@ -18,13 +18,12 @@ class Fractals:
     # _________________- Flocon de Koch (triangles)-_________________
     def draw_koch_flake(self, size, **kwargs):
         """dessine un flocon de Koch"""
-        print("ok")
         max_depth = kwargs.get("max_depth", 5)
         centered = kwargs.get("centered", False)
 
         if centered:
             height = (3**0.5 / 2) * size
-            self.turtle.do_goto(-size/2, -height/3)
+            self.turtle.do_goto(-size/2, -height/(2.5 if max_depth > 0 else 2))
         
         for _ in range(3):
             yield from self.draw_koch_segment(size, max_depth)
@@ -132,13 +131,13 @@ class Fractals:
         if depth == 0:
             # Dessine un cercle
             cx, cy = self.turtle.get_pos(x, y)
-            pygame.draw.circle(self.surface, self.turtle.get("color"), (int(cx), int(cy)), int(radius), width=self.turtle.get("width"))
+            pygame.draw.circle(self.turtle.surface, self.turtle.get("color"), (int(cx), int(cy)), int(radius), width=self.turtle.get("width"))
             yield
             return
         
         # Dessine le cercle principal
         cx, cy = self.turtle.get_pos(x, y)
-        pygame.draw.circle(self.surface, self.turtle.get("color"), (int(cx), int(cy)), int(radius), width=self.turtle.get("width"))
+        pygame.draw.circle(self.turtle.surface, self.turtle.get("color"), (int(cx), int(cy)), int(radius), width=self.turtle.get("width"))
         yield
 
         # Subdivision en 4 cercles autour

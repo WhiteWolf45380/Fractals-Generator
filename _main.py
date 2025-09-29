@@ -4,9 +4,11 @@ from _turtle import Turtle
 from _tools_bar import ToolsBar
 from _fractals_menu import FractalsMenu
 from _settings_menu import SettingsMenu
+import sys
+import os
 
 
-# _________________________- Painting -_________________________
+# _________________________- Main -_________________________
 class Main:
 
     def __init__(self):
@@ -25,7 +27,7 @@ class Main:
         # écran réel
         self.screen_resized_width = 1280
         self.screen_resized_height = 720
-        self.screen_resized = pygame.display.set_mode((self.screen_resized_width, self.screen_resized_height))
+        self.screen_resized = pygame.display.set_mode((self.screen_resized_width, self.screen_resized_height), pygame.RESIZABLE)
         
         # curseur
         self.mouse_x = 0
@@ -47,21 +49,23 @@ class Main:
             self.mouse_y = mouse_y / (self.screen_resized_height / self.screen_height) # conversion de la coordonée y
 
             # vérification des entrées utilisateur
-            self.check_inputs()
+            self.handle_inputs()
 
             # update de turtle
             self.turtle.update()
 
-            # update des menus 
+            # update des menus dans l'ordre de priorité 
+            self.tools_bar.update()
             self.fractals_menu.update()
             self.settings_menu.update()
-            self.tools_bar.update()         
-
+                  
             # mise à jour de l'écran
             self.blit_screen_resized()
             pygame.display.update()
 
-    def check_inputs(self):
+    def handle_inputs(self):
+        """vérification des entrées utilisateur"""
+        self.ui_manager.mouse_hover = None # reset du mouse_hover
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.close_window()
@@ -89,13 +93,22 @@ class Main:
         # Retourne la zone à dessiner
         new_screen = pygame.transform.smoothscale(self.screen, (new_width, new_height))
         self.screen_resized.blit(new_screen, (x_offset, y_offset))
-    
+
     def get_relative_pos(self, rect: pygame.Rect, x: int =None, y: int=None) -> tuple:
         """renvoie la position relative de la souris sur un rect"""
         relative_x = (x if x is not None else self.mouse_x) - rect.left
         relative_y = (y if y is not None else self.mouse_y) - rect.top
         return relative_x, relative_y
     
+    @staticmethod
+    def get_path(relative_path):
+        """Obtention du chemin absolu des assets"""
+        if getattr(sys, 'frozen', False):
+            base_path = sys._MEIPASS
+        else:
+            base_path = os.path.dirname(os.path.abspath(__file__))
+        return os.path.join(base_path, relative_path)
+
     def close_window(self):
         """fonction de fermeture du logiciel"""
         pygame.display.quit()
@@ -103,5 +116,6 @@ class Main:
         exit()
                 
 
+# _________________________- Démarrage -_________________________
 main = Main()
 main.loop()

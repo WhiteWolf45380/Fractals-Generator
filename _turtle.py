@@ -9,6 +9,7 @@ class Turtle:
     def __init__(self, main):
         """formalités"""
         self.main = main
+        self.ui_manager = self.main.ui_manager
         self.name = "turtle"
 
         """Zone d'affichage du dessin"""
@@ -16,7 +17,7 @@ class Turtle:
         self.surface_height = self.main.screen_height - self.main.tools_bar.surface_height # hauteur du menu
         self.surface = pygame.Surface((self.surface_width, self.surface_height)) # fond du menu
         self.surface_rect = self.surface.get_rect(midbottom=(self.main.screen_width / 2, self.main.screen_height))# placement en haut de l'écran
-        self.surface_color = self.main.ui_manager.get_color(self.name, "back") # couleur de fond
+        self.surface_color = self.ui_manager.get_color(self.name, "back") # couleur de fond
         self.surface.fill(self.surface_color)
 
         """zone de dessin"""
@@ -32,8 +33,8 @@ class Turtle:
             "y": 0,
             "angle": 0,
             "color": (0, 0, 0),
-            "width": 2,
-            "speed": 1,
+            "width": 1,
+            "speed": 9,
         }
         self.parameters = self.parameters_init.copy()
 
@@ -65,7 +66,6 @@ class Turtle:
             except StopIteration:
                 self.current_generator = None
         
-        print(self.turtle_surface_rect.centerx, self.turtle_surface_rect.centery)
         self.surface.blit(self.turtle_surface, self.turtle_surface_rect)
         self.main.screen.blit(self.surface, self.surface_rect)
 
