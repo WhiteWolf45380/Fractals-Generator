@@ -15,6 +15,10 @@ class Main:
         """variables utiles"""
         self.running = True  # état du logiciel
 
+        # curseur
+        self.mouse_x = 0
+        self.mouse_y = 0
+
         """pygame"""
         pygame.init()
 
@@ -28,11 +32,11 @@ class Main:
         self.screen_resized_width = 1280
         self.screen_resized_height = 720
         self.screen_resized = pygame.display.set_mode((self.screen_resized_width, self.screen_resized_height), pygame.RESIZABLE)
-        
-        # curseur
-        self.mouse_x = 0
-        self.mouse_y = 0
 
+        # design de la fenêtre
+        pygame.display.set_caption("Fractals Generator - by Imagine having to do this project solo because none of your classmates can even understand what you wrote, lol ! xd")  # titre de la fenêtre
+        pygame.display.set_icon(pygame.image.load(self.get_path("assets/start_button.xcf")))  # icone de la fenêtre
+        
         """sous classes"""
         self.ui_manager = UIManager(self)
         self.tools_bar = ToolsBar(self)
@@ -76,6 +80,9 @@ class Main:
 
     def blit_screen_resized(self):
         """redimensionne l'écran virtuel sur l'écran réel"""
+        self.screen_resized_width = self.screen_resized.get_width()
+        self.screen_resized_height = self.screen_resized.get_height()
+
         # on prend le ratio min
         scale = min(
             self.screen_resized_width / self.screen_width,

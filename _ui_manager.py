@@ -9,7 +9,7 @@ class UIManager:
         self.main = main
         
         """thèmes"""
-        self.current_theme = "dark"
+        self.current_theme = "light"
         self.themes = {
             "dark": {
                 "tools_bar": {
@@ -154,8 +154,7 @@ class UIManager:
         """mise à jour des bouttons de repli"""
         # -- boutton survolé
         if button["back"].collidepoint(self.main.get_relative_pos(surface_rect)):
-            self.ask_for_following(category, "collapse_button")
-            hovered =  self.mouse_hover == (category, "collapse_button")
+            hovered = self.ask_for_following(category, "collapse_button")
         else:
             hovered = False
         # -- fond
