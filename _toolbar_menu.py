@@ -1,13 +1,13 @@
 import pygame
 
 # _________________________- Barre d'outils -_________________________
-class ToolsBar:
+class ToolbarMenu:
 
     def __init__(self, main):
         """formalités"""
         self.main = main
         self.ui_manager = self.main.ui_manager
-        self.name = "tools_bar"
+        self.name = "toolbar"
         
         """Base du menu"""
         self.surface_width = self.main.screen_width # largeur du menu
@@ -21,17 +21,22 @@ class ToolsBar:
         pygame.draw.line(self.surface, self.ui_manager.get_color(self.name, "line"), (0, self.surface_height-1), (self.surface_width, self.surface_height-1), width=1)
 
         """boutons"""
-        self.buttons_next_x = self.surface_width * 0.66
-        self.buttons = {
+        self.buttons_next_x = self.surface_width * 0.67 # démarrage de l'axe x
+        self.buttons = { # trois boutons
             "start": {},
             "pause": {},
             "edit": {},
         }
         for button in self.buttons:
-            image = pygame.image.load(self.main.get_path(f"assets/{button}_button.xcf"))
-            image_rect = image.get_rect(midleft=(self.buttons_next_x, self.surface_height / 2))
-            self.buttons_next_x = image_rect.right + 20
-            self.buttons[button] = {"image": image, "image_rect": image_rect}
+            image = pygame.image.load(self.main.get_path(f"assets/{button}_button.xcf")) # chargement de l'image
+            image_rect = image.get_rect(midleft=(self.buttons_next_x, self.surface_height / 2)) # calcul de la position
+            self.buttons_next_x = image_rect.right + 20 # calcul de la prochaine position
+            self.buttons[button] = {"image": image, "image_rect": image_rect} # ajout au dictionnaire
+        
+        # ajout des événements (handles)
+        self.ui_manager.add_handle(self.name, "down_start_button", self.handle_down_start_button)
+        self.ui_manager.add_handle(self.name, "down_pause_button", self.handle_down_pause_button)
+        self.ui_manager.add_handle(self.name, "down_edit_button", self.handle_down_edit_button)
 
         """surface finale post chargement servant de base au contenu dynamique"""
         self.surface_init = self.surface.copy()
@@ -49,17 +54,30 @@ class ToolsBar:
                 hovered = False
             
             if hovered:
-                pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "button_hover"), self.buttons[button]["image_rect"], border_radius=3)
+                pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "button_hover"), self.buttons[button]["image_rect"], border_radius=2)
             self.surface.blit(self.buttons[button]["image"], self.buttons[button]["image_rect"])
         
         # affichage
         self.main.screen.blit(self.surface, self.surface_rect)
 
-# _________________________- Handles -_________________________
-    def handle_inputs_down(self):
-        """vérifications de la pression d'une touche"""
+# _________________________- Handles controllers -_________________________
+    def handle_left_click_down(self, button: str):
+        """évènements associés au clique souris gauche"""
+        self.ui_manager.do_handle(self.name, f"down_{button}")
+
+    def handle_left_click_up(self):
+        """évènements associés au relâchement du clique souris gauche"""
         pass
 
-    def handle_inputs_up(self):
-        """vérifications du relachement d'une touche"""
+# _________________________- Handles -_________________________
+    def handle_down_start_button(self):
+        if not self.main.turtle.pause:
+            self.main.turtle.draw("koch", 800, centered=True, color=(255, 255, 255), max_depth=8)
+        else:
+            self.main.turtle.do_unpause()
+    
+    def handle_down_pause_button(self):
+        self.main.turtle.do_pause()
+
+    def handle_down_edit_button(self):
         pass

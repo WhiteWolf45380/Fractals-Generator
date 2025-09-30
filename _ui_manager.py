@@ -9,17 +9,17 @@ class UIManager:
         self.main = main
         
         """thèmes"""
-        self.current_theme = "light"
+        self.current_theme = "dark"
         self.themes = {
             "dark": {
-                "tools_bar": {
+                "toolbar": {
                     "back": (43, 43, 43), 
                     "text": (224, 224, 224),
                     "line": (220, 220, 220),
                     "button_idle": (55, 55, 55),
                     "button_hover": (70, 70, 70),
                 },
-                "fractals_menu": {
+                "fractals": {
                     "back": (51, 51, 51), 
                     "text": (240, 240, 240),
                     "line": (180, 180, 180), 
@@ -30,7 +30,7 @@ class UIManager:
                     "collapse_logo_idle": (10, 10, 10),
                     "collapse_logo_hover": (240, 240, 240),
                 },
-                "settings_menu": {
+                "settings": {
                     "back": (42, 42, 42), 
                     "text": (221, 221, 221),
                     "line": (180, 180, 180),
@@ -47,14 +47,14 @@ class UIManager:
             },
 
             "light": {
-                "tools_bar": {
+                "toolbar": {
                     "back": (240, 240, 240), 
                     "text": (34, 34, 34),
                     "line": (35, 35, 35),
                     "button_idle": (225, 225, 225),
                     "button_hover": (200, 200, 200),
                 },
-                "fractals_menu": {
+                "fractals": {
                     "back": (230, 230, 230), 
                     "text": (17, 17, 17), 
                     "line": (75, 75, 75),
@@ -65,7 +65,7 @@ class UIManager:
                     "collapse_logo_idle": (240, 240, 240),
                     "collapse_logo_hover": (10, 10, 10),
                 },
-                "settings_menu": {
+                "settings": {
                     "back": (235, 235, 235), 
                     "text": (26, 26, 26),
                     "line": (75, 75, 75),
@@ -105,6 +105,9 @@ class UIManager:
 
         """variables générales"""
         self.mouse_hover = None # boutton survolé (tuple(category, name))
+        
+        """handles (on y stock des fonctions évènements)"""
+        self.handles = {"toolbar": {}, "fractals": {}, "settings": {}}
     
 # _________________________- Obtention d'informations -_________________________
     def get_color(self, category: str, name: str) -> tuple:
@@ -125,6 +128,14 @@ class UIManager:
             self.mouse_hover = (category, name)
             return True
         return False
+
+    def add_handle(self, category: str, name: str, handle: callable):
+        """ajoute un évènement à un boutton"""
+        self.handles[category][name] = handle
+    
+    def do_handle(self, category: str, name: str, **kwargs):
+        """éxécute un évènement"""
+        return self.handles.get(category, {}).get(name, lambda: None)(**kwargs)
 
 # _________________________- Création d'éléments -_________________________
     def generate_collapse_button(self, side: str, x: int, y: int, anchor: bool="topleft") -> dict:

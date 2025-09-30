@@ -14,7 +14,7 @@ class Turtle:
 
         """Zone d'affichage du dessin"""
         self.surface_width = self.main.screen_width # largeur du menu
-        self.surface_height = self.main.screen_height - self.main.tools_bar.surface_height # hauteur du menu
+        self.surface_height = self.main.screen_height - self.main.menus["toolbar"].surface_height # hauteur du menu
         self.surface = pygame.Surface((self.surface_width, self.surface_height)) # fond du menu
         self.surface_rect = self.surface.get_rect(midbottom=(self.main.screen_width / 2, self.main.screen_height))# placement en haut de l'écran
         self.surface_color = self.ui_manager.get_color(self.name, "back") # couleur de fond
@@ -34,7 +34,7 @@ class Turtle:
             "angle": 0,
             "color": (0, 0, 0),
             "width": 1,
-            "speed": 9,
+            "speed": 5,
         }
         self.parameters = self.parameters_init.copy()
 
@@ -48,6 +48,7 @@ class Turtle:
             7: 1500,
             8: 2500,
             9: 5000,
+            10: 10000,
         }
 
         """stockage des fractals"""
@@ -55,11 +56,12 @@ class Turtle:
 
         """générateur courant (dessin en cours)"""
         self.current_generator = None
+        self.pause = False
 
     def update(self):
         """mise à jour du dessin"""
         self.surface.fill(self.surface_color)
-        if self.current_generator:
+        if self.current_generator and not self.pause:
             try:
                 for _ in range(self.get_speed()):  # nombre de segments dessinés par frame
                     next(self.current_generator)
@@ -146,3 +148,12 @@ class Turtle:
     def do_right(self, angle: int):
         """tourne à droite"""
         self.parameters["angle"] = (self.parameters["angle"] + angle) % 360
+    
+    def do_pause(self):
+        """met pause si un dessin est en cours"""
+        if self.current_generator is not None:
+            self.pause = True
+    
+    def do_unpause(self):
+        """reprends le dessin"""
+        self.pause = False

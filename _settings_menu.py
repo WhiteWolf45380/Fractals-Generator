@@ -7,13 +7,13 @@ class SettingsMenu:
         """formalités"""
         self.main = main
         self.ui_manager = self.main.ui_manager
-        self.name = "settings_menu"
+        self.name = "settings"
         
         """Base du menu"""
         self.surface_width = self.main.screen_width // 4 # largeur du menu
-        self.surface_height = self.main.screen_height - self.main.tools_bar.surface_height # hauteur du menu
+        self.surface_height = self.main.screen_height - self.main.menus["toolbar"].surface_height # hauteur du menu
         self.surface = pygame.Surface((self.surface_width, self.surface_height)) # fond du menu
-        self.surface_rect = self.surface.get_rect(topright=(self.main.screen_width, self.main.tools_bar.surface_height))# placement en haut de l'écran
+        self.surface_rect = self.surface.get_rect(topright=(self.main.screen_width, self.main.menus["toolbar"].surface_height))# placement en haut de l'écran
         self.surface_color = self.ui_manager.get_color(self.name, "back") # couleur de fond
         self.surface.fill(self.surface_color)
 
@@ -37,11 +37,13 @@ class SettingsMenu:
         # affichage
         self.main.screen.blit(self.surface, self.surface_rect)
 
-# _________________________- Handles -_________________________
-    def handle_inputs_down(self):
-        """vérifications de la pression d'une touche"""
+# _________________________- Handles controllers -_________________________
+    def handle_left_click_down(self, button: str):
+        """évènements associés au clique souris gauche"""
+        self.ui_manager.do_handle(self.name, f"down_{button}")
+
+    def handle_left_click_up(self):
+        """évènements associés au relâchement du clique souris gauche"""
         pass
 
-    def handle_inputs_up(self):
-        """vérifications du relachement d'une touche"""
-        pass
+# _________________________- Handles -_________________________

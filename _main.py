@@ -1,7 +1,7 @@
 import pygame
 from _ui_manager import UIManager
 from _turtle import Turtle
-from _tools_bar import ToolsBar
+from _toolbar_menu import ToolbarMenu
 from _fractals_menu import FractalsMenu
 from _settings_menu import SettingsMenu
 import sys
@@ -28,6 +28,12 @@ class Main:
         self.screen = pygame.Surface((self.screen_width, self.screen_height))
         self.screen.fill((255, 255, 255))
 
+        # écran intermédiaire (taille réelle mais sans bandes noires)
+        self.screen_final_width = self.screen_width
+        self.screen_final_height = self.screen_height
+        self.screen_x_offset = 0 # bandes verticales
+        self.screen_y_offset = 0 # bandes horizontales
+
         # écran réel
         self.screen_resized_width = 1280
         self.screen_resized_height = 720
@@ -39,29 +45,34 @@ class Main:
         
         """sous classes"""
         self.ui_manager = UIManager(self)
-        self.tools_bar = ToolsBar(self)
-        self.fractals_menu = FractalsMenu(self)
-        self.settings_menu = SettingsMenu(self)
+        self.menus = {} # ensemble des menus
+        self.menus["toolbar"] = ToolbarMenu(self)
+        self.menus["fractals"] = FractalsMenu(self)
+        self.menus["settings"] = SettingsMenu(self)
         self.turtle = Turtle(self)
 
     def loop(self):
         """loop principal du logiciel"""
         while self.running:
+            # adadptation des dimensions de l'écran
+            self.calc_screen_offsets()
+
             # souris
             mouse_x, mouse_y = pygame.mouse.get_pos()
-            self.mouse_x = mouse_x / (self.screen_resized_width / self.screen_width) # conversion de la coordonée x
-            self.mouse_y = mouse_y / (self.screen_resized_height / self.screen_height) # conversion de la coordonée y
-
-            # vérification des entrées utilisateur
-            self.handle_inputs()
+            self.mouse_x = (mouse_x - self.screen_x_offset) / (self.screen_final_width / self.screen_width) # conversion de la coordonée x
+            self.mouse_y = (mouse_y - self.screen_y_offset) / (self.screen_final_height / self.screen_height) # conversion de la coordonée y
+            self.ui_manager.mouse_hover = None # reset du mouse_hover
 
             # update de turtle
             self.turtle.update()
 
             # update des menus dans l'ordre de priorité 
-            self.tools_bar.update()
-            self.fractals_menu.update()
-            self.settings_menu.update()
+            self.menus["toolbar"].update()
+            self.menus["fractals"].update()
+            self.menus["settings"].update()
+
+            # vérification des entrées utilisateur
+            self.handle_inputs()
                   
             # mise à jour de l'écran
             self.blit_screen_resized()
@@ -69,17 +80,20 @@ class Main:
 
     def handle_inputs(self):
         """vérification des entrées utilisateur"""
-        self.ui_manager.mouse_hover = None # reset du mouse_hover
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT: # fermeture de la fenêtre
                 self.close_window()
             
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    self.turtle.draw("koch", 800, centered=True, max_depth=10, color=(15, 15, 220))
-
-    def blit_screen_resized(self):
-        """redimensionne l'écran virtuel sur l'écran réel"""
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # clique gauche (appuyé)
+                if self.ui_manager.mouse_hover is not None: # si un boutton est survolé
+                    self.menus[self.ui_manager.mouse_hover[0]].handle_left_click_down(self.ui_manager.mouse_hover[1])
+            
+            elif event.type == pygame.MOUSEBUTTONUP and event.button == 1: # clique gauche (relaché)
+                for menu in self.menus.values(): # tous les menus
+                    menu.handle_left_click_up()
+    
+    def calc_screen_offsets(self):
+        """calcul les décalages dû aux dimensions de fenêtre incompatibles"""
         self.screen_resized_width = self.screen_resized.get_width()
         self.screen_resized_height = self.screen_resized.get_height()
 
@@ -90,16 +104,18 @@ class Main:
         )
 
         # nouvelle taille de l’écran virtuel
-        new_width = int(self.screen_width * scale)
-        new_height = int(self.screen_height * scale)
+        self.screen_final_width = int(self.screen_width * scale)
+        self.screen_final_height = int(self.screen_height * scale)
 
         # centrage dans la fenêtre
-        x_offset = (self.screen_resized_width - new_width) // 2
-        y_offset = (self.screen_resized_height - new_height) // 2
+        self.screen_x_offset = (self.screen_resized_width - self.screen_final_width) // 2
+        self.screen_y_offset = (self.screen_resized_height - self.screen_final_height) // 2
 
-        # Retourne la zone à dessiner
-        new_screen = pygame.transform.smoothscale(self.screen, (new_width, new_height))
-        self.screen_resized.blit(new_screen, (x_offset, y_offset))
+    def blit_screen_resized(self):
+        """redimensionne l'écran virtuel sur l'écran réel"""
+        new_screen = pygame.transform.smoothscale(self.screen, (self.screen_final_width, self.screen_final_height))
+        self.screen_resized.fill((0, 0, 0)) # pour les bandes noires
+        self.screen_resized.blit(new_screen, (self.screen_x_offset, self.screen_y_offset))
 
     def get_relative_pos(self, rect: pygame.Rect, x: int =None, y: int=None) -> tuple:
         """renvoie la position relative de la souris sur un rect"""
