@@ -16,7 +16,6 @@ class UIManager:
                     "back": (43, 43, 43), 
                     "text": (200, 200, 200),
                     "line": (220, 220, 220),
-                    "button_idle": (55, 55, 55),
                     "button_hover": (70, 70, 70),
                 },
                 "fractals": {
@@ -25,7 +24,6 @@ class UIManager:
                     "text": (240, 240, 240),
                     "highlight": (81, 81, 81),
                     "line": (180, 180, 180), 
-                    "button_idle": (60, 60, 60),
                     "button_hover": (90, 90, 90),
                     "collapse_idle": (240, 240, 240),
                     "collapse_hover": (170, 170, 170),
@@ -38,8 +36,10 @@ class UIManager:
                     "text": (221, 221, 221),
                     "highlight": (72, 72, 72),
                     "line": (180, 180, 180),
-                    "button_idle": (55, 55, 55),
                     "button_hover": (85, 85, 85),
+                    "bar": (70, 70, 70),
+                    "thumb_idle": (200, 200, 200),
+                    "thumb_hover": (240, 240, 240),
                     "collapse_idle": (221, 221, 221),
                     "collapse_hover": (160, 160, 160),
                     "collapse_logo_idle": (10, 10, 10),
@@ -64,7 +64,6 @@ class UIManager:
                     "text": (17, 17, 17), 
                     "highlight": (200, 200, 200),
                     "line": (75, 75, 75),
-                    "button_idle": (215, 215, 215),
                     "button_hover": (190, 190, 190),
                     "collapse_idle": (17, 17, 17),
                     "collapse_hover": (100, 100, 100),
@@ -77,8 +76,10 @@ class UIManager:
                     "text": (26, 26, 26),
                     "highlight": (205, 205, 205),
                     "line": (75, 75, 75),
-                    "button_idle": (220, 220, 220),
                     "button_hover": (195, 195, 195),
+                    "bar": (200, 200, 200),
+                    "thumb_idle": (80, 80, 80),
+                    "thumb_hover": (40, 40, 40),
                     "collapse_idle": (26, 26, 26),
                     "collapse_hover": (110, 110, 110),
                     "collapse_logo_idle": (240, 240, 240),
@@ -118,6 +119,7 @@ class UIManager:
 
         """variables générales"""
         self.mouse_hover = None # boutton survolé (tuple(category, name))
+        self.mouse_grabbing = None # barre attrapée (tuple(category, name))
         
         """handles (on y stock des fonctions évènements)"""
         self.handles = {"toolbar": {}, "fractals": {}, "settings": {}}
@@ -138,11 +140,23 @@ class UIManager:
         """vérifie si le curseur se trouve sur le rect donné"""
         return rect.collidepoint(self.main.get_relative_pos(surface_rect))
     
+    def is_mouse_grabbing(self, category: str, name: str) -> bool:
+        """vérifie si la barre est attrapée"""
+        return self.mouse_grabbing == (category, name)
+    
 # _________________________- Demandes dynamiques -_________________________
     def ask_for_mouse_hover(self, category: str, name: str) -> bool:
         """assigne is possible le mouse_hover au boutton passé"""
-        if self.mouse_hover is None:
+        if self.mouse_hover is None and self.mouse_grabbing is None:
             self.mouse_hover = (category, name)
+            return True
+        return False
+    
+    def ask_for_mouse_grabbing(self, category: str, name: str) -> bool:
+        """assigne is possible le mouse_grabbing à la barre passée"""
+        if self.mouse_grabbing is None:
+            self.mouse_grabbing = (category, name)
+            self.mouse_hover = None # annulation du mouse_hover
             return True
         return False
 
@@ -165,7 +179,7 @@ class UIManager:
         text_rect = text.get_rect()
 
         # vérification de la taille limite
-        if wlimit > 0 and text_rect.width > wlimit and len(content > 3):
+        if wlimit > 0 and text_rect.width > wlimit and len(content) > 3:
             text, text_rect = self.generate_text(content[:len(content)-(1 if not recursive else 2)], fontsize, wlimit=wlimit, font=font, color=color)
         
         return text, text_rect
