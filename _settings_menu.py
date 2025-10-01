@@ -22,20 +22,41 @@ class SettingsMenu:
 
         """boutton de repli"""
         self.collapse_button_dict = self.ui_manager.generate_collapse_button("right", 0, self.surface_height / 2, anchor="midleft")
+        self.ui_manager.add_handle(self.name, "down_collapse_button", self.handle_down_collapse_button)
 
         """surface finale post chargement servant de base au contenu dynamique"""
         self.surface_init = self.surface.copy()
+
+        """variables utiles"""
+        self.x_init = self.surface_rect.left
+        self.opened = True
+        self.offset_velocity = 13
+        self.offset_closed = self.surface_width - self.collapse_button_dict["back"].width
+        self.offset_current = 0
 
     def update(self):
         """Mise à jour de la barre d'outils"""
         # refresh
         self.surface.blit(self.surface_init, (0, 0))
 
-        # update du boutton de repli
-        self.ui_manager.update_collapse_button(self.name, self.surface, self.surface_rect, self.collapse_button_dict)
+        # ouverture/fermeture du menu
+        if self.opened and self.offset_current > 0:
+            progression = self.offset_current / self.offset_closed
+            self.offset_current = max(0, self.offset_current - self.offset_velocity * self.get_incrementation(progression))
+        elif not self.opened and self.offset_current < self.offset_closed:
+            progression = 1 - self.offset_current / self.offset_closed
+            self.offset_current = min(self.offset_closed, self.offset_current + self.offset_velocity * self.get_incrementation(progression))
+        self.surface_rect.left = self.x_init + self.offset_current
 
+        # update du boutton de repli
+        self.ui_manager.update_collapse_button(self.name, self.surface, self.surface_rect, self.collapse_button_dict, opened=self.opened)
+        
         # affichage
         self.main.screen.blit(self.surface, self.surface_rect)
+    
+    def get_incrementation(self, progression: float) -> float:
+        """renvoie un ratio pour une croissance non linéaire"""
+        return progression ** 0.5
 
 # _________________________- Handles controllers -_________________________
     def handle_left_click_down(self, button: str):
@@ -47,3 +68,5 @@ class SettingsMenu:
         pass
 
 # _________________________- Handles -_________________________
+    def handle_down_collapse_button(self):
+        self.opened = not self.opened

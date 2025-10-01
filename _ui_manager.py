@@ -82,6 +82,11 @@ class UIManager:
             }
         }
 
+        """fonts"""
+        self.fonts_paths = {
+            "default": "assets/fonts/default.ttf"
+        }
+
         """variables utiles aux fonctions d'obtention"""
         # décalage d'ancre
         self.anchors_offsets = {
@@ -138,6 +143,21 @@ class UIManager:
         return self.handles.get(category, {}).get(name, lambda: None)(**kwargs)
 
 # _________________________- Création d'éléments -_________________________
+    def generate_text(self, content: str, fontsize: int, wlimit: int=0, font="default", color: tuple=(0, 0, 0), recursive=False):
+        """génère un texte pygame"""
+        if recursive: # si appel récursif
+            content += "."
+
+        font = pygame.font.Font(self.fonts_paths.get(font, self.fonts_paths["default"]), fontsize)
+        text = font.render(content, 1, color)
+        text_rect = text.get_rect()
+
+        # vérification de la taille limite
+        if text_rect.width > wlimit:
+            text, text_rect = self.generate_text(content[:len(content)-1], fontsize, wlimit=wlimit, font=font, color=color)
+        
+        return text, text_rect
+
     def generate_collapse_button(self, side: str, x: int, y: int, anchor: bool="topleft") -> dict:
         """génère un boutton de repli pour les overlays"""
         settings = self.collapse_button_settings # raccourci
@@ -158,10 +178,10 @@ class UIManager:
             "right": [(back.left + 4, back.centery - 6), (back.right - 3, back.centery), (back.left + 4, back.centery + 6)], # triangle vers la droite
         }
 
-        return {"state": "opened", "back": back, "opened_points": points[side], "closed_points": points[opposite_side]}
+        return {"back": back, "opened_points": points[side], "closed_points": points[opposite_side]}
 
 # _________________________- Mise à jour d'éléments -_________________________
-    def update_collapse_button(self, category: str, surface: pygame.Surface, surface_rect: pygame.Rect, button: dict):
+    def update_collapse_button(self, category: str, surface: pygame.Surface, surface_rect: pygame.Rect, button: dict, opened: bool=True):
         """mise à jour des bouttons de repli"""
         # -- boutton survolé
         if button["back"].collidepoint(self.main.get_relative_pos(surface_rect)):
@@ -171,4 +191,4 @@ class UIManager:
         # -- fond
         pygame.draw.rect(surface, self.get_color(category, ("collapse_hover" if hovered else "collapse_idle")), button["back"])
         # -- logo
-        pygame.draw.polygon(surface, self.get_color(category, "collapse_logo_hover" if hovered else "collapse_logo_idle"), button[f"{button['state']}_points"])
+        pygame.draw.polygon(surface, self.get_color(category, "collapse_logo_hover" if hovered else "collapse_logo_idle"), button[f"{'opened' if opened else 'closed'}_points"])

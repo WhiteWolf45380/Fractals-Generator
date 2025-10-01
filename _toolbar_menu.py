@@ -81,3 +81,7 @@ class ToolbarMenu:
 
     def handle_down_edit_button(self):
         pass
+
+# _________________________- Création d'éléments -_________________________
+    def generate_text_button(self, name: str, x: int, y: int) -> dict:
+        text, text_rect = self.ui_manager.generate_text(name, 30, color=self.ui_manager.get_color(self.name, "text"))
