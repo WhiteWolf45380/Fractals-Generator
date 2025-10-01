@@ -9,7 +9,7 @@ class UIManager:
         self.main = main
         
         """thèmes"""
-        self.current_theme = "light"
+        self.current_theme = "dark"
         self.themes = {
             "dark": {
                 "toolbar": {
@@ -165,8 +165,8 @@ class UIManager:
         text_rect = text.get_rect()
 
         # vérification de la taille limite
-        if wlimit > 0 and text_rect.width > wlimit:
-            text, text_rect = self.generate_text(content[:len(content)-1], fontsize, wlimit=wlimit, font=font, color=color)
+        if wlimit > 0 and text_rect.width > wlimit and len(content > 3):
+            text, text_rect = self.generate_text(content[:len(content)-(1 if not recursive else 2)], fontsize, wlimit=wlimit, font=font, color=color)
         
         return text, text_rect
 

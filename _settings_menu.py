@@ -34,11 +34,27 @@ class SettingsMenu:
         self.surface_init = self.surface.copy()
 
         """variables utiles"""
+        # ouverture/fermeture
         self.x_init = self.surface_rect.left
         self.opened = True
         self.offset_velocity = 13
         self.offset_closed = self.surface_width - self.collapse_button_dict["back"].width
         self.offset_current = 0
+
+        # raccourcis de fonction
+        self.functions = {
+            "generate_bar": self.generate_setting_bar
+        }
+
+        # paramètres des éléments
+        self.parameters = {
+            "bar": {
+                "bar_width": 100,
+                "bar_height": 10,
+                "thumb_width": 10,
+                "thumb_height": 20,
+            }
+        }
 
     def update(self):
         """Mise à jour de la barre d'outils"""
@@ -73,6 +89,32 @@ class SettingsMenu:
         """évènements associés au relâchement du clique souris gauche"""
         pass
 
-# _________________________- Handles -_________________________
+# _________________________- Handlers -_________________________
     def handle_down_collapse_button(self):
+        """événement : appui sur le boutton d'ouverture/fermeture du menu"""
         self.opened = not self.opened
+
+# _________________________- Création d'éléments -_________________________
+def generate_setting(self, text_content: str, category: str) -> dict:
+    """génère un paramètre"""
+    # dictionnaire final du paramètre
+    package = {}
+    # texte
+    package["text"] = self.ui_manager.generate_text(f"{text_content} :", 20, color=self.ui_manager.get_color(self.name, "text"), wlimit=20)
+    package["text_rect"] = package["text"].get_rect()
+    # éléments interactifs
+    setting_handler = self.functions.get(category, lambda: {})()
+    for key, value in setting_handler:
+        package[key] = value
+    
+    return package
+
+def generate_setting_bar(self) -> dict:
+    """génère une barre"""
+    parameters = self.parameters["bar"] # raccourci
+    # barre
+    bar = pygame.Rect(0, 0, parameters["bar_width"], parameters["bar_height"])
+    # le slider
+    thumb = pygame.Rect(0, 0, parameters["thumb_width"], parameters["thumb_height"])
+
+    return {"bar": bar, "thumb": thumb}
