@@ -17,14 +17,20 @@ class SettingsMenu:
         self.surface_color = self.ui_manager.get_color(self.name, "back") # couleur de fond
         self.surface.fill(self.surface_color)
 
-        # trait pour accentuer la démarquation
-        pygame.draw.line(self.surface, self.ui_manager.get_color(self.name, "line"), (0, 0), (0, self.surface_height), width=2)
+        # titre
+        self.title_back = pygame.Rect(0, 0, self.surface_width, 40)
+        self.title_text, self.title_text_rect = self.ui_manager.generate_text("Propriétés", 25, color=self.ui_manager.get_color(self.name, "title"))
+        self.title_text_rect.midleft = (self.surface_width * 0.05, 20)
+        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "highlight"), self.title_back)
+        self.surface.blit(self.title_text, self.title_text_rect)
 
         """boutton de repli"""
         self.collapse_button_dict = self.ui_manager.generate_collapse_button("right", 0, self.surface_height / 2, anchor="midleft")
         self.ui_manager.add_handle(self.name, "down_collapse_button", self.handle_down_collapse_button)
 
         """surface finale post chargement servant de base au contenu dynamique"""
+        # trait pour accentuer la démarquation
+        pygame.draw.line(self.surface, self.ui_manager.get_color(self.name, "line"), (0, 0), (0, self.surface_height), width=2)
         self.surface_init = self.surface.copy()
 
         """variables utiles"""

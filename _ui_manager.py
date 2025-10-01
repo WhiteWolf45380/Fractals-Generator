@@ -9,19 +9,21 @@ class UIManager:
         self.main = main
         
         """thèmes"""
-        self.current_theme = "dark"
+        self.current_theme = "light"
         self.themes = {
             "dark": {
                 "toolbar": {
                     "back": (43, 43, 43), 
-                    "text": (224, 224, 224),
+                    "text": (200, 200, 200),
                     "line": (220, 220, 220),
                     "button_idle": (55, 55, 55),
                     "button_hover": (70, 70, 70),
                 },
                 "fractals": {
                     "back": (51, 51, 51), 
+                    "title": (255, 255, 255),
                     "text": (240, 240, 240),
+                    "highlight": (81, 81, 81),
                     "line": (180, 180, 180), 
                     "button_idle": (60, 60, 60),
                     "button_hover": (90, 90, 90),
@@ -31,8 +33,10 @@ class UIManager:
                     "collapse_logo_hover": (240, 240, 240),
                 },
                 "settings": {
-                    "back": (42, 42, 42), 
+                    "back": (42, 42, 42),
+                    "title": (236, 236, 236),
                     "text": (221, 221, 221),
+                    "highlight": (72, 72, 72),
                     "line": (180, 180, 180),
                     "button_idle": (55, 55, 55),
                     "button_hover": (85, 85, 85),
@@ -49,14 +53,16 @@ class UIManager:
             "light": {
                 "toolbar": {
                     "back": (240, 240, 240), 
-                    "text": (34, 34, 34),
+                    "text": (30, 30, 30),
                     "line": (35, 35, 35),
                     "button_idle": (225, 225, 225),
                     "button_hover": (200, 200, 200),
                 },
                 "fractals": {
                     "back": (230, 230, 230), 
+                    "title": (7, 7, 7),
                     "text": (17, 17, 17), 
+                    "highlight": (200, 200, 200),
                     "line": (75, 75, 75),
                     "button_idle": (215, 215, 215),
                     "button_hover": (190, 190, 190),
@@ -67,7 +73,9 @@ class UIManager:
                 },
                 "settings": {
                     "back": (235, 235, 235), 
+                    "title": (16, 16, 16),
                     "text": (26, 26, 26),
+                    "highlight": (205, 205, 205),
                     "line": (75, 75, 75),
                     "button_idle": (220, 220, 220),
                     "button_hover": (195, 195, 195),
@@ -123,11 +131,15 @@ class UIManager:
             print(f"[UI_Manager] Get_color error : {e}")
     
     def get_anchor_pos(self, x: int, y: int, width: int, height: int, anchor: str) -> tuple:
-        """renvoie la position de l'angle haut gauche d'un élément"""
+        """renvoie la position de l'angle haut gauche d'un élément en fonction de son point d'ancrage"""
         return x + width * self.anchors_offsets.get(anchor, (0, 0))[0], y + height * self.anchors_offsets.get(anchor, (0, 0))[1]
     
+    def is_mouse_hover(self, rect: pygame.Rect, surface_rect: pygame.Rect) -> bool:
+        """vérifie si le curseur se trouve sur le rect donné"""
+        return rect.collidepoint(self.main.get_relative_pos(surface_rect))
+    
 # _________________________- Demandes dynamiques -_________________________
-    def ask_for_following(self, category: str, name: str) -> bool:
+    def ask_for_mouse_hover(self, category: str, name: str) -> bool:
         """assigne is possible le mouse_hover au boutton passé"""
         if self.mouse_hover is None:
             self.mouse_hover = (category, name)
@@ -153,7 +165,7 @@ class UIManager:
         text_rect = text.get_rect()
 
         # vérification de la taille limite
-        if text_rect.width > wlimit:
+        if wlimit > 0 and text_rect.width > wlimit:
             text, text_rect = self.generate_text(content[:len(content)-1], fontsize, wlimit=wlimit, font=font, color=color)
         
         return text, text_rect
@@ -185,7 +197,7 @@ class UIManager:
         """mise à jour des bouttons de repli"""
         # -- boutton survolé
         if button["back"].collidepoint(self.main.get_relative_pos(surface_rect)):
-            hovered = self.ask_for_following(category, "collapse_button")
+            hovered = self.ask_for_mouse_hover(category, "collapse_button")
         else:
             hovered = False
         # -- fond

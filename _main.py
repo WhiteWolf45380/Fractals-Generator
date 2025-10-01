@@ -118,7 +118,7 @@ class Main:
         self.screen_resized.blit(new_screen, (self.screen_x_offset, self.screen_y_offset))
 
     def get_relative_pos(self, rect: pygame.Rect, x: int =None, y: int=None) -> tuple:
-        """renvoie la position relative de la souris sur un rect"""
+        """renvoie la position relative sur un rect (par défaut pos du curseur)"""
         relative_x = (x if x is not None else self.mouse_x) - rect.left
         relative_y = (y if y is not None else self.mouse_y) - rect.top
         return relative_x, relative_y
