@@ -6,6 +6,7 @@ from _fractals_menu import FractalsMenu
 from _settings_menu import SettingsMenu
 import sys
 import os
+import math
 
 
 # _________________________- Main -_________________________
@@ -122,6 +123,23 @@ class Main:
         relative_x = (x if x is not None else self.mouse_x) - rect.left
         relative_y = (y if y is not None else self.mouse_y) - rect.top
         return relative_x, relative_y
+    
+    @staticmethod
+    def snap_value(n: int | float, value_min: int, value_max: int) -> int:
+        """snap une valeur (arrondi complexe)"""
+        range_ = value_max - value_min
+        if range_ == 0:
+            return int(n)
+
+        # ordre de grandeur de la plage
+        magnitude = 10 ** math.floor(math.log10(range_))
+
+        
+        # pas = magnitude / 100
+        step = magnitude / 100
+
+        # arrondi
+        return int(round(n / step) * step)
     
     @staticmethod
     def get_path(relative_path):

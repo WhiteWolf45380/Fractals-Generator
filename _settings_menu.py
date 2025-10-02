@@ -153,8 +153,11 @@ class SettingsMenu:
         bar.left = x + 50
         # slider
         thumb = pygame.Rect(0, 0, parameters["thumb_width"], parameters["thumb_height"])
-        ratio = (content["value"] - content["value_min"]) / (content["value_max"] - content["value_min"])
-        thumb.centerx = bar.left + thumb.width / 2 + ratio * (bar.width - thumb.width)
+        left_limit = bar.left + thumb.width / 2
+        right_limit = bar.right - thumb.width / 2
+        thumb.centerx = left_limit + (content["value"] - content["value_min"]) / (content["value_max"] - content["value_min"]) * (bar.width - thumb.width) # positionnement x
+        content["value"] = self.main.snap_value(content["value_min"] + (content["value_max"] - content["value_min"]) * (thumb.centerx - left_limit) / (right_limit - left_limit), content["value_min"], content["value_max"]) # simple snap
+        thumb.centerx = left_limit + (content["value"] - content["value_min"]) / (content["value_max"] - content["value_min"]) * (bar.width - thumb.width) # double snap
         
         # compteur
         value_dict = self.generate_value(content["value"], bar.right + 30)
@@ -190,7 +193,7 @@ class SettingsMenu:
             left_limit = package["bar"].left + package["thumb"].width / 2 # limite maximum
             package["thumb"].centerx = min(max(self.main.get_relative_pos(self.surface_rect)[0] - content.get("delta", 0), left_limit), right_limit) # suivi du curseur - delta (ancre de saisi)
             ratio = (package["thumb"].centerx - left_limit) / (right_limit - left_limit) # ratio entre le min et le max
-            content["value"] = round(content["value_min"] + ratio * (content["value_max"] - content["value_min"])) # affectation de la valeur selon la position horizontale
+            content["value"] = self.main.snap_value(content["value_min"] + ratio * (content["value_max"] - content["value_min"]), content["value_min"], content["value_max"]) # affectation de la valeur selon la position horizontale
             package["thumb"].centerx = min(max(left_limit + (right_limit - left_limit) * (content["value"] - content["value_min"]) / (content["value_max"] - content["value_min"]), left_limit), right_limit) # on fait un "snap" afin de faire correspondre l'arrondi
             value_dict = self.generate_value(content["value"], package["value_text_rect"].left)
             package["value_text"], _ = value_dict["value_text"], value_dict["value_text_rect"]

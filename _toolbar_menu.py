@@ -95,7 +95,7 @@ class ToolbarMenu:
     def handle_down_start_button(self):
         """handler du boutton d'éxécution"""
         if not self.main.turtle.pause:
-            self.main.turtle.draw("koch", 800)
+            self.main.turtle.draw("koch")
         else:
             self.main.turtle.do_unpause()
     

@@ -30,10 +30,11 @@ class Turtle:
         """paramètres turtle"""
         self.parameters_init = {
             "depth": 4,
+            "size": 100,
             "x": 0,
             "y": 0,
             "angle": 0,
-            "color": (0, 0, 0),
+            "color": (255, 255, 255),
             "width": 1,
             "centered": True,
             "speed": 5,
@@ -74,13 +75,13 @@ class Turtle:
         self.main.screen.blit(self.surface, self.surface_rect)
 
 # _________________________- Dessin -_________________________
-    def draw(self, name: str, size: int):
+    def draw(self, name: str):
         """prépare un dessin progressif"""
         self.push(self.main.menus["settings"].settings)
         self.do_reset()
                 
         try:
-            self.current_generator = self.fractals.available_fractals[name](size)
+            self.current_generator = self.fractals.available_fractals[name](self.get("size"))
         except Exception as e:
             traceback.print_exc()
             self.current_generator = None
