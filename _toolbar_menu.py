@@ -11,7 +11,7 @@ class ToolbarMenu:
         
         """Base du menu"""
         self.surface_width = self.main.screen_width # largeur du menu
-        self.surface_height = 50 # hauteur du menu
+        self.surface_height = 40 # hauteur du menu
         self.surface = pygame.Surface((self.surface_width, self.surface_height)) # fond du menu
         self.surface_rect = self.surface.get_rect(topleft=(0, 0))# placement en haut de l'écran
         self.surface_color = self.ui_manager.get_color(self.name, "back") # couleur de fond
@@ -19,27 +19,27 @@ class ToolbarMenu:
 
         """boutons"""
         # bouttons liés au dessin
-        self.buttons_next_x = self.surface_width * 0.98 # démarrage de l'axe x
+        self.buttons_next_x = self.surface_width * 0.99 # démarrage de l'axe x
         self.buttons = { # trois boutons
             "edit": {},
             "pause": {},
             "start": {},            
         }
         for button in self.buttons:
-            image = pygame.image.load(self.main.get_path(f"assets/{button}_button.xcf")) # chargement de l'image
-            image_rect = image.get_rect(midright=(self.buttons_next_x, self.surface_height / 2)) # calcul de la position
-            self.buttons_next_x = image_rect.left - 20 # calcul de la prochaine position
+            image, image_rect = self.ui_manager.generate_image(f"{button}_button") # génération de l'image
+            image_rect.midright = (self.buttons_next_x, self.surface_height / 2) # positionnement de l'image
+            self.buttons_next_x = image_rect.left - 15 # calcul de la prochaine position
             self.buttons[button] = {"image": image, "image_rect": image_rect} # ajout au dictionnaire
         
             # ajout des événements (handlers)
-        self.ui_manager.add_handle(self.name, "down_start_button", self.handle_down_start_button)
-        self.ui_manager.add_handle(self.name, "down_pause_button", self.handle_down_pause_button)
-        self.ui_manager.add_handle(self.name, "down_edit_button", self.handle_down_edit_button)
+        self.ui_manager.add_handler(self.name, "down_start_button", self.handle_down_start_button)
+        self.ui_manager.add_handler(self.name, "down_pause_button", self.handle_down_pause_button)
+        self.ui_manager.add_handler(self.name, "down_edit_button", self.handle_down_edit_button)
 
         # bouttons de texte
         self.text_buttons_parameters = {
             "height": self.surface_height * 0.6,
-            "fontsize": 22,
+            "fontsize": 18,
         }
 
         self.text_buttons = {
@@ -85,7 +85,7 @@ class ToolbarMenu:
 # _________________________- Handles controllers -_________________________
     def handle_left_click_down(self, button: str):
         """évènements associés au clique souris gauche"""
-        self.ui_manager.do_handle(self.name, f"down_{button}")
+        self.ui_manager.do_handler(self.name, f"down_{button}")
 
     def handle_left_click_up(self):
         """évènements associés au relâchement du clique souris gauche"""

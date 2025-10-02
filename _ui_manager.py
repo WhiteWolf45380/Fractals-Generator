@@ -9,7 +9,7 @@ class UIManager:
         self.main = main
         
         """thèmes"""
-        self.current_theme = "light"
+        self.current_theme = "dark"
         self.themes = {
             "dark": {
                 "toolbar": {
@@ -20,9 +20,9 @@ class UIManager:
                 },
                 "fractals": {
                     "back": (51, 51, 51), 
-                    "title": (255, 255, 255),
+                    "title": (0, 0, 0),
                     "text": (240, 240, 240),
-                    "highlight": (81, 81, 81),
+                    "highlight": (210, 210, 210),
                     "line": (180, 180, 180), 
                     "button_hover": (90, 90, 90),
                     "collapse_idle": (240, 240, 240),
@@ -32,9 +32,9 @@ class UIManager:
                 },
                 "settings": {
                     "back": (42, 42, 42),
-                    "title": (236, 236, 236),
+                    "title": (0, 0, 0),
                     "text": (221, 221, 221),
-                    "highlight": (72, 72, 72),
+                    "highlight": (200, 200, 200),
                     "line": (180, 180, 180),
                     "button_hover": (85, 85, 85),
                     "bar": (70, 70, 70),
@@ -60,9 +60,9 @@ class UIManager:
                 },
                 "fractals": {
                     "back": (230, 230, 230), 
-                    "title": (7, 7, 7),
+                    "title": (255, 255, 255),
                     "text": (17, 17, 17), 
-                    "highlight": (200, 200, 200),
+                    "highlight": (45, 45, 45),
                     "line": (75, 75, 75),
                     "button_hover": (190, 190, 190),
                     "collapse_idle": (17, 17, 17),
@@ -72,9 +72,9 @@ class UIManager:
                 },
                 "settings": {
                     "back": (235, 235, 235), 
-                    "title": (16, 16, 16),
+                    "title": (255, 255, 255),
                     "text": (26, 26, 26),
-                    "highlight": (205, 205, 205),
+                    "highlight": (45, 45, 45),
                     "line": (75, 75, 75),
                     "button_hover": (195, 195, 195),
                     "bar": (150, 150, 150),
@@ -121,8 +121,8 @@ class UIManager:
         self.mouse_hover = None # boutton survolé (tuple(category, name))
         self.mouse_grabbing = None # barre attrapée (tuple(category, name))
         
-        """handles (on y stock des fonctions évènements)"""
-        self.handles = {"toolbar": {}, "fractals": {}, "settings": {}}
+        """handlers (on y stock des fonctions évènements)"""
+        self.handlers = {"toolbar": {}, "fractals": {}, "settings": {}}
     
 # _________________________- Obtention d'informations -_________________________
     def get_color(self, category: str, name: str) -> tuple:
@@ -171,13 +171,13 @@ class UIManager:
             return True
         return False
 
-    def add_handle(self, category: str, name: str, handle: callable):
+    def add_handler(self, category: str, name: str, handler: callable):
         """ajoute un évènement à un boutton"""
-        self.handles[category][name] = handle
+        self.handlers[category][name] = handler
     
-    def do_handle(self, category: str, name: str, **kwargs):
+    def do_handler(self, category: str, name: str, **kwargs):
         """éxécute un évènement"""
-        return self.handles.get(category, {}).get(name, lambda: None)(**kwargs)
+        return self.handlers.get(category, {}).get(name, lambda: None)(**kwargs)
 
 # _________________________- Création d'éléments -_________________________
     def generate_text(self, content: str, fontsize: int, wlimit: int=0, font="default", color: tuple=(0, 0, 0), end="" , recursive=False):
@@ -195,6 +195,22 @@ class UIManager:
             text, text_rect = self.generate_text(content[:len(content)-len(end)-(2 if recursive else 1)], fontsize, wlimit=wlimit, font=font, color=color, end=end, recursive=True)
         
         return text, text_rect
+    
+    def generate_image(self, path: str, width: int=0, height: int=0, smoothscale=True):
+        """génère une image pygame"""
+        # chargement de l'image
+        image = pygame.image.load(self.main.get_path(f"assets/{path}.xcf"))
+        image_rect = image.get_rect()
+
+        # modification potentielle de l'image
+        if width != 0 or height != 0:
+            if smoothscale:
+                image = pygame.transform.smoothscale(image, (width if width != 0 else image_rect.width, height if height != 0 else image_rect.height))
+            else:
+                image = pygame.transform.scale(image, (width if width != 0 else image_rect.width, height if height != 0 else image_rect.height))
+            image_rect = image.get_rect()
+
+        return image, image_rect
 
     def generate_collapse_button(self, side: str, x: int, y: int, anchor: bool="topleft") -> dict:
         """génère un boutton de repli pour les overlays"""

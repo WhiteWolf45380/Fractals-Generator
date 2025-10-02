@@ -26,11 +26,11 @@ class Fractals:
             self.turtle.do_goto(-size/2 + self.turtle.get("x_offset"), -height/(2.5 if max_depth > 0 else 2) + self.turtle.get("y_offset"))
         
         for _ in range(3):
-            yield from self.draw_koch_segment(size, max_depth)
+            yield from self.draw_koch_recursive(size, max_depth)
             self.turtle.do_right(120)
 
-    def draw_koch_segment(self, size, max_depth, depth=0):
-        """dessine un segment du flocon de Koch"""
+    def draw_koch_recursive(self, size, max_depth, depth=0):
+        """Récursion pour dessiner Dragon Curve"""
         if depth == max_depth:
             self.turtle.do_forward(size)
             yield
@@ -38,13 +38,13 @@ class Fractals:
         
         new_size = size / 3
         
-        yield from self.draw_koch_segment(new_size, max_depth, depth+1)
+        yield from self.draw_koch_recursive(new_size, max_depth, depth+1)
         self.turtle.do_left(60)
-        yield from self.draw_koch_segment(new_size, max_depth, depth+1)
+        yield from self.draw_koch_recursive(new_size, max_depth, depth+1)
         self.turtle.do_right(120)
-        yield from self.draw_koch_segment(new_size, max_depth, depth+1)
+        yield from self.draw_koch_recursive(new_size, max_depth, depth+1)
         self.turtle.do_left(60)
-        yield from self.draw_koch_segment(new_size, max_depth, depth+1)
+        yield from self.draw_koch_recursive(new_size, max_depth, depth+1)
 
     # _________________- Flocon de Koch (carrés)-_________________
     def draw_koch_squares_flake(self, size, **kwargs):
@@ -56,10 +56,10 @@ class Fractals:
             self.turtle.do_goto(-size/2 + self.turtle.get("x_offset"), -size/2 + self.turtle.get("y_offset"))
         
         for _ in range(4):
-            yield from self.draw_koch_squares_segment(size, max_depth)
+            yield from self.draw_koch_squares_recursive(size, max_depth)
             self.turtle.do_right(90)
 
-    def draw_koch_squares_segment(self, size, max_depth, depth=0):
+    def draw_koch_squares_recursive(self, size, max_depth, depth=0):
         if depth == max_depth:
             self.turtle.do_forward(size)
             yield
@@ -67,13 +67,13 @@ class Fractals:
         
         new_size = size / 3
         
-        yield from self.draw_koch_squares_segment(new_size, max_depth, depth+1)
+        yield from self.draw_koch_squares_recursive(new_size, max_depth, depth+1)
         self.turtle.do_left(180)
         for _ in range(3):
             self.turtle.do_right(90)
-            yield from self.draw_koch_squares_segment(new_size, max_depth, depth+1)
+            yield from self.draw_koch_squares_recursive(new_size, max_depth, depth+1)
         self.turtle.do_left(90)
-        yield from self.draw_koch_squares_segment(new_size, max_depth, depth+1)
+        yield from self.draw_koch_squares_recursive(new_size, max_depth, depth+1)
 
     # _________________- Dragon Curve -_________________
     def draw_dragon_curve(self, size, **kwargs):
@@ -99,24 +99,24 @@ class Fractals:
             offset = DRAGON_CENTER_OFFSET.get(max_depth, (0,0))
             self.turtle.do_goto(offset[0] + self.turtle.get("x_offset"), offset[1] + self.turtle.get("y_offset"))
 
-        yield from self.draw_dragon_segment(size, max_depth, 1)
+        yield from self.draw_dragon_recursive(size, max_depth, 1)
         self.turtle.do_right(90)
-        yield from self.draw_dragon_segment(size, max_depth, -1)
+        yield from self.draw_dragon_recursive(size, max_depth, -1)
 
-    def draw_dragon_segment(self, size, depth, sign=1):
-        """Dessine un segment du Dragon Curve"""
+    def draw_dragon_recursive(self, size, depth, sign=1):
+        """Récursion pour dessiner Dragon Curve"""
         if depth == 0:
             self.turtle.do_forward(size)
             yield
             return
         
-        yield from self.draw_dragon_segment(size / 1.4142, depth - 1, 1)
+        yield from self.draw_dragon_recursive(size / 1.4142, depth - 1, 1)
         if sign == 1:
             self.turtle.do_right(90)
         else:
             self.turtle.do_left(90)
         yield
-        yield from self.draw_dragon_segment(size / 1.4142, depth - 1, -1)
+        yield from self.draw_dragon_recursive(size / 1.4142, depth - 1, -1)
     
     # _________________- Circle Limit (type Escher) -_________________
     def draw_circle_limit(self, size, **kwargs):

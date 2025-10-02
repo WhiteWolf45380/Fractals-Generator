@@ -26,7 +26,7 @@ class SettingsMenu:
 
         """boutton de repli"""
         self.collapse_button_dict = self.ui_manager.generate_collapse_button("right", 0, self.surface_height / 2, anchor="midleft")
-        self.ui_manager.add_handle(self.name, "down_collapse_button", self.handle_down_collapse_button)
+        self.ui_manager.add_handler(self.name, "down_collapse_button", self.handle_down_collapse_button)
 
         """surface finale post chargement servant de base au contenu dynamique"""
         # trait pour accentuer la démarquation
@@ -71,7 +71,7 @@ class SettingsMenu:
         # ajout des handlers des éléments
         for category in self.parameters:
             if self.parameters[category].get("handler") is not None:
-                self.ui_manager.add_handle(self.name, f"down_setting_{category}", self.parameters["bar"]["handler"])
+                self.ui_manager.add_handler(self.name, f"down_setting_{category}", self.parameters["bar"]["handler"])
 
         # propriétés
         self.settings_y_init = self.title_back.bottom + 30 # placement vertical initial
@@ -127,7 +127,7 @@ class SettingsMenu:
 # _________________________- Handles controllers -_________________________
     def handle_left_click_down(self, button: str):
         """évènements associés au clique souris gauche"""
-        self.ui_manager.do_handle(self.name, f"down_{button}")
+        self.ui_manager.do_handler(self.name, f"down_{button}")
 
     def handle_left_click_up(self):
         """évènements associés au relâchement du clique souris gauche"""

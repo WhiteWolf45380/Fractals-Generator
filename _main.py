@@ -118,10 +118,12 @@ class Main:
         self.screen_resized.fill((0, 0, 0)) # pour les bandes noires
         self.screen_resized.blit(new_screen, (self.screen_x_offset, self.screen_y_offset))
 
-    def get_relative_pos(self, rect: pygame.Rect, x: int =None, y: int=None) -> tuple:
+    def get_relative_pos(self, rect: pygame.Rect, x: int =None, y: int=None, mutiple: list=[]) -> tuple:
         """renvoie la position relative sur un rect (par défaut pos du curseur)"""
         relative_x = (x if x is not None else self.mouse_x) - rect.left
         relative_y = (y if y is not None else self.mouse_y) - rect.top
+        if len(mutiple) > 0: # rects embriqués
+            return self.get_relative_pos(mutiple[0], x=relative_x, y=relative_y, mutiple=mutiple.pop(0))
         return relative_x, relative_y
     
     @staticmethod
@@ -133,9 +135,7 @@ class Main:
 
         # ordre de grandeur de la plage
         magnitude = 10 ** math.floor(math.log10(range_))
-
-        
-        # pas = magnitude / 100
+        # pas = magnitude / 50
         step = max(magnitude // 50, 1)
 
         # arrondi
