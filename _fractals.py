@@ -23,7 +23,7 @@ class Fractals:
 
         if centered:
             height = (3**0.5 / 2) * size
-            self.turtle.do_goto(-size/2, -height/(2.5 if max_depth > 0 else 2))
+            self.turtle.do_goto(-size/2 + self.turtle.get("x_offset"), -height/(2.5 if max_depth > 0 else 2) + self.turtle.get("y_offset"))
         
         for _ in range(3):
             yield from self.draw_koch_segment(size, max_depth)
@@ -53,7 +53,7 @@ class Fractals:
         centered = self.turtle.get("centered")
 
         if centered:
-            self.turtle.do_goto(-size/2, -size/2)
+            self.turtle.do_goto(-size/2 + self.turtle.get("x_offset"), -size/2 + self.turtle.get("y_offset"))
         
         for _ in range(4):
             yield from self.draw_koch_squares_segment(size, max_depth)
@@ -97,7 +97,7 @@ class Fractals:
                 12: (-175, 175),
             }
             offset = DRAGON_CENTER_OFFSET.get(max_depth, (0,0))
-            self.turtle.do_goto(offset[0], offset[1])
+            self.turtle.do_goto(offset[0] + self.turtle.get("x_offset"), offset[1] + self.turtle.get("y_offset"))
 
         yield from self.draw_dragon_segment(size, max_depth, 1)
         self.turtle.do_right(90)
@@ -122,7 +122,6 @@ class Fractals:
     def draw_circle_limit(self, size, **kwargs):
         """Dessine un Circle Limit progressif"""
         max_depth = self.turtle.get("depth")
-        centered = self.turtle.get("centered")
 
         yield from self.draw_circle_limit_recursive(0, 0, size, max_depth)
 

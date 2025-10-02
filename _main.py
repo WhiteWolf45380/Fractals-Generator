@@ -136,10 +136,10 @@ class Main:
 
         
         # pas = magnitude / 100
-        step = magnitude / 100
+        step = max(magnitude // 50, 1)
 
         # arrondi
-        return int(round(n / step) * step)
+        return min(max(int(round(n / step) * step), value_min), value_max)
     
     @staticmethod
     def get_path(relative_path):

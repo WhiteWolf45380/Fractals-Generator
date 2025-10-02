@@ -9,7 +9,7 @@ class UIManager:
         self.main = main
         
         """thèmes"""
-        self.current_theme = "dark"
+        self.current_theme = "light"
         self.themes = {
             "dark": {
                 "toolbar": {
@@ -77,9 +77,9 @@ class UIManager:
                     "highlight": (205, 205, 205),
                     "line": (75, 75, 75),
                     "button_hover": (195, 195, 195),
-                    "bar": (170, 170, 170),
-                    "thumb_idle": (120, 120, 120),
-                    "thumb_hover": (40, 40, 40),
+                    "bar": (150, 150, 150),
+                    "thumb_idle": (105, 105, 105),
+                    "thumb_hover": (60, 60, 60),
                     "collapse_idle": (26, 26, 26),
                     "collapse_hover": (110, 110, 110),
                     "collapse_logo_idle": (240, 240, 240),
@@ -180,18 +180,19 @@ class UIManager:
         return self.handles.get(category, {}).get(name, lambda: None)(**kwargs)
 
 # _________________________- Création d'éléments -_________________________
-    def generate_text(self, content: str, fontsize: int, wlimit: int=0, font="default", color: tuple=(0, 0, 0), recursive=False):
+    def generate_text(self, content: str, fontsize: int, wlimit: int=0, font="default", color: tuple=(0, 0, 0), end="" , recursive=False):
         """génère un texte pygame"""
         if recursive: # si appel récursif
             content += "."
+        content += end # fin définie            
 
         font = pygame.font.Font(self.fonts_paths.get(font, self.fonts_paths["default"]), fontsize)
         text = font.render(content, 1, color)
         text_rect = text.get_rect()
 
         # vérification de la taille limite
-        if wlimit > 0 and text_rect.width > wlimit and len(content) > 3:
-            text, text_rect = self.generate_text(content[:len(content)-(1 if not recursive else 2)], fontsize, wlimit=wlimit, font=font, color=color)
+        if wlimit > 0 and text_rect.width > wlimit and len(content) > 3 + len(end):
+            text, text_rect = self.generate_text(content[:len(content)-len(end)-(2 if recursive else 1)], fontsize, wlimit=wlimit, font=font, color=color, end=end, recursive=True)
         
         return text, text_rect
 

@@ -21,7 +21,7 @@ class Turtle:
         self.surface.fill(self.surface_color)
 
         """zone de dessin"""
-        self.turtle_surface_side = self.main.screen_width * 2
+        self.turtle_surface_side = 5000
         self.turtle_surface = pygame.Surface((self.turtle_surface_side, self.turtle_surface_side), pygame.SRCALPHA)
         self.turtle_surface_rect = self.turtle_surface.get_rect(center=self.surface_rect.center)
         self.turtle_surface_x_offset = 0 # décalage de l'axe x
@@ -29,15 +29,19 @@ class Turtle:
 
         """paramètres turtle"""
         self.parameters_init = {
-            "depth": 4,
-            "size": 100,
-            "x": 0,
-            "y": 0,
-            "angle": 0,
-            "color": (255, 255, 255),
-            "width": 1,
-            "centered": True,
-            "speed": 5,
+            "x": 0, # position x (not to define)
+            "y": 0, # position y (not to define)
+            "angle": 0, # angle (not to define)
+            "depth": 10, # profondeur de récursion
+            "size": 100, # taille du motif
+            "x_offset": 0, # décalage x
+            "y_offset": 0, # décalage y
+            "color_r": 255, # canal rouge
+            "color_b": 255, # canal bleu
+            "color_g": 255, # canal vert
+            "width": 1, # épaisseur
+            "centered": True, # ancre
+            "speed": 5, # vitesse d'éxécution
         }
         self.parameters = self.parameters_init.copy()
 
@@ -102,8 +106,10 @@ class Turtle:
 
 # _________________________- Outils -_________________________
 
-    def get(self, parameter: str):
+    def get(self, parameter: str, mutiple: tuple=None) -> str | int | tuple:
         """retourne le paramètre correspondant"""
+        if mutiple is not None:
+            return tuple(self.parameters.get(f"{parameter}_{single}", 0) for single in mutiple)
         return self.parameters.get(parameter, None)
     
     def change(self, parameter: str, value, index=None):
@@ -128,7 +134,7 @@ class Turtle:
         """reset du tableau"""
         self.surface.fill(self.surface_color)
         self.turtle_surface.fill((0, 0, 0, 0))
-        self.do_goto(0, 0)
+        self.do_goto(self.get("x_offset"), self.get("y_offset"))
         self.do_setheading(0)
     
     def do_goto(self, x: float, y: float):
@@ -145,7 +151,7 @@ class Turtle:
 
         # traçage du trait
         if not penup:
-            pygame.draw.line(self.turtle_surface, self.get("color"), (int(x), int(y)), (int(x_final), int(y_final)), width=self.get("width"),)
+            pygame.draw.line(self.turtle_surface, self.get("color", mutiple=("r", "g", "b")), (int(x), int(y)), (int(x_final), int(y_final)), width=self.get("width"),)
 
         # mise à jour de la position
         x, y = self.get_relative_pos(x_final, y_final)
