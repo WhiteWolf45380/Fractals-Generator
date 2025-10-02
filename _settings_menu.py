@@ -46,27 +46,33 @@ class SettingsMenu:
             "bar": {
                 "generate": self.generate_setting_bar,
                 "update": self.update_setting_bar,
-                "bar_width": 100,
+                "handler": self.handle_down_setting_bar,
+                "bar_width": 200,
                 "bar_height": 10,
                 "thumb_width": 10,
-                "thumb_height": 20,
+                "thumb_height": 40,
             }
         }
+        
+        # ajout des handlers des éléments
+        for category in self.parameters:
+            if self.parameters[category].get("handler") is not None:
+                self.ui_manager.add_handle(self.name, f"down_setting_{category}", self.parameters["bar"]["handler"])
 
         # propriétés
-        self.settings_x = 50 # décalage horizontal
-        self.settings_y_init = self.title_back.bottom + 50 # placement vertical initial
+        self.settings_x = 20 # décalage horizontal
+        self.settings_y_init = self.title_back.bottom + 30 # placement vertical initial
         self.settings_y_next = self.settings_y_init # placement vertical dynamique
 
         """propriétés"""
         self.settings = { # caractéristiques des paramètres
-            "size": {"category": "bar", "text_content": "Taille", "value": 400, "value_min": 100, "value_max": 2000}
+            "size": {"category": "bar", "text_content": "Taille", "value": 400, "value_min": 100, "value_max": 1500}
         }
 
         # génération des paramètres
         for setting in self.settings:
             self.settings[setting]["name"] = setting # attribution d'un nom pour faciliter l'identification
-            self.settings[setting]["package"] = self.generate_setting(self.settings[setting]["text_content"], self.settings[setting]["category"]) # génération du paramètre
+            self.settings[setting]["package"] = self.generate_setting(self.settings[setting]) # génération du paramètre
 
     def update(self):
         """Mise à jour de la barre d'outils"""
@@ -104,38 +110,56 @@ class SettingsMenu:
 
     def handle_left_click_up(self):
         """évènements associés au relâchement du clique souris gauche"""
-        pass
+        self.ui_manager.mouse_grabbing = None
 
 # _________________________- Handlers -_________________________
     def handle_down_collapse_button(self):
         """événement : appui sur le boutton d'ouverture/fermeture du menu"""
         self.opened = not self.opened
 
+    def handle_down_setting_bar(self):
+        """événement : attrape une barre"""
+        _id = self.ui_manager.mouse_hover[2] # récupération de l'id
+        grabbed = self.ui_manager.ask_for_mouse_grabbing(self.name, "setting_bar", _id=_id)
+        if grabbed:
+            self.settings[_id]["delta"] = self.main.get_relative_pos(self.surface_rect)[0] - self.settings[_id]["package"]["thumb"].centerx
+
 # _________________________- Création d'éléments -_________________________
-    def generate_setting(self, text_content: str, category: str) -> dict:
+    def generate_setting(self, content: dict) -> dict:
         """génère un paramètre"""
         # dictionnaire final du paramètre
         package = {}
         # texte
-        package["text"], package["text_rect"] = self.ui_manager.generate_text(f"{text_content} :", 20, color=self.ui_manager.get_color(self.name, "text"), wlimit=20)
+        package["text"], package["text_rect"] = self.ui_manager.generate_text(f"{content['text_content']} :", 25, color=self.ui_manager.get_color(self.name, "text"), wlimit=self.surface_width * 0.3)
         package["text_rect"].left = self.settings_x
         # éléments interactifs
-        setting_handler = self.parameters.get(category, {}).get("generate", lambda _: {})(package["text_rect"].right)
+        setting_handler = self.parameters.get(content['category'], {}).get("generate", lambda _: {})(content, package["text_rect"].right)
         for key, value in setting_handler.items():
             package[key] = value
-        
+    
         return package
+    
+    def generate_value(self, value: int, x: int) -> dict:
+        """génère un compteur (qui affiche la valeur)"""
+        value_text, value_text_rect = self.ui_manager.generate_text(str(value), 20, color=self.ui_manager.get_color(self.name, "text"), wlimit=self.surface_width * 0.2)
+        value_text_rect.left = x
+        return {"value_text": value_text, "value_text_rect": value_text_rect}
 
-    def generate_setting_bar(self, text_right) -> dict:
+    def generate_setting_bar(self, content: dict, x: int) -> dict:
         """génère une barre"""
         parameters = self.parameters["bar"] # raccourci
         # barre
         bar = pygame.Rect(0, 0, parameters["bar_width"], parameters["bar_height"])
-        bar.left = text_right + 20
-        # le slider
+        bar.left = x + 50
+        # slider
         thumb = pygame.Rect(0, 0, parameters["thumb_width"], parameters["thumb_height"])
+        ratio = (content["value"] - content["value_min"]) / (content["value_max"] - content["value_min"])
+        thumb.centerx = bar.left + thumb.width / 2 + ratio * (bar.width - thumb.width)
+        
+        # compteur
+        value_dict = self.generate_value(content["value"], bar.right + 30)
 
-        return {"bar": bar, "thumb": thumb}
+        return {"bar": bar, "thumb": thumb, "value_text": value_dict["value_text"], "value_text_rect": value_dict["value_text_rect"]}
 
 # _________________________- Mise à jour d'éléments -_________________________
     def update_setting(self, content: dict, y: int):
@@ -153,13 +177,24 @@ class SettingsMenu:
         # mise à jour des positions verticales
         package["bar"].centery = package["text_rect"].centery
         package["thumb"].centery = package["bar"].centery
+        package["value_text_rect"].centery = package["bar"].centery
+        # si l'utilisateur survole la barre
+        if self.ui_manager.is_mouse_hover(package["thumb"], self.surface_rect):
+            hovered = self.ui_manager.ask_for_mouse_hover(self.name, "setting_bar", _id=content["name"])
+        else:
+            hovered = False
         # si l'utilisateur attrape la barre
-        if self.ui_manager.is_mouse_grabbing(self.name, content["name"]):
+        grabbed = self.ui_manager.is_mouse_grabbing(self.name, "setting_bar", _id=content["name"])
+        if grabbed:
             right_limit = package["bar"].right - package["thumb"].width / 2 # limite minimum
             left_limit = package["bar"].left + package["thumb"].width / 2 # limite maximum
             package["thumb"].centerx = min(max(self.main.get_relative_pos(self.surface_rect)[0] - content.get("delta", 0), left_limit), right_limit) # suivi du curseur - delta (ancre de saisi)
-            ratio = (content["thumb"].centerx - left_limit) / (right_limit - left_limit) # ratio entre le min et le max
-            content["value"] = ratio * (content["value_max"] - content["value_min"]) # affectation de la valeur selon la position horizontale
+            ratio = (package["thumb"].centerx - left_limit) / (right_limit - left_limit) # ratio entre le min et le max
+            content["value"] = round(content["value_min"] + ratio * (content["value_max"] - content["value_min"])) # affectation de la valeur selon la position horizontale
+            package["thumb"].centerx = min(max(left_limit + (right_limit - left_limit) * (content["value"] - content["value_min"]) / (content["value_max"] - content["value_min"]), left_limit), right_limit) # on fait un "snap" afin de faire correspondre l'arrondi
+            value_dict = self.generate_value(content["value"], package["value_text_rect"].left)
+            package["value_text"], _ = value_dict["value_text"], value_dict["value_text_rect"]
         # blit
         pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "bar"), package["bar"])
-        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, f"thumb_{'hover' if self.ui_manager.mouse_hover == (self.name, content['name']) else 'idle'}"), package["thumb"])
+        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, f"thumb_{'hover' if hovered or grabbed else 'idle'}"), package["thumb"])
+        self.surface.blit(package["value_text"], package["value_text_rect"])

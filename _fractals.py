@@ -16,10 +16,10 @@ class Fractals:
         }
 
     # _________________- Flocon de Koch (triangles)-_________________
-    def draw_koch_flake(self, size, **kwargs):
+    def draw_koch_flake(self, size):
         """dessine un flocon de Koch"""
-        max_depth = kwargs.get("max_depth", 5)
-        centered = kwargs.get("centered", False)
+        max_depth = self.turtle.get("depth")
+        centered = self.turtle.get("centered")
 
         if centered:
             height = (3**0.5 / 2) * size
@@ -49,8 +49,8 @@ class Fractals:
     # _________________- Flocon de Koch (carrés)-_________________
     def draw_koch_squares_flake(self, size, **kwargs):
         """dessine un flocon de Koch progressivement"""
-        max_depth = kwargs.get("max_depth", 4)
-        centered = kwargs.get("centered", False)
+        max_depth = self.turtle.get("depth")
+        centered = self.turtle.get("centered")
 
         if centered:
             self.turtle.do_goto(-size/2, -size/2)
@@ -78,8 +78,8 @@ class Fractals:
     # _________________- Dragon Curve -_________________
     def draw_dragon_curve(self, size, **kwargs):
         """Dessine un Dragon Curve (île) progressivement"""
-        max_depth = kwargs.get("max_depth", 16)  # profondeur par défaut
-        centered = kwargs.get("centered", False)
+        max_depth = self.turtle.get("depth")
+        centered = self.turtle.get("centered")
 
         if centered:
             DRAGON_CENTER_OFFSET = {
@@ -121,8 +121,8 @@ class Fractals:
     # _________________- Circle Limit (type Escher) -_________________
     def draw_circle_limit(self, size, **kwargs):
         """Dessine un Circle Limit progressif"""
-        max_depth = kwargs.get("max_depth", 4)
-        centered = kwargs.get("centered", True)
+        max_depth = self.turtle.get("depth")
+        centered = self.turtle.get("centered")
 
         yield from self.draw_circle_limit_recursive(0, 0, size, max_depth)
 

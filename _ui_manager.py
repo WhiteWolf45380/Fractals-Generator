@@ -38,7 +38,7 @@ class UIManager:
                     "line": (180, 180, 180),
                     "button_hover": (85, 85, 85),
                     "bar": (70, 70, 70),
-                    "thumb_idle": (200, 200, 200),
+                    "thumb_idle": (150, 150, 150),
                     "thumb_hover": (240, 240, 240),
                     "collapse_idle": (221, 221, 221),
                     "collapse_hover": (160, 160, 160),
@@ -77,8 +77,8 @@ class UIManager:
                     "highlight": (205, 205, 205),
                     "line": (75, 75, 75),
                     "button_hover": (195, 195, 195),
-                    "bar": (200, 200, 200),
-                    "thumb_idle": (80, 80, 80),
+                    "bar": (170, 170, 170),
+                    "thumb_idle": (120, 120, 120),
                     "thumb_hover": (40, 40, 40),
                     "collapse_idle": (26, 26, 26),
                     "collapse_hover": (110, 110, 110),
@@ -140,22 +140,33 @@ class UIManager:
         """vérifie si le curseur se trouve sur le rect donné"""
         return rect.collidepoint(self.main.get_relative_pos(surface_rect))
     
-    def is_mouse_grabbing(self, category: str, name: str) -> bool:
+    def is_mouse_hovering(self, category: str, name: str, _id: str="") -> bool:
+        if self.mouse_hover is None:
+            return False
+        elif _id == "":
+            return self.mouse_hover[0] == category and self.mouse_hover[1] == name
+        return self.mouse_hover == (category, name, _id, name)
+    
+    def is_mouse_grabbing(self, category: str, name: str, _id: str="") -> bool:
         """vérifie si la barre est attrapée"""
-        return self.mouse_grabbing == (category, name)
+        if self.mouse_grabbing is None:
+            return False
+        elif _id == "":
+            return self.mouse_grabbing[0] == category and self.mouse_grabbing[1] == name
+        return self.mouse_grabbing == (category, name, _id)
     
 # _________________________- Demandes dynamiques -_________________________
-    def ask_for_mouse_hover(self, category: str, name: str) -> bool:
+    def ask_for_mouse_hover(self, category: str, name: str, _id: str="") -> bool:
         """assigne is possible le mouse_hover au boutton passé"""
         if self.mouse_hover is None and self.mouse_grabbing is None:
-            self.mouse_hover = (category, name)
+            self.mouse_hover = (category, name, _id)
             return True
         return False
     
-    def ask_for_mouse_grabbing(self, category: str, name: str) -> bool:
+    def ask_for_mouse_grabbing(self, category: str, name: str, _id: str="") -> bool:
         """assigne is possible le mouse_grabbing à la barre passée"""
         if self.mouse_grabbing is None:
-            self.mouse_grabbing = (category, name)
+            self.mouse_grabbing = (category, name, _id)
             self.mouse_hover = None # annulation du mouse_hover
             return True
         return False

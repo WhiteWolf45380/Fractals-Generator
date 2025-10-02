@@ -29,11 +29,13 @@ class Turtle:
 
         """paramètres turtle"""
         self.parameters_init = {
+            "depth": 4,
             "x": 0,
             "y": 0,
             "angle": 0,
             "color": (0, 0, 0),
             "width": 1,
+            "centered": True,
             "speed": 5,
         }
         self.parameters = self.parameters_init.copy()
@@ -72,18 +74,30 @@ class Turtle:
         self.main.screen.blit(self.surface, self.surface_rect)
 
 # _________________________- Dessin -_________________________
-    def draw(self, name: str, size: int, **kwargs):
+    def draw(self, name: str, size: int):
         """prépare un dessin progressif"""
+        self.push(self.main.menus["settings"].settings)
         self.do_reset()
-
-        self.change("color", kwargs.get("color", self.get("color")))
                 
         try:
-            self.current_generator = self.fractals.available_fractals[name](size, **kwargs)
+            self.current_generator = self.fractals.available_fractals[name](size)
         except Exception as e:
             traceback.print_exc()
             self.current_generator = None
             print(f"[Painting] Error during the drawing start")
+
+    def get(self, parameter: str) -> int | str | tuple:
+        """renvoie la valeur du paramètre demandé"""
+        if parameter not in self.parameters:
+            print(f"[Turtle] Error : undefined parameter : {parameter}")
+            return
+        return self.parameters[parameter]
+
+    def push(self, settings_dict: dict):
+        """récupère les valeurs des propriétés avant le lancement du dessin"""
+        for setting in settings_dict:
+            if setting in self.parameters:
+                self.parameters[setting] = settings_dict[setting]["value"]
 
 # _________________________- Outils -_________________________
 
