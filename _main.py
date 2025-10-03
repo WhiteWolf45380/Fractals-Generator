@@ -93,8 +93,13 @@ class Main:
                     self.menus[self.ui_manager.mouse_hover[0]].handle_left_click_down(self.ui_manager.mouse_hover[1])
             
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1: # clique gauche (relaché)
+                self.ui_manager.mouse_grabbing = None
                 for menu in self.menus.values(): # tous les menus
                     menu.handle_left_click_up()
+            
+            elif event.type == pygame.MOUSEWHEEL: # molette
+                for menu in self.menus.values(): # tous les menus
+                    menu.handle_mousewheel(-event.y)
     
     def calc_screen_offsets(self):
         """calcul les décalages dû aux dimensions de fenêtre incompatibles"""

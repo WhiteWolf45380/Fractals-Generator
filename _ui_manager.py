@@ -322,21 +322,38 @@ class UIManager:
     
     def update_scroll_bar(self, scroll_bar: dict, surface: pygame.Surface, surface_rect: pygame.Rect, menu: str="settings", ratio: float=0):
         """mise à jour des barres de défilement"""
+        is_grabbed = self.is_mouse_grabbing(menu, "scroll_bar") # vérification que la barre est attrapée
+
         # barre complète
         if scroll_bar["back"]:
             scroll_bar["bar"].fill(self.get_color(menu, "scroll_bar_back"))
             surface.blit(scroll_bar["bar"], scroll_bar["bar_rect"])
 
         # slider (taille)
-        if ratio != 0:
-            scroll_bar["thumb"] = pygame.transform.scale(scroll_bar["thumb"], (scroll_bar["thumb_rect"].width, ratio * scroll_bar["bar_rect"].height))
+        if ratio != 0 and ratio != scroll_bar["ratio"]:
+            scroll_bar["ratio"] = min(ratio, 1)
+            scroll_bar["thumb"] = pygame.transform.scale(scroll_bar["thumb"], (scroll_bar["thumb_rect"].width, scroll_bar["ratio"] * scroll_bar["bar_rect"].height))
             scroll_bar["thumb_rect"] = scroll_bar["thumb"].get_rect(midtop=scroll_bar["thumb_rect"].midtop)
 
         # slider (hoover)
         if self.is_mouse_hover(scroll_bar["thumb_rect"], surface_rect):
-            hovered = self.ask_for_mouse_hover(menu, "scroll_bar")
+            is_hovered = self.ask_for_mouse_hover(menu, "scroll_bar")
         else:
-            hovered = False
+            is_hovered = False
+        
+        # slider (grab)
+        if is_grabbed:
+            top_limit = scroll_bar["bar_rect"].top + scroll_bar["thumb_rect"].height / 2 # limite supérieure du slider
+            bottom_limit = scroll_bar["bar_rect"].bottom - scroll_bar["thumb_rect"].height / 2 # limite inférieure du slider
+
+            # suivi du curseur - delta (ancre de saisi)
+            scroll_bar["thumb_rect"].centery = min(max(self.main.get_relative_pos(surface_rect)[1] - scroll_bar.get("delta", 0), top_limit), bottom_limit)
+
+            # progression dans la barre
+            progression = min(max((scroll_bar["thumb_rect"].centery - top_limit) / max(bottom_limit - top_limit, 10**-9), 0), 1)
+
+            # offset vertical réel
+            scroll_bar["y_dif"] = int(progression * (scroll_bar["bar_rect"].height / scroll_bar["ratio"] - scroll_bar["bar_rect"].height))
         
         # slider (visuel)
         if scroll_bar["hidden"]:
@@ -345,7 +362,7 @@ class UIManager:
             else:
                 scroll_bar["alpha"] = 0
             scroll_bar["thumb"].set_alpha(scroll_bar["alpha"])
-        scroll_bar["thumb"].fill(self.get_color(menu, f"scroll_bar_thumb_{'hover' if hovered else 'idle'}"))
+        scroll_bar["thumb"].fill(self.get_color(menu, f"scroll_bar_thumb_{'hover' if is_hovered or is_grabbed else 'idle'}"))
 
         # slider (affichage)
         surface.blit(scroll_bar["thumb"], scroll_bar["thumb_rect"])
@@ -355,6 +372,21 @@ class UIManager:
         """événement: attrape une barre de défilement"""
         menu = self.mouse_hover[0]
         _id = self.mouse_hover[2] # récupération de l'id
-        grabbed = self.ask_for_mouse_grabbing(menu, "scroll_bar", _id=_id)
-        if grabbed:
-            self.main.menus[menu].scroll_bar["delta"] = self.main.get_relative_pos(self.main.menus[menu].surface_rect)[1] - self.main.menus[menu].scroll_bar["package"]["thumb_rect"].centery
+        is_grabbed = self.ask_for_mouse_grabbing(menu, "scroll_bar", _id=_id)
+        if is_grabbed:
+            self.main.menus[menu].scroll_bar["delta"] = self.main.get_relative_pos(self.main.menus[menu].surface_rect)[1] - self.main.menus[menu].scroll_bar["thumb_rect"].centery
+    
+    def handle_mousewheel_scroll_bar(self, scroll_bar: dict, y_offset):
+        """événement: utilise la barre de défilement par molette"""
+        top_limit = scroll_bar["bar_rect"].top + scroll_bar["thumb_rect"].height / 2 # limite supérieure du slider
+        bottom_limit = scroll_bar["bar_rect"].bottom - scroll_bar["thumb_rect"].height / 2 # limite inférieure du slider
+
+        # suivi du curseur - delta (ancre de saisi)
+        scroll_bar["thumb_rect"].centery = min(max(scroll_bar["thumb_rect"].centery + y_offset * scroll_bar["bar_rect"].height * 0.03, top_limit), bottom_limit)
+
+        # progression dans la barre
+        progression = min(max((scroll_bar["thumb_rect"].centery - top_limit) / max(bottom_limit - top_limit, 10**-9), 0), 1)
+
+        # offset vertical réel
+        scroll_bar["y_dif"] = int(progression * (scroll_bar["bar_rect"].height / scroll_bar["ratio"] - scroll_bar["bar_rect"].height))
+        print(scroll_bar["y_dif"])

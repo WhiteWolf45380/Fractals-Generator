@@ -16,14 +16,14 @@ class Turtle:
         self.surface_width = self.main.screen_width # largeur du menu
         self.surface_height = self.main.screen_height - self.main.menus["toolbar"].surface_height # hauteur du menu
         self.surface = pygame.Surface((self.surface_width, self.surface_height)) # fond du menu
-        self.surface_rect = self.surface.get_rect(midbottom=(self.main.screen_width / 2, self.main.screen_height))# placement en haut de l'écran
+        self.surface_rect = self.surface.get_rect(midbottom=(self.main.screen_width / 2, self.main.screen_height)) # placement en bas au centre de l'écran
         self.surface_color = self.ui_manager.get_color(self.name, "back") # couleur de fond
         self.surface.fill(self.surface_color)
 
         """zone de dessin"""
         self.turtle_surface_side = 5000
         self.turtle_surface = pygame.Surface((self.turtle_surface_side, self.turtle_surface_side), pygame.SRCALPHA)
-        self.turtle_surface_rect = self.turtle_surface.get_rect(center=self.surface_rect.center)
+        self.turtle_surface_rect = self.turtle_surface.get_rect(center=self.surface.get_rect().center)
         self.turtle_surface_x_offset = 0 # décalage de l'axe x
         self.turtle_surface_y_offset = 0 # décalage de l'axe y
 
@@ -75,7 +75,6 @@ class Turtle:
                     next(self.current_generator)
             except StopIteration:
                 self.current_generator = None
-        
         self.surface.blit(self.turtle_surface, self.turtle_surface_rect)
         self.main.screen.blit(self.surface, self.surface_rect)
 

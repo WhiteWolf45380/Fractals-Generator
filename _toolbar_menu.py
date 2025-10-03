@@ -89,7 +89,9 @@ class ToolbarMenu:
 
     def handle_left_click_up(self):
         """événements associés au relâchement du clique souris gauche"""
-        pass
+
+    def handle_mousewheel(self, y_offset: int):
+        """événements associés à l'utilisation de la molette"""
 
 # _________________________- Handles -_________________________
     def handle_down_start_button(self):

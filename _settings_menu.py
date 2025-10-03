@@ -111,12 +111,12 @@ class SettingsMenu:
             self.settings[setting]["name"] = setting # attribution d'un nom pour faciliter l'identification
             self.settings[setting]["package"] = self.generate_setting(self.settings[setting]) # génération du paramètre
 
-        # barre de défilement
+        """barre de défilement"""
         self.scroll_bar = self.ui_manager.generate_scroll_bar(self.surface_rect, 1, y_offset_start=self.title_back.height, back=True, hidden=False)
         self.ui_manager.add_handler(self.name, "down_scroll_bar", self.ui_manager.handle_down_scroll_bar)
 
     def update(self):
-        """Mise à jour de la barre d'outils"""
+        """Mise à jour du menu des propriétés"""
         # refresh
         self.surface.blit(self.surface_init, (0, 0))
 
@@ -147,14 +147,10 @@ class SettingsMenu:
         self.surface.set_clip(None)
 
         # update de la barre de défilement
-        self.ui_manager.update_scroll_bar(self.scroll_bar, self.surface, self.surface_rect, menu=self.name, ratio=(self.surface_height - self.title_back.height)/self.settings_y_next)
+        self.ui_manager.update_scroll_bar(self.scroll_bar, self.surface, self.surface_rect, menu=self.name, ratio=(self.surface_height - self.title_back.height)/(self.settings_y_next+self.scroll_bar["y_dif"]))
         
         # affichage
         self.main.screen.blit(self.surface, self.surface_rect)
-    
-    def get_incrementation(self, progression: float) -> float:
-        """renvoie un ratio pour une croissance non linéaire"""
-        return progression ** 0.5
 
 # _________________________- Handles controllers -_________________________
     def handle_left_click_down(self, button: str):
@@ -163,7 +159,11 @@ class SettingsMenu:
 
     def handle_left_click_up(self):
         """événements associés au relâchement du clique souris gauche"""
-        self.ui_manager.mouse_grabbing = None
+
+    def handle_mousewheel(self, y_offset: int):
+        """événements associés à l'utilisation de la molette"""
+        if self.surface_rect.collidepoint((self.main.mouse_x, self.main.mouse_y)):
+            self.ui_manager.handle_mousewheel_scroll_bar(self.scroll_bar, y_offset)
 
 # _________________________- Handlers -_________________________
     def handle_down_collapse_button(self):
@@ -180,8 +180,8 @@ class SettingsMenu:
     def handle_down_setting_bar(self):
         """événement : attrape une barre"""
         _id = self.ui_manager.mouse_hover[2] # récupération de l'id
-        grabbed = self.ui_manager.ask_for_mouse_grabbing(self.name, "setting_bar", _id=_id)
-        if grabbed:
+        is_grabbed = self.ui_manager.ask_for_mouse_grabbing(self.name, "setting_bar", _id=_id)
+        if is_grabbed:
             self.settings[_id]["delta"] = self.main.get_relative_pos(self.surface_rect)[0] - self.settings[_id]["package"]["thumb"].centerx
 
 # _________________________- Création d'éléments -_________________________
@@ -264,13 +264,13 @@ class SettingsMenu:
 
         # si l'utilisateur survole la barre
         if self.ui_manager.is_mouse_hover(package["thumb"], self.surface_rect):
-            hovered = self.ui_manager.ask_for_mouse_hover(self.name, "setting_bar", _id=content["name"])
+            is_hovered = self.ui_manager.ask_for_mouse_hover(self.name, "setting_bar", _id=content["name"])
         else:
-            hovered = False
+            is_hovered = False
 
         # si l'utilisateur attrape la barre
-        grabbed = self.ui_manager.is_mouse_grabbing(self.name, "setting_bar", _id=content["name"])
-        if grabbed:
+        is_grabbed = self.ui_manager.is_mouse_grabbing(self.name, "setting_bar", _id=content["name"])
+        if is_grabbed:
             # limites
             right_limit = package["bar"].right - package["thumb"].width / 2 # limite minimum
             left_limit = package["bar"].left + package["thumb"].width / 2 # limite maximum
@@ -291,7 +291,7 @@ class SettingsMenu:
     
         # affichage
         pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "bar"), package["bar"])
-        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, f"thumb_{'hover' if hovered or grabbed else 'idle'}"), package["thumb"])
+        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, f"thumb_{'hover' if is_hovered or is_grabbed else 'idle'}"), package["thumb"])
         self.surface.blit(package["value_text"], package["value_text_rect"])
 
     def update_setting_color(self, content: dict):

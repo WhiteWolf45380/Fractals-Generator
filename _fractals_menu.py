@@ -98,16 +98,18 @@ class FractalsMenu:
 
 # _________________________- Handlers controllers -_________________________
     def handle_left_click_down(self, button: str):
-        """événements associés au clique souris gauche"""
+        """évènements associés au clique souris gauche"""
         self.ui_manager.do_handler(self.name, f"down_{button}")
 
     def handle_left_click_up(self):
-        """événements associés au relâchement du clique souris gauche"""
-        pass
+        """évènements associés au relâchement du clique souris gauche"""
+
+    def handle_mousewheel(self, y_offset: int):
+        """événements associés à l'utilisation de la molette"""
 
 # _________________________- Handlers -_________________________
     def handle_down_collapse_button(self):
-        """événement(clique gauche): bouton de repli"""
+        """évènement(clique gauche): bouton de repli"""
         self.opened = not self.opened
         self.offset_progression = 0
         # position actuelle comme nouveau départ
@@ -118,7 +120,7 @@ class FractalsMenu:
             self.offset_x_final = -(self.surface_width - self.collapse_button_dict["back"].width)
 
     def handle_down_pattern_button(self):
-        """événement(clique gauche): bouton de motif"""
+        """évènement(clique gauche): bouton de motif"""
         self.main.turtle.change("pattern", self.ui_manager.mouse_hover[2])
 
 # _________________________- Création d'éléments -_________________________
@@ -157,13 +159,13 @@ class FractalsMenu:
         # pattern survolé
         is_current = content["name"] == self.main.turtle.get("pattern")
         if not is_current and self.ui_manager.is_mouse_hover(package["image_rect"], self.surface_rect):
-            hovered = self.ui_manager.ask_for_mouse_hover(self.name, "pattern_button", _id=content["name"])
+            is_hovered = self.ui_manager.ask_for_mouse_hover(self.name, "pattern_button", _id=content["name"])
         else:
-            hovered = False
+            is_hovered = False
 
         # animation (calculs)
         step = self.main.dt / self.parameters["animation_duration"]
-        if hovered: # état survolé
+        if is_hovered: # état survolé
             package["animation_progression"] = min(package["animation_progression"] + step, 1)
 
         elif is_current: # état séléctionner

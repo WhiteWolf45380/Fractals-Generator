@@ -23,7 +23,7 @@ class Fractals:
 
         if centered:
             height = (3**0.5 / 2) * size
-            self.turtle.do_goto(-size/2 + self.turtle.get("x_offset"), -height/(2.5 if max_depth > 0 else 2) + self.turtle.get("y_offset"))
+            self.turtle.do_goto(-size/2 + self.turtle.get("x_offset"), -height/(3 if max_depth > 0 else 2) + self.turtle.get("y_offset"))
         
         for _ in range(3):
             yield from self.draw_koch_triangles_recursive(size, max_depth)
