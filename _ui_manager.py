@@ -389,4 +389,3 @@ class UIManager:
 
         # offset vertical réel
         scroll_bar["y_dif"] = int(progression * (scroll_bar["bar_rect"].height / scroll_bar["ratio"] - scroll_bar["bar_rect"].height))
-        print(scroll_bar["y_dif"])
