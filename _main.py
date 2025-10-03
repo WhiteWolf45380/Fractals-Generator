@@ -15,6 +15,9 @@ class Main:
     def __init__(self):
         """variables utiles"""
         self.running = True  # état du logiciel
+        self.clock = pygame.time.Clock() # clock pygame
+        self.fps_max = 60 # limite de fps
+        self.dt = 0 # delta time utilisé pour les animations
 
         # curseur
         self.mouse_x = 0
@@ -55,8 +58,8 @@ class Main:
     def loop(self):
         """loop principal du logiciel"""
         while self.running:
-            # adadptation des dimensions de l'écran
-            self.calc_screen_offsets()
+            self.dt = self.clock.tick(self.fps_max) / 1000.0 # limite de fps
+            self.calc_screen_offsets() # adadptation des dimensions de l'écran
 
             # souris
             mouse_x, mouse_y = pygame.mouse.get_pos()

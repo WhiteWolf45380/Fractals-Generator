@@ -35,11 +35,11 @@ class FractalsMenu:
 
         """variables utiles"""
         # ouverture/fermeture
-        self.x_init = self.surface_rect.left
         self.opened = True
-        self.offset_velocity = 13
-        self.offset_closed = self.surface_width - self.collapse_button_dict["back"].width
-        self.offset_current = 0
+        self.offset_x_init = self.surface_rect.left
+        self.offset_x_final = self.surface_rect.left - (self.surface_rect.width - self.collapse_button_dict["back"].width)
+        self.offset_duration = 1
+        self.offset_progression = 1
 
         # paramètres pour les patterns
         self.parameters = {
@@ -51,6 +51,9 @@ class FractalsMenu:
             "text_len_mean": 15, # moyenne prédite de la longueur des descriptions
             "text_font_factor": 0.42, # rapport entre fontsize et la longueur moyenne d'un caractère
             "text_y_offset_factor": 1.2, # rapport entre fontsize et l'écart image/description
+            "animation_factor_max": 1.08, # agrandissement max pour le survolement
+            "animation_factor_min": 0.92, # resize factor min pour le choix actuel
+            "animation_duration": 0.2, # durée de resize
         }
 
         """motifs disponibles"""
@@ -73,13 +76,15 @@ class FractalsMenu:
         self.surface.blit(self.surface_init, (0, 0))
 
         # ouverture/fermeture du menu
-        if self.opened and self.offset_current > 0:
-            progression = self.offset_current / self.offset_closed
-            self.offset_current = max(0, self.offset_current - self.offset_velocity * self.get_incrementation(progression))
-        elif not self.opened and self.offset_current < self.offset_closed:
-            progression = 1 - self.offset_current / self.offset_closed
-            self.offset_current = min(self.offset_closed, self.offset_current + self.offset_velocity * self.get_incrementation(progression))
-        self.surface_rect.left = self.x_init - self.offset_current
+        if self.offset_progression < 1:
+            self.offset_progression = min(1.0, self.offset_progression + self.main.dt / self.offset_duration)
+
+            # easing
+            eased = self.ui_manager.get_ease_out(self.offset_progression, intensity=1.5)
+
+            # interpolation
+            x = self.offset_x_init + (self.offset_x_final - self.offset_x_init) * eased
+            self.surface_rect.left = int(x)
 
         # update du boutton de repli
         self.ui_manager.update_collapse_button(self.name, self.surface, self.surface_rect, self.collapse_button_dict, opened=self.opened)
@@ -91,27 +96,30 @@ class FractalsMenu:
         # affichage
         self.main.screen.blit(self.surface, self.surface_rect)
 
-    def get_incrementation(self, progression: float) -> float:
-        """renvoie un ratio pour une croissance non linéaire"""
-        return progression ** 0.5
-
 # _________________________- Handlers controllers -_________________________
     def handle_left_click_down(self, button: str):
-        """évènements associés au clique souris gauche"""
+        """événements associés au clique souris gauche"""
         self.ui_manager.do_handler(self.name, f"down_{button}")
 
     def handle_left_click_up(self):
-        """évènements associés au relâchement du clique souris gauche"""
+        """événements associés au relâchement du clique souris gauche"""
         pass
 
 # _________________________- Handlers -_________________________
     def handle_down_collapse_button(self):
-        """évènement(clique gauche): bouton de repli"""
+        """événement(clique gauche): bouton de repli"""
         self.opened = not self.opened
+        self.offset_progression = 0
+        # position actuelle comme nouveau départ
+        self.offset_x_init = self.surface_rect.left
+        if self.opened:
+            self.offset_x_final = 0
+        else:
+            self.offset_x_final = -(self.surface_width - self.collapse_button_dict["back"].width)
 
     def handle_down_pattern_button(self):
-        """évènement(clique gauche): bouton de motif"""
-        pass
+        """événement(clique gauche): bouton de motif"""
+        self.main.turtle.change("pattern", self.ui_manager.mouse_hover[2])
 
 # _________________________- Création d'éléments -_________________________
     def generate_pattern_button(self, content: dict, number: int) -> dict:
@@ -132,6 +140,7 @@ class FractalsMenu:
         spacing_x = (self.surface_width - self.parameters["cols_number"] * package["image_rect"].width) / (self.parameters["cols_number"] + 1)
         package["image_rect"].x = spacing_x + col * (package["image_rect"].width + spacing_x)
         package["image_rect"].y = self.parameters["y_start"] + row * package["image_rect"].height * (1 + self.parameters["rows_space_factor"])
+        package["animation_progression"] = 0.5 # état normal
 
         # texte
         fontsize = max(8, int(package["image_rect"].width / (self.parameters["text_len_mean"] * self.parameters["text_font_factor"])))
@@ -145,7 +154,35 @@ class FractalsMenu:
         """met à jour les patterns"""
         package = content["package"] # raccourci
 
+        # pattern survolé
+        is_current = content["name"] == self.main.turtle.get("pattern")
+        if not is_current and self.ui_manager.is_mouse_hover(package["image_rect"], self.surface_rect):
+            hovered = self.ui_manager.ask_for_mouse_hover(self.name, "pattern_button", _id=content["name"])
+        else:
+            hovered = False
+
+        # animation (calculs)
+        step = self.main.dt / self.parameters["animation_duration"]
+        if hovered: # état survolé
+            package["animation_progression"] = min(package["animation_progression"] + step, 1)
+
+        elif is_current: # état séléctionner
+            package["animation_progression"] = max(package["animation_progression"] - step, 0)
+
+        elif package["animation_progression"] > 0.5: # état normal (supérieur)
+            package["animation_progression"] = max(package["animation_progression"] - step, 0.5)
+
+        elif package["animation_progression"] < 0.5: # état normal (inférieur)
+                package["animation_progression"] = min(package["animation_progression"] + step, 0.5)
+        
+        # animation (resize)
+        size_factor = self.parameters["animation_factor_min"] + (self.parameters["animation_factor_max"] - self.parameters["animation_factor_min"]) * package["animation_progression"]
+        image, image_rect = package["image"].copy(), package["image_rect"].copy() # copie de l'image
+        if package["animation_progression"] != 0.5:
+            image = pygame.transform.smoothscale(image, (image_rect.width * size_factor, image_rect.height * size_factor))
+            image_rect = image.get_rect(center=image_rect.center)
+
         # affichage
-        self.surface.blit(package["image"], package["image_rect"]) # image
-        pygame.draw.rect(self.surface, (0, 0, 0), package["image_rect"], 2) # bordure
+        self.surface.blit(image, image_rect) # image
+        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "selection") if is_current else (80, 80, 80), image_rect, 3) # bordure
         self.surface.blit(package["text"], package["text_rect"]) # description

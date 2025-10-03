@@ -9,14 +9,14 @@ class Fractals:
         self.turtle = turtle
 
         self.available_fractals = {
-            "koch": self.draw_koch_flake,
+            "koch_triangles": self.draw_koch_triangles_flake,
             "koch_squares": self.draw_koch_squares_flake,
             "dragon_curve": self.draw_dragon_curve,
             "circle_limit": self.draw_circle_limit,
         }
 
     # _________________- Flocon de Koch (triangles)-_________________
-    def draw_koch_flake(self, size):
+    def draw_koch_triangles_flake(self, size):
         """dessine un flocon de Koch"""
         max_depth = self.turtle.get("depth")
         centered = self.turtle.get("centered")
@@ -26,10 +26,10 @@ class Fractals:
             self.turtle.do_goto(-size/2 + self.turtle.get("x_offset"), -height/(2.5 if max_depth > 0 else 2) + self.turtle.get("y_offset"))
         
         for _ in range(3):
-            yield from self.draw_koch_recursive(size, max_depth)
+            yield from self.draw_koch_triangles_recursive(size, max_depth)
             self.turtle.do_right(120)
 
-    def draw_koch_recursive(self, size, max_depth, depth=0):
+    def draw_koch_triangles_recursive(self, size, max_depth, depth=0):
         """Récursion pour dessiner Dragon Curve"""
         if depth == max_depth:
             self.turtle.do_forward(size)
@@ -38,13 +38,13 @@ class Fractals:
         
         new_size = size / 3
         
-        yield from self.draw_koch_recursive(new_size, max_depth, depth+1)
+        yield from self.draw_koch_triangles_recursive(new_size, max_depth, depth+1)
         self.turtle.do_left(60)
-        yield from self.draw_koch_recursive(new_size, max_depth, depth+1)
+        yield from self.draw_koch_triangles_recursive(new_size, max_depth, depth+1)
         self.turtle.do_right(120)
-        yield from self.draw_koch_recursive(new_size, max_depth, depth+1)
+        yield from self.draw_koch_triangles_recursive(new_size, max_depth, depth+1)
         self.turtle.do_left(60)
-        yield from self.draw_koch_recursive(new_size, max_depth, depth+1)
+        yield from self.draw_koch_triangles_recursive(new_size, max_depth, depth+1)
 
     # _________________- Flocon de Koch (carrés)-_________________
     def draw_koch_squares_flake(self, size, **kwargs):

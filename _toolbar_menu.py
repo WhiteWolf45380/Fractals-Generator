@@ -84,18 +84,18 @@ class ToolbarMenu:
 
 # _________________________- Handles controllers -_________________________
     def handle_left_click_down(self, button: str):
-        """évènements associés au clique souris gauche"""
+        """événements associés au clique souris gauche"""
         self.ui_manager.do_handler(self.name, f"down_{button}")
 
     def handle_left_click_up(self):
-        """évènements associés au relâchement du clique souris gauche"""
+        """événements associés au relâchement du clique souris gauche"""
         pass
 
 # _________________________- Handles -_________________________
     def handle_down_start_button(self):
         """handler du boutton d'éxécution"""
         if not self.main.turtle.pause:
-            self.main.turtle.draw("koch")
+            self.main.turtle.draw()
         else:
             self.main.turtle.do_unpause()
     

@@ -35,11 +35,11 @@ class SettingsMenu:
 
         """variables utiles"""
         # ouverture/fermeture
-        self.x_init = self.surface_rect.left
         self.opened = True
-        self.offset_velocity = 13
-        self.offset_closed = self.surface_width - self.collapse_button_dict["back"].width
-        self.offset_current = 0
+        self.offset_x_init = self.surface_rect.left
+        self.offset_x_final = self.surface_rect.left + (self.surface_rect.width - self.collapse_button_dict["back"].width)
+        self.offset_duration = 1.2
+        self.offset_progression = 1
 
         # paramètres des éléments
         self.parameters = {
@@ -53,7 +53,7 @@ class SettingsMenu:
             "bar": {
                 "generate": self.generate_setting_bar, # fonction générative
                 "update": self.update_setting_bar, # fonction de mise à jour
-                "handler": self.handle_down_setting_bar, # fonction d'évènement
+                "handler": self.handle_down_setting_bar, # fonction d'événement
                 "bar_width": 150, # largeur de la barre
                 "bar_height": 8, # hauteur de la barre
                 "thumb_width": 8, # épaisseur du slider
@@ -88,6 +88,22 @@ class SettingsMenu:
             "color_result": {"category": "color", "masters": ["color_r", "color_g", "color_b"]},
             "x_offset": {"category": "bar", "description": "x (horizontal)", "value": 0, "value_min": -1000, "value_max": 1000},
             "y_offset": {"category": "bar", "description": "y (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
+            "a": {"category": "bar", "description": "a (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
+            "b": {"category": "bar", "description": "n (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
+            "c": {"category": "bar", "description": "c (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
+            "d": {"category": "bar", "description": "d (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
+            "e": {"category": "bar", "description": "e (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
+            "f": {"category": "bar", "description": "f (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
+            "g": {"category": "bar", "description": "g (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
+            "h": {"category": "bar", "description": "h (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
+            "i": {"category": "bar", "description": "i (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
+            "j": {"category": "bar", "description": "j (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
+            "k": {"category": "bar", "description": "k (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
+            "l": {"category": "bar", "description": "l (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
+            "m": {"category": "bar", "description": "m (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
+            "n": {"category": "bar", "description": "n (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
+            "o": {"category": "bar", "description": "o (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
+            "p": {"category": "bar", "description": "p (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
         }
 
         # génération des paramètres
@@ -95,27 +111,43 @@ class SettingsMenu:
             self.settings[setting]["name"] = setting # attribution d'un nom pour faciliter l'identification
             self.settings[setting]["package"] = self.generate_setting(self.settings[setting]) # génération du paramètre
 
+        # barre de défilement
+        self.scroll_bar = self.ui_manager.generate_scroll_bar(self.surface_rect, 1, y_offset_start=self.title_back.height, back=True, hidden=False)
+        self.ui_manager.add_handler(self.name, "down_scroll_bar", self.ui_manager.handle_down_scroll_bar)
+
     def update(self):
         """Mise à jour de la barre d'outils"""
         # refresh
         self.surface.blit(self.surface_init, (0, 0))
 
         # ouverture/fermeture du menu
-        if self.opened and self.offset_current > 0:
-            progression = self.offset_current / self.offset_closed
-            self.offset_current = max(0, self.offset_current - self.offset_velocity * self.get_incrementation(progression))
-        elif not self.opened and self.offset_current < self.offset_closed:
-            progression = 1 - self.offset_current / self.offset_closed
-            self.offset_current = min(self.offset_closed, self.offset_current + self.offset_velocity * self.get_incrementation(progression))
-        self.surface_rect.left = self.x_init + self.offset_current
+        if self.offset_progression < 1:
+            self.offset_progression = min(1.0, self.offset_progression + self.main.dt / self.offset_duration)
+
+            # easing
+            eased = self.ui_manager.get_ease_out(self.offset_progression, intensity=1.5)
+
+            # interpolation
+            x = self.offset_x_init + (self.offset_x_final - self.offset_x_init) * eased
+            self.surface_rect.left = int(x)
 
         # update du boutton de repli
         self.ui_manager.update_collapse_button(self.name, self.surface, self.surface_rect, self.collapse_button_dict, opened=self.opened)
 
-        # update des paramètres
-        self.settings_y_next = self.settings_y_init
+        # clipping pour le scroll des paramètres
+        clip_rect = pygame.Rect(0, self.title_back.bottom, self.surface_width, self.surface_height - self.title_back.bottom)
+        self.surface.set_clip(clip_rect)
+
+            # update des paramètres
+        self.settings_y_next = self.settings_y_init - self.scroll_bar["y_dif"]
         for setting_content in self.settings.values():
             self.settings_y_next = self.update_setting(setting_content, self.settings_y_next)
+        
+        # fin de clipping
+        self.surface.set_clip(None)
+
+        # update de la barre de défilement
+        self.ui_manager.update_scroll_bar(self.scroll_bar, self.surface, self.surface_rect, menu=self.name, ratio=(self.surface_height - self.title_back.height)/self.settings_y_next)
         
         # affichage
         self.main.screen.blit(self.surface, self.surface_rect)
@@ -126,17 +158,24 @@ class SettingsMenu:
 
 # _________________________- Handles controllers -_________________________
     def handle_left_click_down(self, button: str):
-        """évènements associés au clique souris gauche"""
+        """événements associés au clique souris gauche"""
         self.ui_manager.do_handler(self.name, f"down_{button}")
 
     def handle_left_click_up(self):
-        """évènements associés au relâchement du clique souris gauche"""
+        """événements associés au relâchement du clique souris gauche"""
         self.ui_manager.mouse_grabbing = None
 
 # _________________________- Handlers -_________________________
     def handle_down_collapse_button(self):
         """événement : appui sur le boutton d'ouverture/fermeture du menu"""
         self.opened = not self.opened
+        self.offset_progression = 0
+        # position actuelle comme nouveau départ
+        self.offset_x_init = self.surface_rect.left
+        if self.opened:
+            self.offset_x_final = self.main.screen_width - self.surface_width
+        else:
+            self.offset_x_final = self.main.screen_width - self.collapse_button_dict["back"].width
 
     def handle_down_setting_bar(self):
         """événement : attrape une barre"""

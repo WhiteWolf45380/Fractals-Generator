@@ -29,9 +29,7 @@ class Turtle:
 
         """paramètres turtle"""
         self.parameters_init = {
-            "x": 0, # position x (not to define)
-            "y": 0, # position y (not to define)
-            "angle": 0, # angle (not to define)
+            "pattern": "koch_triangles", # motif
             "depth": 10, # profondeur de récursion
             "size": 100, # taille du motif
             "x_offset": 0, # décalage x
@@ -42,6 +40,9 @@ class Turtle:
             "width": 1, # épaisseur
             "centered": True, # ancre
             "speed": 5, # vitesse d'éxécution
+            "x": 0, # position x (not to define)
+            "y": 0, # position y (not to define)
+            "angle": 0, # angle (not to define)
         }
         self.parameters = self.parameters_init.copy()
 
@@ -79,13 +80,13 @@ class Turtle:
         self.main.screen.blit(self.surface, self.surface_rect)
 
 # _________________________- Dessin -_________________________
-    def draw(self, name: str):
+    def draw(self):
         """prépare un dessin progressif"""
         self.push(self.main.menus["settings"].settings)
         self.do_reset()
                 
         try:
-            self.current_generator = self.fractals.available_fractals[name](self.get("size"))
+            self.current_generator = self.fractals.available_fractals[self.get("pattern")](self.get("size"))
         except Exception as e:
             traceback.print_exc()
             self.current_generator = None
