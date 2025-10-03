@@ -152,7 +152,7 @@ class SettingsMenu:
         # affichage
         self.main.screen.blit(self.surface, self.surface_rect)
 
-# _________________________- Handles controllers -_________________________
+# _________________________- Handlers controllers -_________________________
     def handle_left_click_down(self, button: str):
         """événements associés au clique souris gauche"""
         self.ui_manager.do_handler(self.name, f"down_{button}")

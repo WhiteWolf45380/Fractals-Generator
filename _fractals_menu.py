@@ -59,8 +59,8 @@ class FractalsMenu:
         """motifs disponibles"""
         self.patterns = {
             "creation": {"name": "creation", "section": "created_patterns", "description": "Crée ton motif"},
-            "koch_triangles": {"name": "koch_triangles", "section": "preset_patterns", "description": "Koch (triangles)"},
-            "koch_squares": {"name": "koch_squares", "section": "preset_patterns", "description": "Koch (carrés)"},
+            "koch_triangles": {"name": "koch_triangles", "description": "Koch (triangles)"},
+            "koch_squares": {"name": "koch_squares", "description": "Koch (carrés)"},
         }
 
         # génération des motifs
