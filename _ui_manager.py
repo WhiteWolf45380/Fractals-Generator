@@ -10,12 +10,12 @@ class UIManager:
         self.name = "ui_manager"
         
         """thèmes"""
-        self.current_theme = "light"
+        self.current_theme = "dark"
         self.themes = {
             "dark": {
                 "toolbar": {
                     "back": (43, 43, 43), 
-                    "text": (200, 200, 200),
+                    "text": (210, 210, 210),
                     "line": (220, 220, 220),
                     "button_hover": (70, 70, 70),
                 },
@@ -23,8 +23,8 @@ class UIManager:
                     "back": (51, 51, 51), 
                     "title": (0, 0, 0),
                     "text": (240, 240, 240),
-                    "title_highlight": (190, 190, 190),
-                    "section_highlight": (110, 110, 110),
+                    "title_highlight": (200, 200, 200),
+                    "section_highlight": (120, 120, 120),
                     "line": (180, 180, 180), 
                     "selection": (20, 180, 255),
                     "button_hover": (90, 90, 90),
@@ -39,9 +39,9 @@ class UIManager:
                 "settings": {
                     "back": (42, 42, 42),
                     "title": (0, 0, 0),
-                    "text": (201, 201, 201),
-                    "title_highlight": (200, 200, 200),
-                    "section_highlight": (120, 120, 120),
+                    "text": (220, 220, 220),
+                    "title_highlight": (190, 190, 190),
+                    "section_highlight": (110, 110, 110),
                     "line": (180, 180, 180),
                     "button_hover": (85, 85, 85),
                     "bar": (70, 70, 70),
@@ -323,7 +323,7 @@ class UIManager:
 
         return scroll_bar
     
-    def generate_section_title(self, content: str, x: int, y: int, width: int, height: int, menu: str="settings") -> dict:
+    def generate_section_title(self, description: str, x: int, y: int, width: int, height: int, menu: str="settings") -> dict:
         """génère un titre de section"""
         package = {} # dictionnaire final
         
@@ -332,8 +332,8 @@ class UIManager:
         package["back_y_init"] = package["back"].y
 
         # texte
-        package["text"], package["text_rect"] = self.generate_text(content["description"], int(height*0.65), color=self.get_color(menu, "text"), wlimit=width*0.8)
-        package["text_rect"].midleft = (package["back"].left + width * 0.05, package["back"].centery)
+        package["text"], package["text_rect"] = self.generate_text(description, int(height*0.68), color=self.get_color(menu, "text"), wlimit=width*0.8)
+        package["text_rect"].midleft = (package["back"].left + width * 0.03, package["back"].centery)
         package["text_y_init"] = package["text_rect"].y
 
         return package

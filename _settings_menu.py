@@ -49,6 +49,13 @@ class SettingsMenu:
                 "value_fontsize": 15, # taille de la police des valeurs
                 "value_wlimit": self.surface_width * 0.2, # limite de longueur des valeurs
                 "x_offset": 25, # décalage entre le texte et le contenu interactif
+                "settings_space": 20, # décalage entre les paramètres
+            },
+            "section": {
+                "generate": self.generate_section, # fonction générative
+                "update": self.update_section, # fonction de mise à jour
+                "height": self.title_back.height * 0.8, # hauteur des titres de section
+                "space": 50, # décalage entre les sections
             },
             "bar": {
                 "generate": self.generate_setting_bar, # fonction générative
@@ -74,36 +81,22 @@ class SettingsMenu:
                 self.ui_manager.add_handler(self.name, f"down_setting_{category}", self.parameters["bar"]["handler"])
 
         # propriétés
-        self.settings_y_init = self.title_back.bottom + 30 # placement vertical initial
-        self.settings_y_next = self.settings_y_init # placement vertical dynamique
+        self.settings_y_next = 0 # placement vertical dynamique
 
         """propriétés"""
         self.settings = { # caractéristiques des paramètres
+            "geometric": {"category": "section", "title": "-- Géométriques"},
             "depth": {"category": "bar", "description": "Profondeur", "value": 1, "value_min": 0, "value_max": 20},
             "size": {"category": "bar", "description": "Taille", "value": 400, "value_min": 100, "value_max": 1500},
+            "visual": {"category": "section", "title": "-- Visuelles"},
             "width": {"category": "bar", "description": "Epaisseur", "value": 1, "value_min": 1, "value_max": 20},
             "color_r": {"category": "bar", "description": "Canal rouge", "value": self.ui_manager.get_color(self.name, "line")[0], "value_min": 0, "value_max": 255},
             "color_g": {"category": "bar", "description": "Canal vert", "value": self.ui_manager.get_color(self.name, "line")[1], "value_min": 0, "value_max": 255},
             "color_b": {"category": "bar", "description": "Canal bleu", "value": self.ui_manager.get_color(self.name, "line")[2], "value_min": 0, "value_max": 255},
             "color_result": {"category": "color", "masters": ["color_r", "color_g", "color_b"]},
+            "pos": {"category": "section", "title": "-- Positionnelles"},
             "x_offset": {"category": "bar", "description": "x (horizontal)", "value": 0, "value_min": -1000, "value_max": 1000},
             "y_offset": {"category": "bar", "description": "y (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
-            "a": {"category": "bar", "description": "a (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
-            "b": {"category": "bar", "description": "n (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
-            "c": {"category": "bar", "description": "c (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
-            "d": {"category": "bar", "description": "d (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
-            "e": {"category": "bar", "description": "e (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
-            "f": {"category": "bar", "description": "f (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
-            "g": {"category": "bar", "description": "g (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
-            "h": {"category": "bar", "description": "h (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
-            "i": {"category": "bar", "description": "i (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
-            "j": {"category": "bar", "description": "j (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
-            "k": {"category": "bar", "description": "k (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
-            "l": {"category": "bar", "description": "l (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
-            "m": {"category": "bar", "description": "m (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
-            "n": {"category": "bar", "description": "n (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
-            "o": {"category": "bar", "description": "o (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
-            "p": {"category": "bar", "description": "p (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
         }
 
         # génération des paramètres
@@ -112,7 +105,7 @@ class SettingsMenu:
             self.settings[setting]["package"] = self.generate_setting(self.settings[setting]) # génération du paramètre
 
         """barre de défilement"""
-        self.scroll_bar = self.ui_manager.generate_scroll_bar(self.surface_rect, 1, y_offset_start=self.title_back.height, back=False, hidden=True)
+        self.scroll_bar = self.ui_manager.generate_scroll_bar(self.surface_rect, 1, y_offset_start=self.title_back.height, back=True, hidden=True)
         self.ui_manager.add_handler(self.name, "down_scroll_bar", self.ui_manager.handle_down_scroll_bar)
 
     def update(self):
@@ -139,7 +132,7 @@ class SettingsMenu:
         self.surface.set_clip(clip_rect)
 
             # update des paramètres
-        self.settings_y_next = self.settings_y_init - self.scroll_bar["y_dif"]
+        self.settings_y_next = self.title_back.bottom - self.scroll_bar["y_dif"]
         for setting_content in self.settings.values():
             self.settings_y_next = self.update_setting(setting_content, self.settings_y_next)
         
@@ -210,6 +203,12 @@ class SettingsMenu:
         value_text, value_text_rect = self.ui_manager.generate_text(str(value), parameters["value_fontsize"], color=self.ui_manager.get_color(self.name, "text"), wlimit=parameters["value_wlimit"]) # génération du texte
         value_text_rect.left = x # fixation de la coordonnée x
         return {"value_text": value_text, "value_text_rect": value_text_rect}
+    
+    def generate_section(self, content: dict, _: int) -> dict:
+        """génère une section"""
+        parameters = self.parameters["section"] # raccourci
+        package = self.ui_manager.generate_section_title(content["title"], 2, 0, self.surface_width - self.ui_manager.scroll_bar_settings["width"], parameters["height"], menu="settings")
+        return package
 
     def generate_setting_bar(self, content: dict, x: int) -> dict:
         """génère une barre"""
@@ -247,12 +246,25 @@ class SettingsMenu:
     def update_setting(self, content: dict, y: int):
         """met à jour un paramètre"""
         package = content["package"] # raccourci
-        if content.get("description") is not None: # si il y a bien un text a blit
+
+        if content.get("description") is not None: # mise à jour du contenu interactif avec description
             package["text_rect"].top = y # repositionnement du texte
             self.surface.blit(package["text"], package["text_rect"]) # blit du texte
-        forced_next_y = self.parameters.get(content["category"], {}).get("update", lambda _: {})(content) # mise à jour du contenu interactif
+            forced_next_y = self.parameters.get(content["category"], {}).get("update", lambda _: {})(content) 
+    
+        else: # mise à jour du contenu interactif sans description
+            forced_next_y = self.parameters.get(content["category"], {}).get("update", lambda _: {})(content, y) 
         
-        return forced_next_y if forced_next_y is not None else package["text_rect"].bottom + 20
+        return forced_next_y if forced_next_y is not None else package["text_rect"].bottom + self.parameters["general"]["settings_space"]
+    
+    def update_section(self, content: dict, y: int):
+        """met à jour une section"""
+        package = content["package"] # raccourci
+
+        # update
+        self.ui_manager.update_section_title(content, self.surface, menu="settings", y_offset=-y)
+
+        return package["back"].bottom + self.parameters["general"]["settings_space"]
     
     def update_setting_bar(self, content: dict):
         """met à jour une barre"""
@@ -294,7 +306,7 @@ class SettingsMenu:
         pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, f"thumb_{'hover' if is_hovered or is_grabbed else 'idle'}"), package["thumb"])
         self.surface.blit(package["value_text"], package["value_text_rect"])
 
-    def update_setting_color(self, content: dict):
+    def update_setting_color(self, content: dict, _: int):
         """met à jour un rectangle de couleur"""
         package = content["package"]# raccourci
 
