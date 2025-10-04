@@ -10,7 +10,7 @@ class UIManager:
         self.name = "ui_manager"
         
         """thèmes"""
-        self.current_theme = "dark"
+        self.current_theme = "light"
         self.themes = {
             "dark": {
                 "toolbar": {
@@ -23,7 +23,8 @@ class UIManager:
                     "back": (51, 51, 51), 
                     "title": (0, 0, 0),
                     "text": (240, 240, 240),
-                    "highlight": (190, 190, 190),
+                    "title_highlight": (190, 190, 190),
+                    "section_highlight": (110, 110, 110),
                     "line": (180, 180, 180), 
                     "selection": (20, 180, 255),
                     "button_hover": (90, 90, 90),
@@ -31,7 +32,7 @@ class UIManager:
                     "collapse_hover": (170, 170, 170),
                     "collapse_logo_idle": (10, 10, 10),
                     "collapse_logo_hover": (240, 240, 240),
-                    "scroll_bar_back": (31, 31, 31),
+                    "scroll_bar_back": (41, 41, 41),
                     "scroll_bar_thumb_idle": (75, 75, 75),
                     "scroll_bar_thumb_hover": (85, 85, 85),
                 },
@@ -39,7 +40,8 @@ class UIManager:
                     "back": (42, 42, 42),
                     "title": (0, 0, 0),
                     "text": (201, 201, 201),
-                    "highlight": (200, 200, 200),
+                    "title_highlight": (200, 200, 200),
+                    "section_highlight": (120, 120, 120),
                     "line": (180, 180, 180),
                     "button_hover": (85, 85, 85),
                     "bar": (70, 70, 70),
@@ -49,7 +51,7 @@ class UIManager:
                     "collapse_hover": (160, 160, 160),
                     "collapse_logo_idle": (10, 10, 10),
                     "collapse_logo_hover": (240, 240, 240),
-                    "scroll_bar_back": (22, 22, 22),
+                    "scroll_bar_back": (36, 36, 36),
                     "scroll_bar_thumb_idle": (65, 65, 65),
                     "scroll_bar_thumb_hover": (75, 75, 75),
                 },
@@ -70,7 +72,8 @@ class UIManager:
                     "back": (230, 230, 230), 
                     "title": (255, 255, 255),
                     "text": (17, 17, 17), 
-                    "highlight": (45, 45, 45),
+                    "title_highlight": (45, 45, 45),
+                    "section_highlight": (165, 165, 165),
                     "line": (75, 75, 75),
                     "selection": (40, 60, 255),
                     "button_hover": (190, 190, 190),
@@ -78,7 +81,7 @@ class UIManager:
                     "collapse_hover": (100, 100, 100),
                     "collapse_logo_idle": (240, 240, 240),
                     "collapse_logo_hover": (10, 10, 10),
-                    "scroll_bar_back": (250, 250, 250),
+                    "scroll_bar_back": (240, 240, 240),
                     "scroll_bar_thumb_idle": (170, 170, 170),
                     "scroll_bar_thumb_hover": (155, 155, 155),
                 },
@@ -86,7 +89,8 @@ class UIManager:
                     "back": (235, 235, 235), 
                     "title": (255, 255, 255),
                     "text": (26, 26, 26),
-                    "highlight": (45, 45, 45),
+                    "title_highlight": (55, 55, 55),
+                    "section_highlight": (175, 175, 175),
                     "line": (75, 75, 75),
                     "button_hover": (195, 195, 195),
                     "bar": (150, 150, 150),
@@ -96,7 +100,7 @@ class UIManager:
                     "collapse_hover": (110, 110, 110),
                     "collapse_logo_idle": (240, 240, 240),
                     "collapse_logo_hover": (10, 10, 10),
-                    "scroll_bar_back": (255, 255, 255),
+                    "scroll_bar_back": (245, 245, 245),
                     "scroll_bar_thumb_idle": (175, 175, 175),
                     "scroll_bar_thumb_hover": (160, 160, 160),
                 },
@@ -132,6 +136,13 @@ class UIManager:
             "height": 120,
         }
 
+        # barre de défilement
+        self.scroll_bar_settings = {
+            "width": 15,
+            "alpha_duration_in": 0.4,
+            "alpha_duration_out": 1,
+        }
+
         """variables générales"""
         self.mouse_hover = None # boutton survolé (tuple(category, name))
         self.mouse_grabbing = None # barre attrapée (tuple(category, name))
@@ -142,6 +153,8 @@ class UIManager:
 # _________________________- Prédicats -_________________________
     def is_mouse_hover(self, rect: pygame.Rect, surface_rect: pygame.Rect, mutiple: list=[]) -> bool:
         """vérifie si le curseur se trouve sur le rect donné"""
+        if self.main.mouse_out: # curseur en dehors de l'écran
+            return False
         return rect.collidepoint(self.main.get_relative_pos(surface_rect, mutiple=mutiple))
     
     def is_mouse_hovering(self, category: str, name: str, _id: str="") -> bool:
@@ -277,10 +290,12 @@ class UIManager:
 
         return {"back": back, "opened_points": points[side], "closed_points": points[opposite_side]}
     
-    def generate_scroll_bar(self, rect: pygame.Rect, ratio: float, y_offset_start: int=0, y_offset_end: int=0, width: int=15, side: str="right", back=False, hidden=True) -> dict:
+    def generate_scroll_bar(self, rect: pygame.Rect, ratio: float, y_offset_start: int=0, y_offset_end: int=0, width: int=0, side: str="right", back=True, hidden=False) -> dict:
         """génère une barre de défilement"""
         scroll_bar = {} # dictionnaire final
         height = rect.height - y_offset_start - y_offset_end
+        if width == 0:
+            width = self.scroll_bar_settings["width"]
 
         # création de la barre
         scroll_bar["bar"] = pygame.Surface((width, height)) # slider
@@ -301,11 +316,27 @@ class UIManager:
         scroll_bar["back"] = back # affichage de la barre complète
         scroll_bar["hidden"] = hidden # slider avec opacité variable
         scroll_bar["alpha"] = 0 if hidden else 255 # opacité
+        scroll_bar["alpha_progression"] = 0 if hidden else 1 # progression des variations d'opacité
         scroll_bar["delta"] = 0 # décalage entre la souris et le slider au moment du grab
         scroll_bar["y_dif"] = 0 # offset réel du contenu
         scroll_bar["ratio"] = min(ratio, 1) # ratio entre les hauteurs absolues et relatives
 
         return scroll_bar
+    
+    def generate_section_title(self, content: str, x: int, y: int, width: int, height: int, menu: str="settings") -> dict:
+        """génère un titre de section"""
+        package = {} # dictionnaire final
+        
+        # fond
+        package["back"] = pygame.Rect(x, y, width, height)
+        package["back_y_init"] = package["back"].y
+
+        # texte
+        package["text"], package["text_rect"] = self.generate_text(content["description"], int(height*0.65), color=self.get_color(menu, "text"), wlimit=width*0.8)
+        package["text_rect"].midleft = (package["back"].left + width * 0.05, package["back"].centery)
+        package["text_y_init"] = package["text_rect"].y
+
+        return package
 
 # _________________________- Mise à jour d'éléments -_________________________
     def update_collapse_button(self, category: str, surface: pygame.Surface, surface_rect: pygame.Rect, button: dict, opened: bool=True):
@@ -356,16 +387,34 @@ class UIManager:
             scroll_bar["y_dif"] = int(progression * (scroll_bar["bar_rect"].height / scroll_bar["ratio"] - scroll_bar["bar_rect"].height))
         
         # slider (visuel)
-        if scroll_bar["hidden"]:
-            if surface_rect.collidepoint((self.main.mouse_x, self.main.mouse_y)):
-                scroll_bar["alpha"] = 255
-            else:
-                scroll_bar["alpha"] = 0
-            scroll_bar["thumb"].set_alpha(scroll_bar["alpha"])
         scroll_bar["thumb"].fill(self.get_color(menu, f"scroll_bar_thumb_{'hover' if is_hovered or is_grabbed else 'idle'}"))
+        if scroll_bar["hidden"]:
+            # progression alpha entre 0 et 1
+            if surface_rect.collidepoint((self.main.mouse_x, self.main.mouse_y)): # fade in
+                scroll_bar["alpha_progression"] = min(scroll_bar["alpha_progression"] + self.main.dt / self.scroll_bar_settings["alpha_duration_in"], 1)
+            else: # fade out
+                scroll_bar["alpha_progression"] = max(scroll_bar["alpha_progression"] - self.main.dt / self.scroll_bar_settings["alpha_duration_out"], 0)
+
+            # easing
+            eased = self.get_ease_in_out(scroll_bar["alpha_progression"], intensity=2)
+            scroll_bar["alpha"] = int(255 * eased)
+
+            scroll_bar["thumb"].set_alpha(scroll_bar["alpha"])
 
         # slider (affichage)
         surface.blit(scroll_bar["thumb"], scroll_bar["thumb_rect"])
+
+    def update_section_title(self, content: dict, surface: pygame.Surface, y_offset: int=0, menu="settings"):
+        """mise à jour des titres de section"""
+        package = content["package"] # raccourci
+
+        # défilement
+        package["back"].y = package["back_y_init"] - y_offset
+        package["text_rect"].y = package["text_y_init"] - y_offset
+
+        # affichage
+        pygame.draw.rect(surface, self.get_color(menu, "section_highlight"), package["back"])
+        surface.blit(package["text"], package["text_rect"])
 
 # _________________________- Handlers -_________________________
     def handle_down_scroll_bar(self):

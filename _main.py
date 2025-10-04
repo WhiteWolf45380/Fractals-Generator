@@ -20,6 +20,7 @@ class Main:
         self.dt = 0 # delta time utilisé pour les animations
 
         # curseur
+        self.mouse_out = False # curseur en dehors de l'écran
         self.mouse_x = 0
         self.mouse_y = 0
 
@@ -63,6 +64,10 @@ class Main:
 
             # souris
             mouse_x, mouse_y = pygame.mouse.get_pos()
+            if not self.screen_x_offset <= mouse_x <= self.screen_resized_width - self.screen_x_offset or not self.screen_y_offset <= mouse_y <= self.screen_resized_height - self.screen_y_offset: # limite à l'écran
+                self.mouse_out = True
+            else:
+                self.mouse_out = False
             self.mouse_x = (mouse_x - self.screen_x_offset) / (self.screen_final_width / self.screen_width) # conversion de la coordonée x
             self.mouse_y = (mouse_y - self.screen_y_offset) / (self.screen_final_height / self.screen_height) # conversion de la coordonée y
             self.ui_manager.mouse_hover = None # reset du mouse_hover

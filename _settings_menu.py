@@ -21,7 +21,7 @@ class SettingsMenu:
         self.title_back = pygame.Rect(0, 0, self.surface_width, 40)
         self.title_text, self.title_text_rect = self.ui_manager.generate_text("Propriétés", 25, color=self.ui_manager.get_color(self.name, "title"))
         self.title_text_rect.midleft = (self.surface_width * 0.05, 20)
-        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "highlight"), self.title_back)
+        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "title_highlight"), self.title_back)
         self.surface.blit(self.title_text, self.title_text_rect)
 
         """boutton de repli"""
@@ -112,7 +112,7 @@ class SettingsMenu:
             self.settings[setting]["package"] = self.generate_setting(self.settings[setting]) # génération du paramètre
 
         """barre de défilement"""
-        self.scroll_bar = self.ui_manager.generate_scroll_bar(self.surface_rect, 1, y_offset_start=self.title_back.height, back=True, hidden=False)
+        self.scroll_bar = self.ui_manager.generate_scroll_bar(self.surface_rect, 1, y_offset_start=self.title_back.height, back=False, hidden=True)
         self.ui_manager.add_handler(self.name, "down_scroll_bar", self.ui_manager.handle_down_scroll_bar)
 
     def update(self):
@@ -147,7 +147,7 @@ class SettingsMenu:
         self.surface.set_clip(None)
 
         # update de la barre de défilement
-        self.ui_manager.update_scroll_bar(self.scroll_bar, self.surface, self.surface_rect, menu=self.name, ratio=(self.surface_height - self.title_back.height)/(self.settings_y_next+self.scroll_bar["y_dif"]))
+        self.ui_manager.update_scroll_bar(self.scroll_bar, self.surface, self.surface_rect, menu=self.name, ratio=(self.surface_height - self.title_back.height)/(self.settings_y_next - self.parameters["general"]["text_fontsize"] + self.scroll_bar["y_dif"]))
         
         # affichage
         self.main.screen.blit(self.surface, self.surface_rect)
