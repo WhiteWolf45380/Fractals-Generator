@@ -51,10 +51,9 @@ class ToolbarMenu:
 
         self.text_menus = {
             "Fichier": {
-                "theme": {"type": "choices", "description": "Thème","choices": ["light", "dark"], "value": self.ui_manager.current_theme},
             },
             "Affichage": {
-
+                "theme": {"name": "theme", "type": "choices", "description": "Thème","choices": ["light", "dark"], "value": self.ui_manager.current_theme},
             },
             "Outils": {
 
