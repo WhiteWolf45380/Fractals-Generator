@@ -54,7 +54,7 @@ class SettingsMenu:
             "section": {
                 "generate": self.generate_section, # fonction générative
                 "update": self.update_section, # fonction de mise à jour
-                "height": self.title_back.height * 0.8, # hauteur des titres de section
+                "height": self.title_back.height * 0.7, # hauteur des titres de section
                 "space": 50, # décalage entre les sections
             },
             "bar": {

@@ -49,16 +49,42 @@ class ToolbarMenu:
             "Aide": {}
         }
 
-            # génération des boutons de texte
+        self.text_menus = {
+            "Fichier": {
+                "theme": {"type": "choices", "description": "Thème","choices": ["light", "dark"], "value": self.ui_manager.current_theme},
+            },
+            "Affichage": {
+
+            },
+            "Outils": {
+
+            },
+            "Aide": {
+
+            }
+        }
+
+        # génération des boutons de texte
         next_x_offset = 20
         for text_button in self.text_buttons:
-            self.text_buttons[text_button] = self.generate_text_button(text_button, next_x_offset, self.surface_height // 2, anchor="midleft")
-            next_x_offset = self.text_buttons[text_button]["back"].right
+            # génération du bouton textuel
+            self.text_buttons[text_button]["name"] = text_button
+            self.text_buttons[text_button]["package"] = self.generate_text_button(text_button, next_x_offset, self.surface_height // 2, anchor="midleft")
+            # génération du menu textuel
+            self.text_menus[text_button]["package"] = self.ui_manager.generate_text_menu(self.text_menus[text_button], self.text_buttons[text_button]["package"]["back"].left, self.text_buttons[text_button]["package"]["back"].bottom)
+            next_x_offset = self.text_buttons[text_button]["package"]["back"].right
+
+        # ajout des handlers
+        self.ui_manager.add_handler(self.name, "down_text_button", self.handle_down_text_button)
 
         """surface finale post chargement servant de base au contenu dynamique"""
         # trait pour accentuer la démarquation
         pygame.draw.line(self.surface, self.ui_manager.get_color(self.name, "line"), (0, self.surface_height-1), (self.surface_width, self.surface_height-1), width=1)
         self.surface_init = self.surface.copy()
+
+        """variables utiles"""
+        self.text_menus_opened = False
+        self.text_menus_current = ""
 
     def update(self):
         """Mise à jour de la barre d'outils"""
@@ -67,10 +93,7 @@ class ToolbarMenu:
 
         # blit des différents boutons de texte
         for text_button in self.text_buttons:
-            if self.ui_manager.is_mouse_hover(self.text_buttons[text_button]["back"], self.surface_rect):
-                if self.ui_manager.ask_for_mouse_hover(self.name, f"{text_button}_button"):
-                    pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "button_hover"), self.text_buttons[text_button]["back"], border_radius=7)
-            self.surface.blit(self.text_buttons[text_button]["text"], self.text_buttons[text_button]["text_rect"])
+            self.update_text_button(self.text_buttons[text_button])
 
         # blit des différents boutons liés au dessin
         for button in self.buttons:
@@ -82,7 +105,11 @@ class ToolbarMenu:
         # affichage
         self.main.screen.blit(self.surface, self.surface_rect)
 
-# _________________________- Handles controllers -_________________________
+        # blit du menu ouvert
+        if self.text_menus_opened:
+            self.ui_manager.update_text_menu(self.text_menus[self.text_menus_current], self.main.screen)
+
+# _________________________- Handlers controllers -_________________________
     def handle_left_click_down(self, button: str):
         """événements associés au clique souris gauche"""
         self.ui_manager.do_handler(self.name, f"down_{button}")
@@ -93,21 +120,31 @@ class ToolbarMenu:
     def handle_mousewheel(self, y_offset: int):
         """événements associés à l'utilisation de la molette"""
 
-# _________________________- Handles -_________________________
+# _________________________- Handlers -_________________________
     def handle_down_start_button(self):
-        """handler du boutton d'éxécution"""
+        """événement(clique gauche): bouton d'éxécution"""
         if not self.main.turtle.pause:
             self.main.turtle.draw()
         else:
             self.main.turtle.do_unpause()
     
     def handle_down_pause_button(self):
-        """handler du boutton pause"""
+        """événement(clique gauche): bouton pause"""
         self.main.turtle.do_pause()
 
     def handle_down_edit_button(self):
-        """handler du boutton d'édition de l'éxécution"""
+        """événement(clique gauche): bouton d'édition de l'éxécution"""
         pass
+
+    def handle_down_text_button(self):
+        """événement(clique gauche): bouton textuel"""
+        self.text_menus_opened = not self.text_menus_opened
+        self.text_menus_current = self.ui_manager.mouse_hover[2]
+    
+    def handle_down_text_menu(self):
+        """événement indépendant(clique gauche): bouton textuel"""
+        if self.text_menus_opened and not self.text_menus[self.text_menus_current]["package"]["surface_rect"].collidepoint((self.main.mouse_x, self.main.mouse_y)) and not self.text_buttons[self.text_menus_current]["package"]["back"].collidepoint(self.main.get_relative_pos(self.surface_rect)):
+            self.text_menus_opened = False
 
 # _________________________- Création d'éléments -_________________________
     def generate_text_button(self, name: str, x: int, y: int, anchor: str="topleft") -> dict:
@@ -116,6 +153,7 @@ class ToolbarMenu:
 
         # texte du bouton
         text, text_rect = self.ui_manager.generate_text(name, self.text_buttons_parameters["fontsize"], color=self.ui_manager.get_color(self.name, "text"))
+        text_hover, _ = self.ui_manager.generate_text(name, self.text_buttons_parameters["fontsize"], color=self.ui_manager.get_color(self.name, "text_hover"))
         text_width = text_rect.width + 30
 
         # fond du bouton
@@ -124,4 +162,23 @@ class ToolbarMenu:
         back = pygame.Rect(x, y, text_width, parameters["height"])
         text_rect.center = back.center
 
-        return {"back": back, "text": text, "text_rect": text_rect}
+        return {"back": back, "text": text, "text_hover": text_hover, "text_rect": text_rect}
+    
+# _________________________- Mise à jour d'éléments -_________________________
+    def update_text_button(self, content: dict):
+        """mise à jour d'un bouton textuel"""
+        package = content["package"] # raccourci
+
+        # mouse hover
+        if self.ui_manager.is_mouse_hover(package["back"], self.surface_rect):
+            is_hovered = self.ui_manager.ask_for_mouse_hover(self.name, "text_button", _id=content["name"])
+            self.text_menus_current = self.ui_manager.mouse_hover[2]
+        else:
+            is_hovered = False
+        
+        is_current = content["name"] == self.text_menus_current
+        if is_hovered or is_current and self.text_menus_opened: # fond
+            pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "button_hover"), package["back"], border_radius=7)
+
+        # texte
+        self.surface.blit(package["text_hover" if is_hovered or is_current and self.text_menus_opened else "text"], package["text_rect"])

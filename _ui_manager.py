@@ -10,21 +10,27 @@ class UIManager:
         self.name = "ui_manager"
         
         """thèmes"""
-        self.current_theme = "dark"
+        self.current_theme = "light"
         self.themes = {
             "dark": {
                 "toolbar": {
-                    "back": (43, 43, 43), 
-                    "text": (210, 210, 210),
+                    "back": (70, 73, 76), 
+                    "text": (215, 220, 230),
+                    "text_hover": (255, 255, 255),
                     "line": (220, 220, 220),
-                    "button_hover": (70, 70, 70),
+                    "button_hover": (85, 88, 91),
+                },
+                "text_menu": {
+                    "back": (59, 62, 65),
+                    "text": (255, 255, 255)
                 },
                 "fractals": {
-                    "back": (51, 51, 51), 
-                    "title": (0, 0, 0),
-                    "text": (240, 240, 240),
-                    "title_highlight": (200, 200, 200),
-                    "section_highlight": (120, 120, 120),
+                    "back": (50, 53, 56), 
+                    "title": (30, 35, 40),
+                    "section": (255, 255, 255),
+                    "text": (225, 230, 240),
+                    "title_highlight": (170, 173, 176),
+                    "section_highlight": (84, 87, 90),
                     "line": (180, 180, 180), 
                     "selection": (20, 180, 255),
                     "button_hover": (90, 90, 90),
@@ -37,11 +43,12 @@ class UIManager:
                     "scroll_bar_thumb_hover": (85, 85, 85),
                 },
                 "settings": {
-                    "back": (42, 42, 42),
-                    "title": (0, 0, 0),
-                    "text": (220, 220, 220),
-                    "title_highlight": (190, 190, 190),
-                    "section_highlight": (110, 110, 110),
+                    "back": (40, 43, 46),
+                    "title": (25, 30, 35),
+                    "section": (255, 255, 255),
+                    "text": (220, 225, 235),
+                    "title_highlight": (160, 163, 166),
+                    "section_highlight": (74, 77, 80),
                     "line": (180, 180, 180),
                     "button_hover": (85, 85, 85),
                     "bar": (70, 70, 70),
@@ -56,7 +63,7 @@ class UIManager:
                     "scroll_bar_thumb_hover": (75, 75, 75),
                 },
                 "turtle": {
-                    "back": (30, 30, 30)
+                    "back": (35, 37, 40)
                 },
             },
 
@@ -64,13 +71,19 @@ class UIManager:
                 "toolbar": {
                     "back": (200, 200, 200), 
                     "text": (30, 30, 30),
+                    "text_hover": (0, 0, 0),
                     "line": (35, 35, 35),
                     "button_idle": (225, 225, 225),
                     "button_hover": (180, 180, 180),
                 },
+                "text_menu": {
+                    "back": (255, 255, 255),
+                    "text": (0, 0, 0)
+                },
                 "fractals": {
                     "back": (230, 230, 230), 
                     "title": (255, 255, 255),
+                    "section": (0, 0, 0),
                     "text": (17, 17, 17), 
                     "title_highlight": (45, 45, 45),
                     "section_highlight": (165, 165, 165),
@@ -88,6 +101,7 @@ class UIManager:
                 "settings": {
                     "back": (235, 235, 235), 
                     "title": (255, 255, 255),
+                    "section": (0, 0, 0),
                     "text": (26, 26, 26),
                     "title_highlight": (55, 55, 55),
                     "section_highlight": (175, 175, 175),
@@ -132,15 +146,38 @@ class UIManager:
         """variables utiles aux éléments pygame"""
         # boutton de repli
         self.collapse_button_settings = {
-            "width": 13,
-            "height": 120,
+            "width": 13, # largeur
+            "height": 120, # hauteur
         }
 
         # barre de défilement
         self.scroll_bar_settings = {
-            "width": 15,
-            "alpha_duration_in": 0.4,
-            "alpha_duration_out": 1,
+            "width": 15, # épaisseur par défaut
+            "alpha_duration_in": 0.4, # durée du fade in
+            "alpha_duration_out": 1, # durée du fade out
+        }
+
+        # menu textuel
+        self.text_menu_settings = {
+            "general": {
+                "surface_width": 300, # largeur
+                "surface_height_max": 800, # hauteur max
+                "item_height": 30, # hauteur des items
+                "item_fontsize": 15, # taille de la police du texte des items
+                "item_text_x_offset": 20, # décalage du texte horizontalement
+            },
+            "normal": {
+                "generate": self.generate_text_menu_item_normal, # fonction générative
+                "update": self.update_text_menu_item_normal, # fonction de mise à jour
+            },
+            "toggle": {
+                "generate": self.generate_text_menu_item_toggle, # fonction générative
+                "update": self.update_text_menu_item_toggle, # fonction de mise à jour
+            },
+            "choices": {
+                "generate": self.generate_text_menu_item_choices, # fonction générative
+                "update": self.update_text_menu_item_choices, # fonction de mise à jour
+            }
         }
 
         """variables générales"""
@@ -210,18 +247,16 @@ class UIManager:
 # _________________________- Demandes dynamiques -_________________________
     def ask_for_mouse_hover(self, category: str, name: str, _id: str="") -> bool:
         """assigne is possible le mouse_hover au boutton passé"""
-        if self.mouse_hover is None and self.mouse_grabbing is None:
+        if self.mouse_grabbing is None:
             self.mouse_hover = (category, name, _id)
             return True
         return False
     
     def ask_for_mouse_grabbing(self, category: str, name: str, _id: str="") -> bool:
         """assigne is possible le mouse_grabbing à la barre passée"""
-        if self.mouse_grabbing is None:
-            self.mouse_grabbing = (category, name, _id)
-            self.mouse_hover = None # annulation du mouse_hover
-            return True
-        return False
+        self.mouse_grabbing = (category, name, _id)
+        self.mouse_hover = None # annulation du mouse_hover
+        return True
 
     def add_handler(self, category: str, name: str, handler: callable):
         """ajoute un événement à un boutton"""
@@ -332,9 +367,70 @@ class UIManager:
         package["back_y_init"] = package["back"].y
 
         # texte
-        package["text"], package["text_rect"] = self.generate_text(description, int(height*0.68), color=self.get_color(menu, "text"), wlimit=width*0.8)
+        package["text"], package["text_rect"] = self.generate_text(description, int(height*0.68), color=self.get_color(menu, "section"), wlimit=width*0.8)
         package["text_rect"].midleft = (package["back"].left + width * 0.03, package["back"].centery)
         package["text_y_init"] = package["text_rect"].y
+
+        return package
+    
+    def generate_text_menu(self, content: dict, x: int, y: int) -> dict:
+        """génère un menu textuel"""
+        package = {} # dictionnaire final
+        parameters = self.text_menu_settings["general"] # raccourci
+
+        # surface
+        package["surface"] = pygame.Surface((parameters["surface_width"], parameters["surface_height_max"]), pygame.SRCALPHA)
+        package["surface_rect"] = package["surface"].get_rect(topleft=(x, y))
+
+        # génération des éléments
+        i_save = 0
+        for i, (item_name, item_value) in enumerate(content.items()):
+            package[item_name] = self.generate_text_menu_item(item_value, i * parameters["item_height"])
+            i_save = i
+        
+        # clipping
+        package["surface"] = pygame.transform.scale(package["surface"], (parameters["surface_width"], min(parameters["surface_height_max"], max(1, i_save) * parameters["item_height"])))
+        package["surface_rect"] = package["surface"].get_rect(topleft=(x, y))
+
+        return package
+    
+    def generate_text_menu_item(self, content: dict, y: int) -> dict:
+        """génère un item de menu textuel"""
+        package = {} # dictionnaire final
+        parameters = self.text_menu_settings["general"] # raccourci
+
+        # contenu général des items
+        package["text"], package["text_rect"] = self.generate_text(content["description"], parameters["item_fontsize"], color=self.get_color("text_menu", "text"), wlimit=parameters["surface_width"] * 0.6)
+        package["text_rect"].midleft = (parameters["item_text_x_offset"], y + parameters["item_height"] // 2)
+
+        # contenu propre à chaque type d'item
+        dynamic_content = self.text_menu_settings.get(content["type"], {}).get("generate", lambda x, y: {})(content, y)
+        for key, value in dynamic_content:
+            package[key] = value
+
+        # variables utiles
+        package["type"] = content["type"]
+
+        return package
+    
+    def generate_text_menu_item_normal(self, content: dict, y: int) -> dict:
+        """génère un item de menu textuel de type instantanné (clique = action)"""
+        package = {} # dictionnaire final
+        parameters = self.text_menu_settings["normal"] # raccourci
+
+        return package
+
+    def generate_text_menu_item_toggle(self, content: dict, y: int) -> dict:
+        """génère un item de menu textuel de type alternatif (clique = changement d'état True/False)"""
+        package = {} # dictionnaire final
+        parameters = self.text_menu_settings["toggle"] # raccourci
+
+        return package
+
+    def generate_text_menu_item_choices(self, content: dict, y: int) -> dict:
+        """génère un item de menu textuel de type choix (clique = Nouveau menu de choix)"""
+        package = {} # dictionnaire final
+        parameters = self.text_menu_settings["choices"] # raccourci
 
         return package
 
@@ -390,7 +486,7 @@ class UIManager:
         scroll_bar["thumb"].fill(self.get_color(menu, f"scroll_bar_thumb_{'hover' if is_hovered or is_grabbed else 'idle'}"))
         if scroll_bar["hidden"]:
             # progression alpha entre 0 et 1
-            if surface_rect.collidepoint((self.main.mouse_x, self.main.mouse_y)): # fade in
+            if is_grabbed or surface_rect.collidepoint((self.main.mouse_x, self.main.mouse_y)): # fade in
                 scroll_bar["alpha_progression"] = min(scroll_bar["alpha_progression"] + self.main.dt / self.scroll_bar_settings["alpha_duration_in"], 1)
             else: # fade out
                 scroll_bar["alpha_progression"] = max(scroll_bar["alpha_progression"] - self.main.dt / self.scroll_bar_settings["alpha_duration_out"], 0)
@@ -415,6 +511,37 @@ class UIManager:
         # affichage
         pygame.draw.rect(surface, self.get_color(menu, "section_highlight"), package["back"])
         surface.blit(package["text"], package["text_rect"])
+
+    def update_text_menu(self, content: dict, surface: pygame.Surface):
+        """met à jour un menu textuel"""
+        package = content["package"] # raccourc
+
+        # reset du fond avec border radius
+        pygame.draw.rect(package["surface"], self.get_color("text_menu", "back"), package["surface"].get_rect(), border_radius=5)
+
+        # mise à jour des items
+        for item in package.values():
+            if type(item) == dict: # skip de surface et surface_rect
+                self.update_text_menu_item(item, package["surface"])
+
+        # affichage
+        surface.blit(package["surface"], package["surface_rect"])
+    
+    def update_text_menu_item(self, content: dict, surface: pygame.Surface):
+        "met à jour un item de menu textuel"
+        parameters = self.text_menu_settings["general"] # raccourci
+
+        # update du contenu propre au type
+        self.text_menu_settings.get(content["type"], {}).get("update", lambda x, y: None)(content, surface)
+    
+    def update_text_menu_item_normal(self, content: dict, surface: pygame.Surface):
+        "met à jour un item de menu textuel de type normal"
+    
+    def update_text_menu_item_toggle(self, content: dict, surface: pygame.Surface):
+        "met à jour un item de menu textuel de type alternatif"
+    
+    def update_text_menu_item_choices(self, content: dict, surface: pygame.Surface):
+        "met à jour un item de menu textuel de type choix"
 
 # _________________________- Handlers -_________________________
     def handle_down_scroll_bar(self):

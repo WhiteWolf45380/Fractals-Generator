@@ -76,9 +76,9 @@ class Main:
             self.turtle.update()
 
             # update des menus dans l'ordre de priorité 
-            self.menus["toolbar"].update()
             self.menus["fractals"].update()
             self.menus["settings"].update()
+            self.menus["toolbar"].update()
 
             # vérification des entrées utilisateur
             self.handle_inputs()
@@ -94,6 +94,9 @@ class Main:
                 self.close_window()
             
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # clique gauche (appuyé)
+                # événements indépendants
+                self.menus["toolbar"].handle_down_text_menu()
+                
                 if self.ui_manager.mouse_hover is not None: # si un boutton est survolé
                     self.menus[self.ui_manager.mouse_hover[0]].handle_left_click_down(self.ui_manager.mouse_hover[1])
             
