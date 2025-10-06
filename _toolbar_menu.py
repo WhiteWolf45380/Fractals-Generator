@@ -36,7 +36,7 @@ class ToolbarMenu:
         self.ui_manager.add_handler(self.name, "down_pause_button", self.handle_down_pause_button)
         self.ui_manager.add_handler(self.name, "down_edit_button", self.handle_down_edit_button)
 
-        # bouttons de texte
+        # boutons textuels
         self.text_buttons_parameters = {
             "height": self.surface_height * 0.6,
             "fontsize": 18,
@@ -49,11 +49,12 @@ class ToolbarMenu:
             "Aide": {}
         }
 
-        self.text_menus = {
+        # menus textuels
+        self.text_menus = { # stockage des éléments
             "Fichier": {
             },
             "Affichage": {
-                "theme": {"name": "theme", "type": "choices", "description": "Thème","choices": ["light", "dark"], "value": self.ui_manager.current_theme},
+                "theme": {"name": "theme", "type": "choices", "description": "Thème","choices": [("light", "Clair"), ("dark", "Sombre")], "value": "dark"},
             },
             "Outils": {
 
@@ -74,7 +75,8 @@ class ToolbarMenu:
             next_x_offset = self.text_buttons[text_button]["package"]["back"].right
 
         # ajout des handlers
-        self.ui_manager.add_handler(self.name, "down_text_button", self.handle_down_text_button)
+        self.ui_manager.add_handler(self.name, "down_text_button", self.handle_down_text_button) # bouttons textuels
+        self.ui_manager.add_handler(self.name, "down_text_menu_item", self.ui_manager.handle_down_text_menu_item) # items des menus textuels
 
         """surface finale post chargement servant de base au contenu dynamique"""
         # trait pour accentuer la démarquation
@@ -143,6 +145,7 @@ class ToolbarMenu:
     def handle_down_text_menu(self):
         """événement indépendant(clique gauche): bouton textuel"""
         if self.text_menus_opened and not self.text_menus[self.text_menus_current]["package"]["surface_rect"].collidepoint((self.main.mouse_x, self.main.mouse_y)) and not self.text_buttons[self.text_menus_current]["package"]["back"].collidepoint(self.main.get_relative_pos(self.surface_rect)):
+            
             self.text_menus_opened = False
 
 # _________________________- Création d'éléments -_________________________

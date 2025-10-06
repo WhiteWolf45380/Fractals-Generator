@@ -10,7 +10,6 @@ class UIManager:
         self.name = "ui_manager"
         
         """thèmes"""
-        self.current_theme = "dark"
         self.themes = {
             "dark": {
                 "toolbar": {
@@ -171,18 +170,21 @@ class UIManager:
                 "item_text_x_offset": 40, # décalage du texte horizontalement
                 "item_back_offset": 4, # padding des items au menu
             },
-            "normal": {
-                "generate": self.generate_text_menu_item_normal, # fonction générative
-                "update": self.update_text_menu_item_normal, # fonction de mise à jour
-            },
-            "toggle": {
-                "generate": self.generate_text_menu_item_toggle, # fonction générative
-                "update": self.update_text_menu_item_toggle, # fonction de mise à jour
-            },
-            "choices": {
-                "generate": self.generate_text_menu_item_choices, # fonction générative
-                "update": self.update_text_menu_item_choices, # fonction de mise à jour
-            }
+            "normal": {},
+            "toggle": {},
+            "choices": {},
+            "value": {},
+        }
+
+            # auto adressage des fonctions utiles
+        for item_type in self.text_menu_settings:
+            if item_type != "general":
+                self.text_menu_settings[item_type]["generate"] = getattr(self, f"generate_text_menu_item_{item_type}") # auto adressage de la fonction générative
+                self.text_menu_settings[item_type]["update"] = getattr(self, f"update_text_menu_item_{item_type}") # auto adressage de la fonction de mise à jour
+
+            # stockage des valeurs
+        self.text_menus_items_values = {
+            "theme": [False, "dark"]
         }
 
         """variables générales"""
@@ -216,10 +218,18 @@ class UIManager:
         return self.mouse_grabbing == (category, name, _id)
     
 # _________________________- recherches de données -_________________________
+    def get_item_value(self, name: str) -> all:
+        """renvoie la valeur d'un item"""
+        if name in self.text_menus_items_values:
+            return self.text_menus_items_values[name][1]
+        else:
+            print(f"[UIManager] Error: not found {name} item_value")
+
     def get_color(self, category: str, name: str) -> tuple:
         """renvoie la couleur d'un élément selon le thème choisit"""
         try:
-            return self.themes[self.current_theme][category][name]
+            print(self.text_menus_items_values)
+            return self.themes[self.get_item_value("theme")][category][name]
         except Exception as e:
             print(f"[UI_Manager] Get_color error : {e}")
     
@@ -390,7 +400,7 @@ class UIManager:
         # génération des éléments
         i_save = 0
         for i, (item_name, item_value) in enumerate(content.items()):
-            package[item_name] = self.generate_text_menu_item(item_value, parameters["item_back_offset"] + i * parameters["item_height"])
+            package[item_name] = self.generate_text_menu_item(item_value, package["surface_rect"], parameters["item_back_offset"] + i * parameters["item_height"])
             i_save = i
         
         # clipping
@@ -399,7 +409,7 @@ class UIManager:
 
         return package
     
-    def generate_text_menu_item(self, content: dict, y: int) -> dict:
+    def generate_text_menu_item(self, content: dict, surface_rect: int, y: int) -> dict:
         """génère un item de menu textuel"""
         package = {} # dictionnaire final
         parameters = self.text_menu_settings["general"] # raccourci
@@ -412,8 +422,8 @@ class UIManager:
         package["text_rect"].midleft = (parameters["item_text_x_offset"], package["back"].centery)
 
         # contenu propre à chaque type d'item
-        dynamic_content = self.text_menu_settings.get(content["type"], {}).get("generate", lambda x, y: {})(content, y)
-        for key, value in dynamic_content:
+        dynamic_content = self.text_menu_settings.get(content["type"], {}).get("generate", lambda **kwargs: {})(content=content, y=y, surface_rect=surface_rect)
+        for key, value in dynamic_content.items():
             package[key] = value
 
         # variables utiles
@@ -422,24 +432,60 @@ class UIManager:
 
         return package
     
-    def generate_text_menu_item_normal(self, content: dict, y: int) -> dict:
+    def generate_text_menu_item_normal(self, **kwargs) -> dict:
         """génère un item de menu textuel de type instantanné (clique = action)"""
         package = {} # dictionnaire final
         parameters = self.text_menu_settings["normal"] # raccourci
 
+        # récupération des arguments
+        content = kwargs["content"]
+
+        # stockage du handler dans un dictionnaire général
+        self.text_menus_items_values[content["name"]] = content["handler"]
+
         return package
 
-    def generate_text_menu_item_toggle(self, content: dict, y: int) -> dict:
+    def generate_text_menu_item_toggle(self, **kwargs) -> dict:
         """génère un item de menu textuel de type alternatif (clique = changement d'état True/False)"""
         package = {} # dictionnaire final
         parameters = self.text_menu_settings["toggle"] # raccourci
 
+        # récupération des arguments
+        content = kwargs["content"]
+
+        # stockage de la valeur dans un dictionnaire général
+        self.text_menus_items_values[content["name"]] = content["value"]
+
         return package
 
-    def generate_text_menu_item_choices(self, content: dict, y: int) -> dict:
+    def generate_text_menu_item_choices(self, **kwargs) -> dict:
         """génère un item de menu textuel de type choix (clique = Nouveau menu de choix)"""
         package = {} # dictionnaire final
         parameters = self.text_menu_settings["choices"] # raccourci
+
+        # récupération des arguments
+        content = kwargs["content"]
+        y = kwargs["y"]
+        surface_rect = kwargs["surface_rect"]
+
+        # création du menu de choix
+        package["choices_menu"] = {}
+        for choice, description in content["choices"]:
+            package["choices_menu"][choice] = {"name": f"{content['name']}.{choice}", "type": "value", "description": description}
+        package["choices_menu"]["package"] = self.generate_text_menu(package["choices_menu"], surface_rect.right, surface_rect.top + y - self.text_menu_settings["general"]["item_back_offset"])
+
+        # stockage de l'état (menu de choix : ouvert/fermé) et de la valeur par défaut dans un dictionnaire général
+        self.text_menus_items_values[content["name"]] = [False, content["value"]]
+
+        return package
+    
+    def generate_text_menu_item_value(self, **kwargs) -> dict:
+        """génère un item de menu textuel de type choix (clique = Nouveau menu de choix)"""
+        package = {} # dictionnaire final
+        parameters = self.text_menu_settings["value"] # raccourci
+
+        # récupération des arguments
+        content = kwargs["content"]
 
         return package
 
@@ -523,7 +569,7 @@ class UIManager:
 
     def update_text_menu(self, content: dict, surface: pygame.Surface, menu: str="toolbar"):
         """met à jour un menu textuel"""
-        package = content["package"] # raccourc
+        package = content["package"] # raccourci
 
         # reset du fond avec border radius
         pygame.draw.rect(package["surface"], self.get_color("text_menu", "back"), package["surface"].get_rect(), border_radius=7)
@@ -542,7 +588,7 @@ class UIManager:
 
         # item survolé
         if self.is_mouse_hover(content["back"], surface_rect):
-            hovered = self.ask_for_mouse_hover(menu, "text_menu_item", _id=content["name"])
+            hovered = self.ask_for_mouse_hover(menu, "text_menu_item", _id=f"{content['type']}.{content['name']}")
         else:
             hovered = False
 
@@ -569,6 +615,16 @@ class UIManager:
         # affichage du fond
         if hovered:
             pygame.draw.rect(surface, self.get_color("text_menu", "item_hover"), content["back"], border_radius=7)
+        
+        # affichage du menu de choix si menu ouvert
+        if self.text_menus_items_values[content["name"]][0]:
+            self.update_text_menu(content["choices_menu"], self.main.screen, menu=menu)
+    
+    def update_text_menu_item_value(self, content: dict, surface: pygame.Surface, surface_rect: pygame.Rect, menu: str="toolbar", hovered: bool=False):
+        "met à jour un item de menu textuel de type valeur"
+        # affichage du fond
+        if hovered:
+            pygame.draw.rect(surface, self.get_color("text_menu", "item_hover"), content["back"], border_radius=7)
 
 # _________________________- Handlers -_________________________
     def handle_down_scroll_bar(self):
@@ -592,3 +648,29 @@ class UIManager:
 
         # offset vertical réel
         scroll_bar["y_dif"] = int(progression * (scroll_bar["bar_rect"].height / scroll_bar["ratio"] - scroll_bar["bar_rect"].height))
+    
+    def handle_down_text_menu_item(self):
+        """événement: clic sur un item de menu textuel"""
+        funct_name = f"handle_down_text_menu_item_{self.mouse_hover[2].split('.')[0]}" # récupération de l'adresse de fonction
+        func = getattr(self, funct_name, None) # auto redirection vers la fonction associée
+        if func: # si la fonction existe
+            func(self.mouse_hover[2].split(".")[1]) # récupération du nom de l'item et éxécution du handler associé
+        else: # fonction introuvable
+            print(f"[UIManager] Error : not found {funct_name}")
+    
+    def handle_down_text_menu_item_normal(self, item_name: str):
+        """événement: clique sur un item de menu textuel de type normal"""
+        self.text_menus_items_values[item_name]() # éxécution du handler associé
+
+    def handle_down_text_menu_item_toggle(self, item_name: str):
+        """événement: clique sur un item de menu textuel de type alternatif"""
+        self.text_menus_items_values[item_name] = not self.text_menus_items_values[item_name] # alternance True/False
+
+    def handle_down_text_menu_item_choices(self, item_name: str):
+        """événement: clique sur un item de menu textuel de type choix"""
+        self.text_menus_items_values[item_name][0] = not self.text_menus_items_values[item_name][0] # ouverture/fermeture des choix
+    
+    def handle_down_text_menu_item_value(self, item_name: str):
+        """événement: clique sur un item de menu textuel de type choix"""
+        self.text_menus_items_values[item_name][1] = self.mouse_hover[2].split(".")[2] # changement de choix
+        print(self.text_menus_items_values[item_name][1])
