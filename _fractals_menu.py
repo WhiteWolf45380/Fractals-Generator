@@ -14,24 +14,15 @@ class FractalsMenu:
         self.surface_height = self.main.screen_height - self.main.menus["toolbar"].surface_height # hauteur du menu
         self.surface = pygame.Surface((self.surface_width, self.surface_height)) # fond du menu
         self.surface_rect = self.surface.get_rect(topleft=(0, self.main.menus["toolbar"].surface_height))# placement en haut de l'écran
-        self.surface_color = self.ui_manager.get_color(self.name, "back") # couleur de fond
-        self.surface.fill(self.surface_color)
 
         """titre"""
         self.title_back = pygame.Rect(0, 0, self.surface_width, 40)
-        self.title_text, self.title_text_rect = self.ui_manager.generate_text("Sélection du motif", 25, color=self.ui_manager.get_color(self.name, "title"))
+        self.title_text, self.title_text_rect = self.ui_manager.generate_text("Sélection du motif", 25, self.name, "title")
         self.title_text_rect.midleft = (self.surface_width * 0.05, 20)
-        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "title_highlight"), self.title_back)
-        self.surface.blit(self.title_text, self.title_text_rect)
 
         """boutton de repli"""
         self.collapse_button_dict = self.ui_manager.generate_collapse_button("left", self.surface_width, self.surface_height / 2, anchor="midright")
         self.ui_manager.add_handler(self.name, "down_collapse_button", self.handle_down_collapse_button)
-        
-        """surface finale post chargement servant de base au contenu dynamique"""
-        # trait pour accentuer la démarquation
-        pygame.draw.line(self.surface, self.ui_manager.get_color(self.name, "line"), (self.surface_width - 2, 0), (self.surface_width - 2, self.surface_height), width=2)
-        self.surface_init = self.surface.copy()
 
         """variables utiles"""
         # ouverture/fermeture
@@ -98,7 +89,7 @@ class FractalsMenu:
     def update(self):
         """Mise à jour du menu de choix de fractal"""
         # refresh
-        self.surface.blit(self.surface_init, (0, 0))
+        self.surface.fill(self.ui_manager.get_color(self.name, "back"))
 
         # ouverture/fermeture du menu
         if self.offset_progression < 1:
@@ -110,9 +101,6 @@ class FractalsMenu:
             # interpolation
             x = self.offset_x_init + (self.offset_x_final - self.offset_x_init) * eased
             self.surface_rect.left = int(x)
-
-        # update du boutton de repli
-        self.ui_manager.update_collapse_button(self.name, self.surface, self.surface_rect, self.collapse_button_dict, opened=self.opened)
 
         # clipping pour le scroll des paramètres
         clip_rect = pygame.Rect(0, self.title_back.bottom, self.surface_width, self.surface_height - self.title_back.bottom)
@@ -128,6 +116,17 @@ class FractalsMenu:
         
         # fin de clipping
         self.surface.set_clip(None)
+
+        # affichage du titre
+        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "title_highlight"), self.title_back)
+        self.surface.blit(self.title_text, self.title_text_rect)
+
+        # trait pour accentuer la démarquation
+        pygame.draw.line(self.surface, self.ui_manager.get_color(self.name, "line"), (self.surface_width - 2, 0), (self.surface_width - 2, self.surface_height), width=2)
+        self.surface_init = self.surface.copy()
+
+        # update du boutton de repli
+        self.ui_manager.update_collapse_button(self.name, self.surface, self.surface_rect, self.collapse_button_dict, opened=self.opened)
         
         # update de la barre de défilement
         self.ui_manager.update_scroll_bar(self.scroll_bar, self.surface, self.surface_rect, menu=self.name)
@@ -191,7 +190,7 @@ class FractalsMenu:
 
         # texte
         fontsize = min(max(8, int(package["image_rect"].width / (self.parameters["text_len_mean"] * self.parameters["text_font_factor"]))), 30)
-        package["text"], package["text_rect"] = self.ui_manager.generate_text(content["description"], fontsize, color=self.ui_manager.get_color(self.name, "text"), wlimit=package["image_rect"].width*1.2)
+        package["text"], package["text_rect"] = self.ui_manager.generate_text(content["description"], fontsize, self.name, "text", wlimit=package["image_rect"].width*1.2)
         package["text_rect"].center = (package["image_rect"].centerx, package["image_rect"].bottom + fontsize * self.parameters["text_y_offset_factor"])
         package["text_y_init"] = package["text_rect"].y
 

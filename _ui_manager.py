@@ -20,10 +20,10 @@ class UIManager:
                     "button_hover": (65, 69, 71),
                 },
                 "text_menu": {
-                    "back": (69, 72, 75),
+                    "back": (69, 72, 75, 250),
                     "text": (255, 255, 255),
-                    "item_hover": (52, 55, 58),
-                    "item_icons": (150, 150, 150),
+                    "item_hover": (52, 55, 58, 250),
+                    "item_icon": (150, 150, 150),
                 },
                 "fractals": {
                     "back": (50, 53, 56), 
@@ -78,10 +78,10 @@ class UIManager:
                     "button_hover": (180, 180, 180),
                 },
                 "text_menu": {
-                    "back": (255, 255, 255),
+                    "back": (220, 220, 220, 250),
                     "text": (0, 0, 0),
-                    "item_hover": (205, 205, 205),
-                    "item_icons": (90, 90, 90),
+                    "item_hover": (190, 190, 190, 250),
+                    "item_icon": (90, 90, 90),
                 },
                 "fractals": {
                     "back": (230, 230, 230), 
@@ -126,6 +126,9 @@ class UIManager:
                 },
             }
         }
+
+        # stockage des textes afin de faciliter la regénération lors d'un changement de thème
+        self.generated_texts = []
 
         """fonts"""
         self.fonts_paths = {
@@ -172,7 +175,10 @@ class UIManager:
             },
             "normal": {},
             "toggle": {},
-            "choices": {},
+            "choices": {
+                "icon_x_offset": 20, # décalage de l'icone
+                "icon_size": 5, # taille de l'icone
+            },
             "value": {},
         }
 
@@ -186,6 +192,9 @@ class UIManager:
         self.text_menus_items_values = {
             "theme": [False, "dark"]
         }
+
+            # stockage intermédiaire pour adapter les priorités des blit
+        self.choices_menus_to_blit = [] 
 
         """variables générales"""
         self.mouse_hover = None # boutton survolé (tuple(category, name))
@@ -221,14 +230,15 @@ class UIManager:
     def get_item_value(self, name: str) -> all:
         """renvoie la valeur d'un item"""
         if name in self.text_menus_items_values:
-            return self.text_menus_items_values[name][1]
+            if type(self.text_menus_items_values[name]) == list:
+                return self.text_menus_items_values[name][1]
+            return self.text_menus_items_values[name]
         else:
             print(f"[UIManager] Error: not found {name} item_value")
 
     def get_color(self, category: str, name: str) -> tuple:
         """renvoie la couleur d'un élément selon le thème choisit"""
         try:
-            print(self.text_menus_items_values)
             return self.themes[self.get_item_value("theme")][category][name]
         except Exception as e:
             print(f"[UI_Manager] Get_color error : {e}")
@@ -280,21 +290,30 @@ class UIManager:
     def do_handler(self, category: str, name: str, **kwargs):
         """éxécute un événement"""
         return self.handlers.get(category, {}).get(name, lambda: None)(**kwargs)
+    
+    def do_close_choices_menus(self):
+        """fermes le menu de choix ouvert"""
+        for item in self.text_menus_items_values.values():
+            if type(item) == list:
+                item[0] = False
 
 # _________________________- Création d'éléments -_________________________
-    def generate_text(self, content: str, fontsize: int, wlimit: int=0, font="default", color: tuple=(0, 0, 0), end="" , recursive=False):
+    def generate_text(self, content: str, fontsize: int, menu: str, name: str, font="default", wlimit: int=0, end="" , recursive=False):
         """génère un texte pygame"""
         if recursive: # si appel récursif
             content += "."
         content += end # fin définie            
 
         font = pygame.font.Font(self.fonts_paths.get(font, self.fonts_paths["default"]), fontsize)
-        text = font.render(content, 1, color)
+        text = font.render(content, 1, (255, 255, 255))
         text_rect = text.get_rect()
 
         # vérification de la taille limite
         if wlimit > 0 and text_rect.width > wlimit and len(content) > 3 + len(end):
-            text, text_rect = self.generate_text(content[:len(content)-len(end)-(2 if recursive else 1)], fontsize, wlimit=wlimit, font=font, color=color, end=end, recursive=True)
+            text, text_rect = self.generate_text(content[:len(content)-len(end)-(2 if recursive else 1)], fontsize, menu, name, font=font, wlimit=wlimit, end=end, recursive=True)
+        else:
+            # stockage du texte
+            self.generated_texts.append((text.copy(), text, menu, name))
         
         return text, text_rect
     
@@ -382,8 +401,8 @@ class UIManager:
         package["back_y_init"] = package["back"].y
 
         # texte
-        package["text"], package["text_rect"] = self.generate_text(description, int(height*0.68), color=self.get_color(menu, "section"), wlimit=width*0.8)
-        package["text_rect"].midleft = (package["back"].left + width * 0.03, package["back"].centery)
+        package["text"], package["text_rect"] = self.generate_text(description, int(height*0.68), menu, "section", wlimit=width*0.8)
+        package["text_rect"].midleft = (package["back"].left + width * 0.04, package["back"].centery)
         package["text_y_init"] = package["text_rect"].y
 
         return package
@@ -418,11 +437,11 @@ class UIManager:
         package["back"] = pygame.Rect(parameters["item_back_offset"], y, parameters["surface_width"] - parameters["item_back_offset"] * 2, parameters["item_height"])
 
         # contenu général des items
-        package["text"], package["text_rect"] = self.generate_text(content["description"], parameters["item_fontsize"], color=self.get_color("text_menu", "text"), wlimit=parameters["surface_width"] * 0.6)
+        package["text"], package["text_rect"] = self.generate_text(content["description"], parameters["item_fontsize"], "text_menu", "text", wlimit=parameters["surface_width"] * 0.6)
         package["text_rect"].midleft = (parameters["item_text_x_offset"], package["back"].centery)
 
         # contenu propre à chaque type d'item
-        dynamic_content = self.text_menu_settings.get(content["type"], {}).get("generate", lambda **kwargs: {})(content=content, y=y, surface_rect=surface_rect)
+        dynamic_content = self.text_menu_settings.get(content["type"], {}).get("generate", lambda **kwargs: {})(content=content, y=y, back=package["back"], surface_rect=surface_rect)
         for key, value in dynamic_content.items():
             package[key] = value
 
@@ -466,13 +485,21 @@ class UIManager:
         # récupération des arguments
         content = kwargs["content"]
         y = kwargs["y"]
+        back = kwargs["back"]
         surface_rect = kwargs["surface_rect"]
+
+        # génération de l'icone
+        package["icon_points"] = [
+            (back.right - parameters["icon_x_offset"], back.centery - parameters["icon_size"]),
+            (back.right - parameters["icon_x_offset"], back.centery + parameters["icon_size"]),
+            (back.right - parameters["icon_x_offset"] + (parameters["icon_size"]**2 - (parameters["icon_size"] / 2)**2)**0.5, back.centery),
+        ]
 
         # création du menu de choix
         package["choices_menu"] = {}
         for choice, description in content["choices"]:
             package["choices_menu"][choice] = {"name": f"{content['name']}.{choice}", "type": "value", "description": description}
-        package["choices_menu"]["package"] = self.generate_text_menu(package["choices_menu"], surface_rect.right, surface_rect.top + y - self.text_menu_settings["general"]["item_back_offset"])
+        package["choices_menu"]["package"] = self.generate_text_menu(package["choices_menu"], surface_rect.left + back.right, surface_rect.top + y - self.text_menu_settings["general"]["item_back_offset"])
 
         # stockage de l'état (menu de choix : ouvert/fermé) et de la valeur par défaut dans un dictionnaire général
         self.text_menus_items_values[content["name"]] = [False, content["value"]]
@@ -572,15 +599,21 @@ class UIManager:
         package = content["package"] # raccourci
 
         # reset du fond avec border radius
-        pygame.draw.rect(package["surface"], self.get_color("text_menu", "back"), package["surface"].get_rect(), border_radius=7)
+        pygame.draw.rect(package["surface"], self.get_color("text_menu", "back"), package["surface"].get_rect(), border_radius=5)
+        pygame.draw.rect(package["surface"], (0, 0, 0, 30), package["surface"].get_rect(), 1, border_radius=5) # shadow border
 
         # mise à jour des items
+        self.choices_menus_to_blit = [] # reset du stockage intermédiaire
         for item in package.values():
             if type(item) == dict: # skip de surface et surface_rect
                 self.update_text_menu_item(item, package["surface"], package["surface_rect"], menu=menu)
 
         # affichage
         surface.blit(package["surface"], package["surface_rect"])
+
+        # blit repoussés
+        for _zip in self.choices_menus_to_blit:
+            self.update_text_menu(*_zip)
     
     def update_text_menu_item(self, content: dict, surface: pygame.Surface, surface_rect: pygame.Rect, menu: str="toolbar"):
         "met à jour un item de menu textuel"
@@ -602,29 +635,33 @@ class UIManager:
         "met à jour un item de menu textuel de type normal"
         # affichage du fond
         if hovered:
-            pygame.draw.rect(surface, self.get_color("text_menu", "item_hover"), content["back"], border_radius=7)
+            pygame.draw.rect(surface, self.get_color("text_menu", "item_hover"), content["back"], border_radius=5)
     
     def update_text_menu_item_toggle(self, content: dict, surface: pygame.Surface, surface_rect: pygame.Rect, menu: str="toolbar", hovered: bool=False):
         "met à jour un item de menu textuel de type alternatif"
         # affichage du fond
         if hovered:
-            pygame.draw.rect(surface, self.get_color("text_menu", "item_hover"), content["back"], border_radius=7)
+            pygame.draw.rect(surface, self.get_color("text_menu", "item_hover"), content["back"], border_radius=5)
     
     def update_text_menu_item_choices(self, content: dict, surface: pygame.Surface, surface_rect: pygame.Rect, menu: str="toolbar", hovered: bool=False):
         "met à jour un item de menu textuel de type choix"
         # affichage du fond
         if hovered:
-            pygame.draw.rect(surface, self.get_color("text_menu", "item_hover"), content["back"], border_radius=7)
+            pygame.draw.rect(surface, self.get_color("text_menu", "item_hover"), content["back"], border_radius=5)
+
+        # affichage de l'icone
+        pygame.draw.line(surface, self.get_color("text_menu", "item_icon"), content["icon_points"][0], content["icon_points"][2], 2)
+        pygame.draw.line(surface, self.get_color("text_menu", "item_icon"), content["icon_points"][1], content["icon_points"][2], 2)
         
         # affichage du menu de choix si menu ouvert
         if self.text_menus_items_values[content["name"]][0]:
-            self.update_text_menu(content["choices_menu"], self.main.screen, menu=menu)
+            self.choices_menus_to_blit.append((content["choices_menu"], self.main.screen, menu))
     
     def update_text_menu_item_value(self, content: dict, surface: pygame.Surface, surface_rect: pygame.Rect, menu: str="toolbar", hovered: bool=False):
         "met à jour un item de menu textuel de type valeur"
         # affichage du fond
         if hovered:
-            pygame.draw.rect(surface, self.get_color("text_menu", "item_hover"), content["back"], border_radius=7)
+            pygame.draw.rect(surface, self.get_color("text_menu", "item_hover"), content["back"], border_radius=5)
 
 # _________________________- Handlers -_________________________
     def handle_down_scroll_bar(self):
@@ -673,4 +710,17 @@ class UIManager:
     def handle_down_text_menu_item_value(self, item_name: str):
         """événement: clique sur un item de menu textuel de type choix"""
         self.text_menus_items_values[item_name][1] = self.mouse_hover[2].split(".")[2] # changement de choix
-        print(self.text_menus_items_values[item_name][1])
+        
+        # potentielle fonction d'activation
+        funct_name = f"activate_{item_name}"
+        funct = getattr(self, funct_name, None)
+        if funct:
+            funct()
+    
+# _________________________- Fonctions d'activation -_________________________
+    def activate_theme(self):
+        """application: nouveau thème"""
+        for text_init, text, menu, name in self.generated_texts:
+            new_text= text_init.copy() # copie pour conserver la version blanche
+            new_text.fill(self.get_color(menu, name), special_flags=pygame.BLEND_RGB_MULT) # teinte de la copie pour appliquer le nouvea thème
+            text.blit(new_text, (0, 0)) # changement du texte

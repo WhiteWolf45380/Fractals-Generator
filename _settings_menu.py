@@ -14,24 +14,15 @@ class SettingsMenu:
         self.surface_height = self.main.screen_height - self.main.menus["toolbar"].surface_height # hauteur du menu
         self.surface = pygame.Surface((self.surface_width, self.surface_height)) # fond du menu
         self.surface_rect = self.surface.get_rect(topright=(self.main.screen_width, self.main.menus["toolbar"].surface_height))# placement en haut de l'écran
-        self.surface_color = self.ui_manager.get_color(self.name, "back") # couleur de fond
-        self.surface.fill(self.surface_color)
 
         # titre
         self.title_back = pygame.Rect(0, 0, self.surface_width, 40)
-        self.title_text, self.title_text_rect = self.ui_manager.generate_text("Propriétés", 25, color=self.ui_manager.get_color(self.name, "title"))
+        self.title_text, self.title_text_rect = self.ui_manager.generate_text("Propriétés", 25, self.name, "title")
         self.title_text_rect.midleft = (self.surface_width * 0.05, 20)
-        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "title_highlight"), self.title_back)
-        self.surface.blit(self.title_text, self.title_text_rect)
 
         """boutton de repli"""
         self.collapse_button_dict = self.ui_manager.generate_collapse_button("right", 0, self.surface_height / 2, anchor="midleft")
         self.ui_manager.add_handler(self.name, "down_collapse_button", self.handle_down_collapse_button)
-
-        """surface finale post chargement servant de base au contenu dynamique"""
-        # trait pour accentuer la démarquation
-        pygame.draw.line(self.surface, self.ui_manager.get_color(self.name, "line"), (0, 0), (0, self.surface_height), width=2)
-        self.surface_init = self.surface.copy()
 
         """variables utiles"""
         # ouverture/fermeture
@@ -71,7 +62,7 @@ class SettingsMenu:
                 "update": self.update_setting_color, # fonction de mise à jour
                 "width": 40, # hauteur du rect
                 "border": 1, # bordure du rect
-                "x_offset": 350,# décalage pour etre sur la droite du menu
+                "x_offset": 375,# décalage pour etre sur la droite du menu
             }
         }
         
@@ -88,15 +79,25 @@ class SettingsMenu:
             "geometric": {"category": "section", "title": "-- Géométriques"},
             "depth": {"category": "bar", "description": "Profondeur", "value": 1, "value_min": 0, "value_max": 20},
             "size": {"category": "bar", "description": "Taille", "value": 400, "value_min": 100, "value_max": 1500},
-            "visual": {"category": "section", "title": "-- Visuelles"},
+            "visual_lines": {"category": "section", "title": "-- Visuelles (lignes)"},
             "width": {"category": "bar", "description": "Epaisseur", "value": 1, "value_min": 1, "value_max": 20},
             "color_r": {"category": "bar", "description": "Canal rouge", "value": self.ui_manager.get_color(self.name, "line")[0], "value_min": 0, "value_max": 255},
             "color_g": {"category": "bar", "description": "Canal vert", "value": self.ui_manager.get_color(self.name, "line")[1], "value_min": 0, "value_max": 255},
             "color_b": {"category": "bar", "description": "Canal bleu", "value": self.ui_manager.get_color(self.name, "line")[2], "value_min": 0, "value_max": 255},
-            "color_result": {"category": "color", "masters": ["color_r", "color_g", "color_b"]},
+            "color_a": {"category": "bar", "description": "Opacité", "value": 255, "value_min": 0, "value_max": 255},
+            "color_result": {"category": "color", "masters": ["color_r", "color_g", "color_b", "color_a"]},
+            "visual_filling": {"category": "section", "title": "-- Visuelles (remplissage)"},
+            "filling": {"category": "bar", "description": "Remplissage", "value": 1, "value_min": 0, "value_max": 1},
+            "filling_r": {"category": "bar", "description": "Canal rouge", "value": self.ui_manager.get_color(self.name, "line")[0], "value_min": 0, "value_max": 255},
+            "filling_g": {"category": "bar", "description": "Canal vert", "value": self.ui_manager.get_color(self.name, "line")[1], "value_min": 0, "value_max": 255},
+            "filling_b": {"category": "bar", "description": "Canal bleu", "value": self.ui_manager.get_color(self.name, "line")[2], "value_min": 0, "value_max": 255},
+            "filling_a": {"category": "bar", "description": "Opacité", "value": 255, "value_min": 0, "value_max": 255},
+            "filling_result": {"category": "color", "masters": ["filling_r", "filling_g", "filling_b", "filling_a"]},
             "pos": {"category": "section", "title": "-- Positionnelles"},
+            "centered": {"category": "bar", "description": "Centré", "value": 1, "value_min": 0, "value_max": 1},
             "x_offset": {"category": "bar", "description": "x (horizontal)", "value": 0, "value_min": -1000, "value_max": 1000},
             "y_offset": {"category": "bar", "description": "y (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
+            "generative": {"category": "section", "title": "-- Génératives"},
         }
 
         # génération des paramètres
@@ -111,7 +112,7 @@ class SettingsMenu:
     def update(self):
         """Mise à jour du menu des propriétés"""
         # refresh
-        self.surface.blit(self.surface_init, (0, 0))
+        self.surface.fill(self.ui_manager.get_color(self.name, "back"))
 
         # ouverture/fermeture du menu
         if self.offset_progression < 1:
@@ -124,9 +125,6 @@ class SettingsMenu:
             x = self.offset_x_init + (self.offset_x_final - self.offset_x_init) * eased
             self.surface_rect.left = int(x)
 
-        # update du boutton de repli
-        self.ui_manager.update_collapse_button(self.name, self.surface, self.surface_rect, self.collapse_button_dict, opened=self.opened)
-
         # clipping pour le scroll des paramètres
         clip_rect = pygame.Rect(0, self.title_back.bottom, self.surface_width, self.surface_height - self.title_back.bottom)
         self.surface.set_clip(clip_rect)
@@ -138,6 +136,16 @@ class SettingsMenu:
         
         # fin de clipping
         self.surface.set_clip(None)
+
+        # affichage du titre
+        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "title_highlight"), self.title_back)
+        self.surface.blit(self.title_text, self.title_text_rect)
+        
+        # trait pour accentuer la démarquation
+        pygame.draw.line(self.surface, self.ui_manager.get_color(self.name, "line"), (0, 0), (0, self.surface_height), width=2)
+
+        # update du boutton de repli
+        self.ui_manager.update_collapse_button(self.name, self.surface, self.surface_rect, self.collapse_button_dict, opened=self.opened)
 
         # update de la barre de défilement
         self.ui_manager.update_scroll_bar(self.scroll_bar, self.surface, self.surface_rect, menu=self.name, ratio=(self.surface_height - self.title_back.height)/(self.settings_y_next - self.parameters["general"]["text_fontsize"] + self.scroll_bar["y_dif"]))
@@ -187,7 +195,7 @@ class SettingsMenu:
 
         # texte
         if content.get("description") is not None:
-            package["text"], package["text_rect"] = self.ui_manager.generate_text(f"{content['description']}", parameters["text_fontsize"], color=self.ui_manager.get_color(self.name, "text"), wlimit=parameters["text_wlimit"], end=" :")
+            package["text"], package["text_rect"] = self.ui_manager.generate_text(f"{content['description']}", parameters["text_fontsize"],self.name, "text", wlimit=parameters["text_wlimit"], end=" :")
             package["text_rect"].left = parameters["x_offset"]
 
         # éléments interactifs
@@ -200,7 +208,7 @@ class SettingsMenu:
     def generate_value(self, value: int, x: int) -> dict:
         """génère un compteur (qui affiche la valeur)"""
         parameters = self.parameters["general"] # raccourci
-        value_text, value_text_rect = self.ui_manager.generate_text(str(value), parameters["value_fontsize"], color=self.ui_manager.get_color(self.name, "text"), wlimit=parameters["value_wlimit"]) # génération du texte
+        value_text, value_text_rect = self.ui_manager.generate_text(str(value), parameters["value_fontsize"], self.name, "text", wlimit=parameters["value_wlimit"]) # génération du texte
         value_text_rect.left = x # fixation de la coordonnée x
         return {"value_text": value_text, "value_text_rect": value_text_rect}
     

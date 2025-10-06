@@ -14,8 +14,6 @@ class ToolbarMenu:
         self.surface_height = 40 # hauteur du menu
         self.surface = pygame.Surface((self.surface_width, self.surface_height)) # fond du menu
         self.surface_rect = self.surface.get_rect(topleft=(0, 0))# placement en haut de l'écran
-        self.surface_color = self.ui_manager.get_color(self.name, "back") # couleur de fond
-        self.surface.fill(self.surface_color)
 
         """boutons"""
         # bouttons liés au dessin
@@ -78,11 +76,6 @@ class ToolbarMenu:
         self.ui_manager.add_handler(self.name, "down_text_button", self.handle_down_text_button) # bouttons textuels
         self.ui_manager.add_handler(self.name, "down_text_menu_item", self.ui_manager.handle_down_text_menu_item) # items des menus textuels
 
-        """surface finale post chargement servant de base au contenu dynamique"""
-        # trait pour accentuer la démarquation
-        pygame.draw.line(self.surface, self.ui_manager.get_color(self.name, "line"), (0, self.surface_height-1), (self.surface_width, self.surface_height-1), width=1)
-        self.surface_init = self.surface.copy()
-
         """variables utiles"""
         self.text_menus_opened = False
         self.text_menus_current = ""
@@ -90,7 +83,11 @@ class ToolbarMenu:
     def update(self):
         """Mise à jour de la barre d'outils"""
         # refresh
-        self.surface.blit(self.surface_init, (0, 0))
+        self.surface.fill(self.ui_manager.get_color(self.name, "back"))
+
+        # ligne pour accentuer la démarquation
+        pygame.draw.line(self.surface, self.ui_manager.get_color(self.name, "line"), (0, self.surface_height-1), (self.surface_width, self.surface_height-1), width=1)
+
 
         # blit des différents boutons de texte
         for text_button in self.text_buttons:
@@ -140,12 +137,13 @@ class ToolbarMenu:
     def handle_down_text_button(self):
         """événement(clique gauche): bouton textuel"""
         self.text_menus_opened = not self.text_menus_opened
-        self.text_menus_current = self.ui_manager.mouse_hover[2]
+        if self.text_menus_opened:
+            self.text_menus_current = self.ui_manager.mouse_hover[2]
+            self.ui_manager.do_close_choices_menus()
     
     def handle_down_text_menu(self):
         """événement indépendant(clique gauche): bouton textuel"""
         if self.text_menus_opened and not self.text_menus[self.text_menus_current]["package"]["surface_rect"].collidepoint((self.main.mouse_x, self.main.mouse_y)) and not self.text_buttons[self.text_menus_current]["package"]["back"].collidepoint(self.main.get_relative_pos(self.surface_rect)):
-            
             self.text_menus_opened = False
 
 # _________________________- Création d'éléments -_________________________
@@ -154,8 +152,8 @@ class ToolbarMenu:
         parameters = self.text_buttons_parameters # raccourci
 
         # texte du bouton
-        text, text_rect = self.ui_manager.generate_text(name, self.text_buttons_parameters["fontsize"], color=self.ui_manager.get_color(self.name, "text"))
-        text_hover, _ = self.ui_manager.generate_text(name, self.text_buttons_parameters["fontsize"], color=self.ui_manager.get_color(self.name, "text_hover"))
+        text, text_rect = self.ui_manager.generate_text(name, self.text_buttons_parameters["fontsize"], self.name, "text")
+        text_hover, _ = self.ui_manager.generate_text(name, self.text_buttons_parameters["fontsize"], self.name, "text_hover")
         text_width = text_rect.width + 30
 
         # fond du bouton
@@ -174,7 +172,9 @@ class ToolbarMenu:
         # mouse hover
         if self.ui_manager.is_mouse_hover(package["back"], self.surface_rect):
             is_hovered = self.ui_manager.ask_for_mouse_hover(self.name, "text_button", _id=content["name"])
-            self.text_menus_current = self.ui_manager.mouse_hover[2]
+            if self.text_menus_opened and self.text_menus_current != self.ui_manager.mouse_hover[2]:
+                self.text_menus_current = self.ui_manager.mouse_hover[2]
+                self.ui_manager.do_close_choices_menus()
         else:
             is_hovered = False
         

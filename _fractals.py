@@ -18,16 +18,19 @@ class Fractals:
     # _________________- Flocon de Koch (triangles)-_________________
     def draw_koch_triangles_flake(self, size):
         """dessine un flocon de Koch"""
-        max_depth = self.turtle.get("depth")
-        centered = self.turtle.get("centered")
-
-        if centered:
+        # centrage
+        if self.turtle.get("centered"):
             height = (3**0.5 / 2) * size
-            self.turtle.do_goto(-size/2 + self.turtle.get("x_offset"), -height/(3 if max_depth > 0 else 2) + self.turtle.get("y_offset"))
+            self.turtle.do_goto(-size/2 + self.turtle.get("x_offset"), -height/(3 if self.turtle.get("depth") > 0 else 2) + self.turtle.get("y_offset"), add_point=False)
         
+        # dessin
         for _ in range(3):
-            yield from self.draw_koch_triangles_recursive(size, max_depth)
+            yield from self.draw_koch_triangles_recursive(size, self.turtle.get("depth"))
             self.turtle.do_right(120)
+        
+        # remplissage
+        if self.turtle.get("filling") and len(self.turtle.all_points) >= 3:
+            pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get("filling", multiple=("r", "g", "b", "a")), self.turtle.all_points)
 
     def draw_koch_triangles_recursive(self, size, max_depth, depth=0):
         """Récursion pour dessiner Dragon Curve"""
@@ -52,12 +55,18 @@ class Fractals:
         max_depth = self.turtle.get("depth")
         centered = self.turtle.get("centered")
 
+        # centrage
         if centered:
-            self.turtle.do_goto(-size/2 + self.turtle.get("x_offset"), -size/2 + self.turtle.get("y_offset"))
+            self.turtle.do_goto(-size/2 + self.turtle.get("x_offset"), -size/2 + self.turtle.get("y_offset"), add_point=False)
         
+        # dessin
         for _ in range(4):
             yield from self.draw_koch_squares_recursive(size, max_depth)
             self.turtle.do_right(90)
+
+        # remplissage
+        if self.turtle.get("filling") and len(self.turtle.all_points) >= 3:
+            pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get("filling", multiple=("r", "g", "b", "a")), self.turtle.all_points)
 
     def draw_koch_squares_recursive(self, size, max_depth, depth=0):
         if depth == max_depth:
@@ -97,7 +106,7 @@ class Fractals:
                 12: (-175, 175),
             }
             offset = DRAGON_CENTER_OFFSET.get(max_depth, (0,0))
-            self.turtle.do_goto(offset[0] + self.turtle.get("x_offset"), offset[1] + self.turtle.get("y_offset"))
+            self.turtle.do_goto(offset[0] + self.turtle.get("x_offset"), offset[1] + self.turtle.get("y_offset"), add_point=False)
 
         yield from self.draw_dragon_recursive(size, max_depth, 1)
         self.turtle.do_right(90)

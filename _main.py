@@ -56,6 +56,9 @@ class Main:
         self.menus["settings"] = SettingsMenu(self)
         self.turtle = Turtle(self)
 
+        """appels de prélancement"""
+        self.ui_manager.activate_theme()
+
     def loop(self):
         """loop principal du logiciel"""
         while self.running:

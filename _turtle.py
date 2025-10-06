@@ -17,8 +17,6 @@ class Turtle:
         self.surface_height = self.main.screen_height - self.main.menus["toolbar"].surface_height # hauteur du menu
         self.surface = pygame.Surface((self.surface_width, self.surface_height)) # fond du menu
         self.surface_rect = self.surface.get_rect(midbottom=(self.main.screen_width / 2, self.main.screen_height)) # placement en bas au centre de l'écran
-        self.surface_color = self.ui_manager.get_color(self.name, "back") # couleur de fond
-        self.surface.fill(self.surface_color)
 
         """zone de dessin"""
         self.turtle_surface_side = 5000
@@ -34,10 +32,16 @@ class Turtle:
             "size": 100, # taille du motif
             "x_offset": 0, # décalage x
             "y_offset": 0, # décalage y
-            "color_r": 255, # canal rouge
-            "color_b": 255, # canal bleu
-            "color_g": 255, # canal vert
             "width": 1, # épaisseur
+            "color_r": 255, # canal rouge
+            "color_g": 255, # canal vert
+            "color_b": 255, # canal bleu
+            "color_a": 255, # opacité
+            "filling": False, # remplissage
+            "filling_r": 255, # remplissage rouge
+            "filling_g": 0, # remplissage vert
+            "filling_b": 0, # remplissage bleu
+            "filling_a": 255, # remplissage opacité
             "centered": True, # ancre
             "speed": 5, # vitesse d'éxécution
             "x": 0, # position x (not to define)
@@ -63,12 +67,13 @@ class Turtle:
         self.fractals = Fractals(self)
 
         """générateur courant (dessin en cours)"""
-        self.current_generator = None
-        self.pause = False
+        self.current_generator = None # stockage du générateur
+        self.pause = False # paramètre de pause
+        self.all_points = [] # stockage de tous les points du dessin pour le remplissage
 
     def update(self):
         """mise à jour du dessin"""
-        self.surface.fill(self.surface_color)
+        self.surface.fill(self.ui_manager.get_color(self.name, "back"))
         if self.current_generator and not self.pause:
             try:
                 for _ in range(self.get_speed()):  # nombre de segments dessinés par frame
@@ -82,7 +87,8 @@ class Turtle:
     def draw(self):
         """prépare un dessin progressif"""
         self.push(self.main.menus["settings"].settings)
-        self.do_reset()
+        self.do_reset() # remise du dessin à blanc
+        self.all_points = [] # reset des points de dessin
                 
         try:
             self.current_generator = self.fractals.available_fractals[self.get("pattern")](self.get("size"))
@@ -106,10 +112,10 @@ class Turtle:
 
 # _________________________- Outils -_________________________
 
-    def get(self, parameter: str, mutiple: tuple=None) -> str | int | tuple:
+    def get(self, parameter: str, multiple: tuple=None) -> str | int | tuple:
         """retourne le paramètre correspondant"""
-        if mutiple is not None:
-            return tuple(self.parameters.get(f"{parameter}_{single}", 0) for single in mutiple)
+        if multiple is not None:
+            return tuple(self.parameters.get(f"{parameter}_{single}", 0) for single in multiple)
         return self.parameters.get(parameter, None)
     
     def change(self, parameter: str, value, index=None):
@@ -132,15 +138,17 @@ class Turtle:
 
     def do_reset(self):
         """reset du tableau"""
-        self.surface.fill(self.surface_color)
+        self.surface.fill(self.ui_manager.get_color(self.name, "back"))
         self.turtle_surface.fill((0, 0, 0, 0))
         self.do_goto(self.get("x_offset"), self.get("y_offset"))
         self.do_setheading(0)
     
-    def do_goto(self, x: float, y: float):
+    def do_goto(self, x: float, y: float, add_point=True):
         """se rend à une position"""
         self.change("x", x)
         self.change("y", y)
+        if add_point:
+            self.all_points.append(self.get_pos(x, y))
     
     def do_forward(self, distance: float, penup=False):
         """avance en dessinant"""
@@ -151,12 +159,24 @@ class Turtle:
 
         # traçage du trait
         if not penup:
-            pygame.draw.line(self.turtle_surface, self.get("color", mutiple=("r", "g", "b")), (int(x), int(y)), (int(x_final), int(y_final)), width=self.get("width"),)
+            color = self.get("color", multiple=("r", "g", "b", "a"))
+            width = self.get("width")
+            
+            if width == 1:# ligne fine
+                pygame.draw.aaline(self.turtle_surface, color, (int(x), int(y)), (int(x_final), int(y_final)))
+            else:# ligne épaisse
+                radius = max(1, (width + 1) // 2)
+                pygame.draw.line(self.turtle_surface, color, (int(x), int(y)), (int(x_final), int(y_final)), width)
+                pygame.draw.circle(self.turtle_surface, color, (int(x), int(y)), radius)
+                pygame.draw.circle(self.turtle_surface, color, (int(x_final), int(y_final)), radius)
+            
+            # ajout du point final
+            self.all_points.append((x_final, y_final))
 
         # mise à jour de la position
-        x, y = self.get_relative_pos(x_final, y_final)
-        self.change("x", x)
-        self.change("y", y)
+        x_rel, y_rel = self.get_relative_pos(x_final, y_final)
+        self.change("x", x_rel)
+        self.change("y", y_rel)
     
     def do_setheading(self, angle: int):
         """fixe l'angle"""
