@@ -101,7 +101,6 @@ class Main:
                 self.menus["toolbar"].handle_down_text_menu()
                 
                 if self.ui_manager.mouse_hover is not None: # si un boutton est survolé
-                    print(self.ui_manager.mouse_hover)
                     self.menus[self.ui_manager.mouse_hover[0]].handle_left_click_down(self.ui_manager.mouse_hover[1])
             
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1: # clique gauche (relaché)

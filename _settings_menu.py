@@ -195,6 +195,8 @@ class SettingsMenu:
     
     def handle_down_setting_toggle(self):
         """événement: clique sur un boutton oui/non"""
+        setting, button = self.ui_manager.mouse_hover[2].split(".")
+        self.settings[setting]["value"] = button == "true"
 
 # _________________________- Création d'éléments -_________________________
     def generate_setting(self, content: dict) -> dict:
@@ -367,7 +369,7 @@ class SettingsMenu:
 
             # bouton survolé
             if self.ui_manager.is_mouse_hover(package[f"{button}_back"], self.surface_rect):
-                hovered = self.ui_manager.ask_for_mouse_hover(self.name, "setting_toggle", _id=content["name"])
+                hovered = self.ui_manager.ask_for_mouse_hover(self.name, "setting_toggle", _id=f"{content['name']}.{button}")
             else:
                 hovered = False
             
