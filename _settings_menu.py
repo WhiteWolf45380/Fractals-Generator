@@ -43,14 +43,10 @@ class SettingsMenu:
                 "settings_space": 20, # décalage entre les paramètres
             },
             "section": {
-                "generate": self.generate_section, # fonction générative
-                "update": self.update_section, # fonction de mise à jour
                 "height": self.title_back.height * 0.7, # hauteur des titres de section
                 "space": 50, # décalage entre les sections
             },
             "bar": {
-                "generate": self.generate_setting_bar, # fonction générative
-                "update": self.update_setting_bar, # fonction de mise à jour
                 "handler": self.handle_down_setting_bar, # fonction d'événement
                 "bar_width": 150, # largeur de la barre
                 "bar_height": 8, # hauteur de la barre
@@ -58,13 +54,22 @@ class SettingsMenu:
                 "thumb_height": 30, # hauteur du slider
             },
             "color": {
-                "generate": self.generate_setting_color, # fonction générative
-                "update": self.update_setting_color, # fonction de mise à jour
                 "width": 40, # hauteur du rect
                 "border": 1, # bordure du rect
                 "x_offset": 375,# décalage pour etre sur la droite du menu
+            },
+            "toggle": {
+                "button_width": 60, # largeur des boutons oui/non
+                "button_height": 30, # hauteur des boutons oui/non
+                "text_fontsize": 16, # taille de la police
             }
         }
+
+        # auto adressage des fonctions
+        for parameter in self.parameters:
+            if parameter != "general":
+                self.parameters[parameter]["generate"] = getattr(self, f"generate_setting_{parameter}", None) # fonction générative
+                self.parameters[parameter]["update"] = getattr(self, f"update_setting_{parameter}", None) # fonction de mise à jour
         
         # ajout des handlers des éléments
         for category in self.parameters:
@@ -87,14 +92,14 @@ class SettingsMenu:
             "color_a": {"category": "bar", "description": "Opacité", "value": 255, "value_min": 0, "value_max": 255},
             "color_result": {"category": "color", "masters": ["color_r", "color_g", "color_b", "color_a"]},
             "visual_filling": {"category": "section", "title": "-- Visuelles (remplissage)"},
-            "filling": {"category": "bar", "description": "Remplissage", "value": 1, "value_min": 0, "value_max": 1},
+            "filling": {"category": "toggle", "description": "Remplissage", "value": False},
             "filling_r": {"category": "bar", "description": "Canal rouge", "value": self.ui_manager.get_color(self.name, "line")[0], "value_min": 0, "value_max": 255},
             "filling_g": {"category": "bar", "description": "Canal vert", "value": self.ui_manager.get_color(self.name, "line")[1], "value_min": 0, "value_max": 255},
             "filling_b": {"category": "bar", "description": "Canal bleu", "value": self.ui_manager.get_color(self.name, "line")[2], "value_min": 0, "value_max": 255},
             "filling_a": {"category": "bar", "description": "Opacité", "value": 255, "value_min": 0, "value_max": 255},
             "filling_result": {"category": "color", "masters": ["filling_r", "filling_g", "filling_b", "filling_a"]},
             "pos": {"category": "section", "title": "-- Positionnelles"},
-            "centered": {"category": "bar", "description": "Centré", "value": 1, "value_min": 0, "value_max": 1},
+            "centered": {"category": "toggle", "description": "Centré", "value": True},
             "x_offset": {"category": "bar", "description": "x (horizontal)", "value": 0, "value_min": -1000, "value_max": 1000},
             "y_offset": {"category": "bar", "description": "y (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
             "generative": {"category": "section", "title": "-- Génératives"},
@@ -212,10 +217,10 @@ class SettingsMenu:
         value_text_rect.left = x # fixation de la coordonnée x
         return {"value_text": value_text, "value_text_rect": value_text_rect}
     
-    def generate_section(self, content: dict, _: int) -> dict:
+    def generate_setting_section(self, content: dict, _: int) -> dict:
         """génère une section"""
         parameters = self.parameters["section"] # raccourci
-        package = self.ui_manager.generate_section_title(content["title"], 2, 0, self.surface_width - self.ui_manager.scroll_bar_settings["width"], parameters["height"], menu="settings")
+        package = self.ui_manager.generate_section(content["title"], 2, 0, self.surface_width - self.ui_manager.scroll_bar_settings["width"], parameters["height"], menu="settings")
         return package
 
     def generate_setting_bar(self, content: dict, x: int) -> dict:
@@ -223,8 +228,7 @@ class SettingsMenu:
         parameters = self.parameters["bar"] # raccourci
 
         # barre
-        bar = pygame.Rect(0, 0, parameters["bar_width"], parameters["bar_height"])
-        bar.left = x
+        bar = pygame.Rect(x, 0, parameters["bar_width"], parameters["bar_height"])
 
         # slider
         thumb = pygame.Rect(0, 0, parameters["thumb_width"], parameters["thumb_height"])
@@ -249,6 +253,22 @@ class SettingsMenu:
         rect.left = x + parameters["x_offset"]
 
         return {"rect": rect}
+    
+    def generate_setting_toggle(self, content: dict, x: int) -> dict:
+        """génère un paramètre de type alternatif"""
+        parameters = self.parameters["toggle"]
+        package = {} # dictionnaire final
+
+        # génération des boutons
+        for i, button in enumerate([("true", "Oui"), ("false", "Non")]):
+            # fond des boutons
+            package[f"{button[0]}_back"] = pygame.Rect(x + i * parameters["button_width"], 0, parameters["button_width"], parameters["button_height"])
+
+            # texte des boutons
+            package[f"{button[0]}_text"], package[f"{button[0]}_text_rect"] = self.ui_manager.generate_text(button[1], parameters["text_fontsize"], self.name, "text")
+            package[f"{button[0]}_text_rect"].center = package[f"{button[0]}_back"].center
+        
+        return package
 
 # _________________________- Mise à jour d'éléments -_________________________
     def update_setting(self, content: dict, y: int):
@@ -265,18 +285,19 @@ class SettingsMenu:
         
         return forced_next_y if forced_next_y is not None else package["text_rect"].bottom + self.parameters["general"]["settings_space"]
     
-    def update_section(self, content: dict, y: int):
+    def update_setting_section(self, content: dict, y: int):
         """met à jour une section"""
         package = content["package"] # raccourci
 
         # update
-        self.ui_manager.update_section_title(content, self.surface, menu="settings", y_offset=-y)
+        self.ui_manager.update_section(content, self.surface, menu="settings", y_offset=-y)
 
         return package["back"].bottom + self.parameters["general"]["settings_space"]
     
     def update_setting_bar(self, content: dict):
         """met à jour une barre"""
         package = content["package"] # raccourci
+
         # mise à jour des positions verticales
         package["bar"].centery = package["text_rect"].centery
         package["thumb"].centery = package["bar"].centery
@@ -316,10 +337,10 @@ class SettingsMenu:
 
     def update_setting_color(self, content: dict, _: int):
         """met à jour un rectangle de couleur"""
-        package = content["package"]# raccourci
+        package = content["package"] # raccourci
 
         # repositionnement
-        package["rect"].top = self.settings[content["masters"][0]]["package"]["text_rect"].top
+        package["rect"].y = self.settings[content["masters"][0]]["package"]["text_rect"].top
         package["rect"].height = self.settings[content["masters"][-1]]["package"]["text_rect"].bottom - self.settings[content["masters"][0]]["package"]["text_rect"].top
 
         # affichage
@@ -327,3 +348,18 @@ class SettingsMenu:
         pygame.draw.rect(self.surface, (0, 0, 0), package["rect"], self.parameters["color"]["border"])
 
         return self.settings_y_next
+
+    def update_setting_toggle(self, content: dict):
+        """met à jour un paramètre de type alternatif"""
+        package = content["package"] # raccourci
+
+        # mise à jour des boutons
+        for button in ["true", "false"]:
+            # repositionnement
+            package[f"{button}_back"].centery = package["text_rect"].centery
+            package[f"{button}_text_rect"].centery = package["text_rect"].centery
+
+            # affichage
+            pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "button_idle"), package[f"{button}_back"])
+            pygame.draw.rect(self.surface, (0, 0, 0, 40), package[f"{button}_back"], 1)
+            self.surface.blit(package[f"{button}_text"], package[f"{button}_text_rect"])

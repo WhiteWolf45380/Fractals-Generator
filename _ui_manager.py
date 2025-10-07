@@ -26,7 +26,7 @@ class UIManager:
                     "item_icon": (150, 150, 150),
                 },
                 "fractals": {
-                    "back": (50, 53, 56), 
+                    "back": (50, 53, 56, 255), 
                     "title": (30, 35, 40),
                     "section": (255, 255, 255),
                     "text": (225, 230, 240),
@@ -34,7 +34,8 @@ class UIManager:
                     "section_highlight": (84, 87, 90),
                     "line": (180, 180, 180), 
                     "selection": (20, 180, 255),
-                    "button_hover": (90, 90, 90),
+                    "button_idle": (70, 70, 70, 250),
+                    "button_hover": (90, 90, 90, 250),
                     "collapse_idle": (240, 240, 240),
                     "collapse_hover": (170, 170, 170),
                     "collapse_logo_idle": (10, 10, 10),
@@ -44,14 +45,15 @@ class UIManager:
                     "scroll_bar_thumb_hover": (70, 73, 76),
                 },
                 "settings": {
-                    "back": (40, 43, 46),
+                    "back": (40, 43, 46, 255),
                     "title": (25, 30, 35),
                     "section": (255, 255, 255),
                     "text": (220, 225, 235),
                     "title_highlight": (160, 163, 166),
                     "section_highlight": (74, 77, 80),
                     "line": (180, 180, 180),
-                    "button_hover": (85, 85, 85),
+                    "button_idle": (65, 65, 65, 250),
+                    "button_hover": (85, 85, 85, 250),
                     "bar": (70, 70, 70),
                     "thumb_idle": (150, 150, 150),
                     "thumb_hover": (240, 240, 240),
@@ -84,7 +86,7 @@ class UIManager:
                     "item_icon": (90, 90, 90),
                 },
                 "fractals": {
-                    "back": (230, 230, 230), 
+                    "back": (230, 230, 230, 255), 
                     "title": (255, 255, 255),
                     "section": (0, 0, 0),
                     "text": (17, 17, 17), 
@@ -92,7 +94,8 @@ class UIManager:
                     "section_highlight": (165, 165, 165),
                     "line": (75, 75, 75),
                     "selection": (40, 60, 255),
-                    "button_hover": (190, 190, 190),
+                    "button_idle": (190, 190, 190, 250),
+                    "button_hover": (170, 170, 170, 250),
                     "collapse_idle": (17, 17, 17),
                     "collapse_hover": (100, 100, 100),
                     "collapse_logo_idle": (240, 240, 240),
@@ -102,14 +105,15 @@ class UIManager:
                     "scroll_bar_thumb_hover": (155, 155, 155),
                 },
                 "settings": {
-                    "back": (235, 235, 235), 
+                    "back": (235, 235, 235, 255), 
                     "title": (255, 255, 255),
                     "section": (0, 0, 0),
                     "text": (26, 26, 26),
                     "title_highlight": (55, 55, 55),
                     "section_highlight": (175, 175, 175),
                     "line": (75, 75, 75),
-                    "button_hover": (195, 195, 195),
+                    "button_idle": (195, 195, 195, 250),
+                    "button_hover": (175, 175, 175),
                     "bar": (150, 150, 150),
                     "thumb_idle": (105, 105, 105),
                     "thumb_hover": (60, 60, 60),
@@ -176,7 +180,7 @@ class UIManager:
             "normal": {},
             "toggle": {},
             "choices": {
-                "icon_x_offset": 20, # décalage de l'icone
+                "icon_x_offset": 30, # décalage de l'icone
                 "icon_size": 5, # taille de l'icone
             },
             "value": {},
@@ -392,7 +396,7 @@ class UIManager:
 
         return scroll_bar
     
-    def generate_section_title(self, description: str, x: int, y: int, width: int, height: int, menu: str="settings") -> dict:
+    def generate_section(self, description: str, x: int, y: int, width: int, height: int, menu: str="settings") -> dict:
         """génère un titre de section"""
         package = {} # dictionnaire final
         
@@ -492,7 +496,7 @@ class UIManager:
         package["icon_points"] = [
             (back.right - parameters["icon_x_offset"], back.centery - parameters["icon_size"]),
             (back.right - parameters["icon_x_offset"], back.centery + parameters["icon_size"]),
-            (back.right - parameters["icon_x_offset"] + (parameters["icon_size"]**2 - (parameters["icon_size"] / 2)**2)**0.5, back.centery),
+            (back.right - parameters["icon_x_offset"] + parameters["icon_size"], back.centery),
         ]
 
         # création du menu de choix
@@ -582,7 +586,7 @@ class UIManager:
         # slider (affichage)
         surface.blit(scroll_bar["thumb"], scroll_bar["thumb_rect"])
 
-    def update_section_title(self, content: dict, surface: pygame.Surface, y_offset: int=0, menu="settings"):
+    def update_section(self, content: dict, surface: pygame.Surface, y_offset: int=0, menu="settings"):
         """mise à jour des titres de section"""
         package = content["package"] # raccourci
 
