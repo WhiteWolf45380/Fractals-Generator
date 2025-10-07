@@ -59,6 +59,7 @@ class SettingsMenu:
                 "x_offset": 375,# décalage pour etre sur la droite du menu
             },
             "toggle": {
+                "handler": self.handle_down_setting_toggle, # fonction d'événement
                 "button_width": 60, # largeur des boutons oui/non
                 "button_height": 30, # hauteur des boutons oui/non
                 "button_space": 8, # espace entre les deux boutons
@@ -75,7 +76,7 @@ class SettingsMenu:
         # ajout des handlers des éléments
         for category in self.parameters:
             if self.parameters[category].get("handler") is not None:
-                self.ui_manager.add_handler(self.name, f"down_setting_{category}", self.parameters["bar"]["handler"])
+                self.ui_manager.add_handler(self.name, f"down_setting_{category}", self.parameters[category]["handler"])
 
         # propriétés
         self.settings_y_next = 0 # placement vertical dynamique
@@ -191,6 +192,9 @@ class SettingsMenu:
         is_grabbed = self.ui_manager.ask_for_mouse_grabbing(self.name, "setting_bar", _id=_id)
         if is_grabbed:
             self.settings[_id]["delta"] = self.main.get_relative_pos(self.surface_rect)[0] - self.settings[_id]["package"]["thumb"].centerx
+    
+    def handle_down_setting_toggle(self):
+        """événement: clique sur un boutton oui/non"""
 
 # _________________________- Création d'éléments -_________________________
     def generate_setting(self, content: dict) -> dict:

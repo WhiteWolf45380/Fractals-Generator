@@ -56,6 +56,7 @@ class FractalsMenu:
             "creation": {"name": "creation", "section": "created_patterns", "description": "Crée ton motif"},
             "koch_triangles": {"name": "koch_triangles", "section": "preset_patterns", "description": "Koch (triangles)"},
             "koch_squares": {"name": "koch_squares", "section": "preset_patterns", "description": "Koch (carrés)"},
+            "dragon_curve": {"name": "dragon_curve", "section": "preset_patterns", "description": "Dragon Curve"}
         }
 
         self.sections = {
