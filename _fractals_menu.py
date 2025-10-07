@@ -12,7 +12,7 @@ class FractalsMenu:
         """Base du menu"""
         self.surface_width = self.main.screen_width // 5 # largeur du menu
         self.surface_height = self.main.screen_height - self.main.menus["toolbar"].surface_height # hauteur du menu
-        self.surface = pygame.Surface((self.surface_width, self.surface_height)) # fond du menu
+        self.surface = pygame.Surface((self.surface_width, self.surface_height), pygame.SRCALPHA) # fond du menu
         self.surface_rect = self.surface.get_rect(topleft=(0, self.main.menus["toolbar"].surface_height))# placement en haut de l'écran
 
         """titre"""

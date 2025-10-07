@@ -32,6 +32,7 @@ class Turtle:
             "size": 100, # taille du motif
             "x_offset": 0, # décalage x
             "y_offset": 0, # décalage y
+            "start_angle": 0, # angle de la figure
             "width": 1, # épaisseur
             "color_r": 255, # canal rouge
             "color_g": 255, # canal vert
@@ -133,6 +134,12 @@ class Turtle:
     def get_speed(self) -> int:
         """obtention de la vitesse de dessin"""
         return self.speed_conversions[self.parameters["speed"]]
+    
+    def get_rotated_offset(self, x, y, angle_deg):
+        """obtention du centrage avec angle non nul"""
+        rad = math.radians(angle_deg)
+        cos_a, sin_a = math.cos(rad), math.sin(rad)
+        return x * cos_a - y * sin_a, x * sin_a + y * cos_a
 
 # _________________________- Turtle -_________________________
 
@@ -141,7 +148,7 @@ class Turtle:
         self.surface.fill(self.ui_manager.get_color(self.name, "back"))
         self.turtle_surface.fill((0, 0, 0, 0))
         self.do_goto(self.get("x_offset"), self.get("y_offset"))
-        self.do_setheading(0)
+        self.do_setheading(self.get("start_angle"))
     
     def do_goto(self, x: float, y: float, add_point=True):
         """se rend à une position"""

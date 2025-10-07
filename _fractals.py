@@ -21,7 +21,10 @@ class Fractals:
         # centrage
         if self.turtle.get("centered"):
             height = (3**0.5 / 2) * size
-            self.turtle.do_goto(-size/2 + self.turtle.get("x_offset"), -height/(3 if self.turtle.get("depth") > 0 else 2) + self.turtle.get("y_offset"), add_point=False)
+            offset_x = -size/2
+            offset_y = -height/(3 if self.turtle.get("depth") > 0 else 2)
+            rx, ry = self.turtle.get_rotated_offset(offset_x, offset_y, self.turtle.get("start_angle"))
+            self.turtle.do_goto(rx + self.turtle.get("x_offset"), ry + self.turtle.get("y_offset"), add_point=False)
         
         # dessin
         for _ in range(3):
@@ -57,7 +60,10 @@ class Fractals:
 
         # centrage
         if centered:
-            self.turtle.do_goto(-size/2 + self.turtle.get("x_offset"), -size/2 + self.turtle.get("y_offset"), add_point=False)
+            start_angle = self.turtle.get("start_angle")
+            offset_x, offset_y = -size/2, -size/2
+            rx, ry = self.turtle.get_rotated_offset(offset_x, offset_y, start_angle)
+            self.turtle.do_goto(rx + self.turtle.get("x_offset"), ry + self.turtle.get("y_offset"), add_point=False)
         
         # dessin
         for _ in range(4):

@@ -33,16 +33,17 @@ class UIManager:
                     "title_highlight": (170, 173, 176),
                     "section_highlight": (84, 87, 90),
                     "line": (180, 180, 180), 
-                    "selection": (20, 180, 255),
+                    "selection": (20, 180, 255, 200),
                     "button_idle": (70, 70, 70, 250),
                     "button_hover": (90, 90, 90, 250),
+                    "button_selected": (105, 105, 105, 250),
                     "collapse_idle": (240, 240, 240),
                     "collapse_hover": (170, 170, 170),
                     "collapse_logo_idle": (10, 10, 10),
                     "collapse_logo_hover": (240, 240, 240),
                     "scroll_bar_back": (45, 48, 51),
-                    "scroll_bar_thumb_idle": (63, 66, 66),
-                    "scroll_bar_thumb_hover": (70, 73, 76),
+                    "scroll_bar_thumb_idle": (73, 76, 79),
+                    "scroll_bar_thumb_hover": (83, 86, 89),
                 },
                 "settings": {
                     "back": (40, 43, 46, 255),
@@ -52,8 +53,10 @@ class UIManager:
                     "title_highlight": (160, 163, 166),
                     "section_highlight": (74, 77, 80),
                     "line": (180, 180, 180),
+                    "selection": (20, 180, 255, 200),
                     "button_idle": (65, 65, 65, 250),
                     "button_hover": (85, 85, 85, 250),
+                    "button_selected": (100, 100, 100, 250),
                     "bar": (70, 70, 70),
                     "thumb_idle": (150, 150, 150),
                     "thumb_hover": (240, 240, 240),
@@ -62,8 +65,8 @@ class UIManager:
                     "collapse_logo_idle": (10, 10, 10),
                     "collapse_logo_hover": (240, 240, 240),
                     "scroll_bar_back": (37, 40, 43),
-                    "scroll_bar_thumb_idle": (55, 58, 61),
-                    "scroll_bar_thumb_hover": (62, 65, 68),
+                    "scroll_bar_thumb_idle": (65, 68, 71),
+                    "scroll_bar_thumb_hover": (75, 78, 81),
                 },
                 "turtle": {
                     "back": (35, 37, 40)
@@ -78,13 +81,13 @@ class UIManager:
                     "line": (35, 35, 35),
                     "button_idle": (225, 225, 225),
                     "button_hover": (180, 180, 180),
-                },
+                    },
                 "text_menu": {
                     "back": (220, 220, 220, 250),
                     "text": (0, 0, 0),
                     "item_hover": (190, 190, 190, 250),
                     "item_icon": (90, 90, 90),
-                },
+                    },
                 "fractals": {
                     "back": (230, 230, 230, 255), 
                     "title": (255, 255, 255),
@@ -93,9 +96,10 @@ class UIManager:
                     "title_highlight": (45, 45, 45),
                     "section_highlight": (165, 165, 165),
                     "line": (75, 75, 75),
-                    "selection": (40, 60, 255),
+                    "selection": (40, 60, 255, 240),
                     "button_idle": (190, 190, 190, 250),
                     "button_hover": (170, 170, 170, 250),
+                    "button_selected": (155, 155, 155, 250),
                     "collapse_idle": (17, 17, 17),
                     "collapse_hover": (100, 100, 100),
                     "collapse_logo_idle": (240, 240, 240),
@@ -103,7 +107,7 @@ class UIManager:
                     "scroll_bar_back": (240, 240, 240),
                     "scroll_bar_thumb_idle": (170, 170, 170),
                     "scroll_bar_thumb_hover": (155, 155, 155),
-                },
+                    },
                 "settings": {
                     "back": (235, 235, 235, 255), 
                     "title": (255, 255, 255),
@@ -112,8 +116,10 @@ class UIManager:
                     "title_highlight": (55, 55, 55),
                     "section_highlight": (175, 175, 175),
                     "line": (75, 75, 75),
+                    "selection": (45, 65, 255, 240),
                     "button_idle": (195, 195, 195, 250),
                     "button_hover": (175, 175, 175),
+                    "button_selected": (160, 160, 160, 250),
                     "bar": (150, 150, 150),
                     "thumb_idle": (105, 105, 105),
                     "thumb_hover": (60, 60, 60),
@@ -124,9 +130,72 @@ class UIManager:
                     "scroll_bar_back": (245, 245, 245),
                     "scroll_bar_thumb_idle": (175, 175, 175),
                     "scroll_bar_thumb_hover": (160, 160, 160),
-                },
+                    },
                 "turtle": {
                     "back": (255, 255, 255)
+                },
+            },
+    
+            "mid-light": {
+                "toolbar": {
+                    "back": (225, 222, 218),  # beige clair
+                    "text": (40, 40, 40),
+                    "text_hover": (0, 0, 0),
+                    "line": (90, 90, 90),
+                    "button_idle": (235, 232, 228),
+                    "button_hover": (210, 207, 202),
+                },
+                "text_menu": {
+                    "back": (235, 233, 229, 250),
+                    "text": (25, 25, 25),
+                    "item_hover": (210, 208, 203, 250),
+                    "item_icon": (80, 80, 80),
+                },
+                "fractals": {
+                    "back": (242, 240, 236, 255),  # fond légèrement chaud
+                    "title": (255, 255, 255),
+                    "section": (25, 25, 25),
+                    "text": (30, 30, 30),
+                    "title_highlight": (60, 60, 60),
+                    "section_highlight": (155, 155, 155),
+                    "line": (90, 90, 90),
+                    "selection": (70, 100, 255, 240),
+                    "button_idle": (220, 218, 214, 250),
+                    "button_hover": (200, 198, 193, 250),
+                    "button_selected": (185, 183, 178, 250),
+                    "collapse_idle": (40, 40, 40),
+                    "collapse_hover": (100, 100, 100),
+                    "collapse_logo_idle": (240, 240, 240),
+                    "collapse_logo_hover": (10, 10, 10),
+                    "scroll_bar_back": (238, 236, 232),
+                    "scroll_bar_thumb_idle": (185, 183, 178),
+                    "scroll_bar_thumb_hover": (170, 168, 163),
+                },
+                "settings": {
+                    "back": (245, 243, 239, 255),
+                    "title": (255, 255, 255),
+                    "section": (30, 30, 30),
+                    "text": (35, 35, 35),
+                    "title_highlight": (65, 65, 65),
+                    "section_highlight": (160, 160, 160),
+                    "line": (90, 90, 90),
+                    "selection": (70, 100, 255, 240),
+                    "button_idle": (225, 222, 218, 250),
+                    "button_hover": (205, 202, 198),
+                    "button_selected": (185, 182, 178, 250),
+                    "bar": (160, 160, 160),
+                    "thumb_idle": (115, 115, 115),
+                    "thumb_hover": (70, 70, 70),
+                    "collapse_idle": (35, 35, 35),
+                    "collapse_hover": (110, 110, 110),
+                    "collapse_logo_idle": (240, 240, 240),
+                    "collapse_logo_hover": (10, 10, 10),
+                    "scroll_bar_back": (242, 240, 236),
+                    "scroll_bar_thumb_idle": (180, 178, 173),
+                    "scroll_bar_thumb_hover": (165, 163, 158),
+                },
+                "turtle": {
+                    "back": (248, 246, 242)  # fond très doux, légèrement cassé
                 },
             }
         }
@@ -183,7 +252,10 @@ class UIManager:
                 "icon_x_offset": 30, # décalage de l'icone
                 "icon_size": 5, # taille de l'icone
             },
-            "value": {},
+            "value": {
+                "icon_x_offset": 20, # décalage de l'incone
+                "icon_radius": 4, # rayon de l'icone
+            },
         }
 
             # auto adressage des fonctions utiles
@@ -663,9 +735,17 @@ class UIManager:
     
     def update_text_menu_item_value(self, content: dict, surface: pygame.Surface, surface_rect: pygame.Rect, menu: str="toolbar", hovered: bool=False):
         "met à jour un item de menu textuel de type valeur"
+        parameters = self.text_menu_settings["value"]
+
         # affichage du fond
         if hovered:
             pygame.draw.rect(surface, self.get_color("text_menu", "item_hover"), content["back"], border_radius=5)
+        
+        master, value = content["name"].split(".")
+        is_current = self.get_item_value(master) == value
+        
+        if is_current: # si choix actuel
+            pygame.draw.circle(surface, self.get_color("text_menu", "item_icon"), (content["back"].left + parameters["icon_x_offset"], content["back"].centery), parameters["icon_radius"])
 
 # _________________________- Handlers -_________________________
     def handle_down_scroll_bar(self):

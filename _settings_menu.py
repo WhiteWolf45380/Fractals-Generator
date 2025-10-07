@@ -12,7 +12,7 @@ class SettingsMenu:
         """Base du menu"""
         self.surface_width = self.main.screen_width // 4 # largeur du menu
         self.surface_height = self.main.screen_height - self.main.menus["toolbar"].surface_height # hauteur du menu
-        self.surface = pygame.Surface((self.surface_width, self.surface_height)) # fond du menu
+        self.surface = pygame.Surface((self.surface_width, self.surface_height), pygame.SRCALPHA) # fond du menu
         self.surface_rect = self.surface.get_rect(topright=(self.main.screen_width, self.main.menus["toolbar"].surface_height))# placement en haut de l'écran
 
         # titre
@@ -61,6 +61,7 @@ class SettingsMenu:
             "toggle": {
                 "button_width": 60, # largeur des boutons oui/non
                 "button_height": 30, # hauteur des boutons oui/non
+                "button_space": 8, # espace entre les deux boutons
                 "text_fontsize": 16, # taille de la police
             }
         }
@@ -84,6 +85,7 @@ class SettingsMenu:
             "geometric": {"category": "section", "title": "-- Géométriques"},
             "depth": {"category": "bar", "description": "Profondeur", "value": 1, "value_min": 0, "value_max": 20},
             "size": {"category": "bar", "description": "Taille", "value": 400, "value_min": 100, "value_max": 1500},
+            "start_angle": {"category": "bar", "description": "angle", "value": 0, "value_min": -180, "value_max": 180},
             "visual_lines": {"category": "section", "title": "-- Visuelles (lignes)"},
             "width": {"category": "bar", "description": "Epaisseur", "value": 1, "value_min": 1, "value_max": 20},
             "color_r": {"category": "bar", "description": "Canal rouge", "value": self.ui_manager.get_color(self.name, "line")[0], "value_min": 0, "value_max": 255},
@@ -262,7 +264,7 @@ class SettingsMenu:
         # génération des boutons
         for i, button in enumerate([("true", "Oui"), ("false", "Non")]):
             # fond des boutons
-            package[f"{button[0]}_back"] = pygame.Rect(x + i * parameters["button_width"], 0, parameters["button_width"], parameters["button_height"])
+            package[f"{button[0]}_back"] = pygame.Rect(x + i * (parameters["button_width"] + parameters["button_space"]), 0, parameters["button_width"], parameters["button_height"])
 
             # texte des boutons
             package[f"{button[0]}_text"], package[f"{button[0]}_text_rect"] = self.ui_manager.generate_text(button[1], parameters["text_fontsize"], self.name, "text")
@@ -359,7 +361,16 @@ class SettingsMenu:
             package[f"{button}_back"].centery = package["text_rect"].centery
             package[f"{button}_text_rect"].centery = package["text_rect"].centery
 
+            # bouton survolé
+            if self.ui_manager.is_mouse_hover(package[f"{button}_back"], self.surface_rect):
+                hovered = self.ui_manager.ask_for_mouse_hover(self.name, "setting_toggle", _id=content["name"])
+            else:
+                hovered = False
+            
+            # bouton actuel
+            is_current = (button == "true") == content["value"]
+
             # affichage
-            pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "button_idle"), package[f"{button}_back"])
-            pygame.draw.rect(self.surface, (0, 0, 0, 40), package[f"{button}_back"], 1)
+            pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, f"button_{'selected' if is_current else 'hover' if hovered else 'idle'}"), package[f"{button}_back"])
+            pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "selection") if is_current else (0, 0, 0, 40), package[f"{button}_back"], 1)
             self.surface.blit(package[f"{button}_text"], package[f"{button}_text_rect"])

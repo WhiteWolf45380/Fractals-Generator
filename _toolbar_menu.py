@@ -52,7 +52,7 @@ class ToolbarMenu:
             "Fichier": {
             },
             "Affichage": {
-                "theme": {"name": "theme", "type": "choices", "description": "Thème","choices": [("light", "Clair"), ("dark", "Sombre")], "value": "dark"},
+                "theme": {"name": "theme", "type": "choices", "description": "Thème","choices": [("light", "Clair"), ("mid-light", "Clair attenué"), ("dark", "Sombre")], "value": "dark"},
             },
             "Outils": {
 
