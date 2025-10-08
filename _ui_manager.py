@@ -201,7 +201,8 @@ class UIManager:
         }
 
         # stockage des textes afin de faciliter la regénération lors d'un changement de thème
-        self.generated_texts = []
+        self.generated_texts = {}
+        self.generated_texts_next_id = 0
 
         """fonts"""
         self.fonts_paths = {
@@ -344,7 +345,7 @@ class UIManager:
             return 1 - 0.5 * (2 * (1 - progression)) ** (1 + intensity)
         else: # seconde moitié
             return 0.5 * (2 * progression) ** (1 + intensity)
-
+        
 # _________________________- Demandes dynamiques -_________________________
     def ask_for_mouse_hover(self, category: str, name: str, _id: str="") -> bool:
         """assigne is possible le mouse_hover au boutton passé"""
@@ -374,24 +375,28 @@ class UIManager:
                 item[0] = False
 
 # _________________________- Création d'éléments -_________________________
-    def generate_text(self, content: str, fontsize: int, menu: str, name: str, font="default", wlimit: int=0, end="" , recursive=False):
+    def generate_text(self, content: str, fontsize: int, menu: str, name: str, font="default", wlimit: int=0, end="" , recursive=False, update=False):
         """génère un texte pygame"""
         if recursive: # si appel récursif
             content += "."
         content += end # fin définie            
 
+        # version blanche pour la teinte
         font = pygame.font.Font(self.fonts_paths.get(font, self.fonts_paths["default"]), fontsize)
-        text = font.render(content, 1, (255, 255, 255))
+        text = font.render(content, 1, self.get_color(menu, name))
         text_rect = text.get_rect()
 
         # vérification de la taille limite
         if wlimit > 0 and text_rect.width > wlimit and len(content) > 3 + len(end):
-            text, text_rect = self.generate_text(content[:len(content)-len(end)-(2 if recursive else 1)], fontsize, menu, name, font=font, wlimit=wlimit, end=end, recursive=True)
+            text = self.generate_text(content[:len(content)-len(end)-(2 if recursive else 1)], fontsize, menu, name, font=font, wlimit=wlimit, end=end, recursive=True)
         else:
             # stockage du texte
-            self.generated_texts.append((text.copy(), text, menu, name))
-        
-        return text, text_rect
+            _id = self.generated_texts_next_id
+            self.generated_texts[_id] = {"text": text, "text_rect": text_rect, "menu": menu, "name": name, "content": content, "font": font, "fontsize": fontsize}
+            text = self.generated_texts[_id]
+            self.generated_texts_next_id += 1
+
+        return text
     
     def generate_image(self, path: str, width: int=0, height: int=0, smoothscale=True):
         """génère une image pygame"""
@@ -477,8 +482,8 @@ class UIManager:
         package["back_y_init"] = package["back"].y
 
         # texte
-        package["text"], package["text_rect"] = self.generate_text(description, int(height*0.68), menu, "section", wlimit=width*0.8)
-        package["text_rect"].midleft = (package["back"].left + width * 0.04, package["back"].centery)
+        package["text"] = self.generate_text(description, int(height*0.68), menu, "section", wlimit=width*0.8)
+        package["text"]["rect"].midleft = (package["back"].left + width * 0.04, package["back"].centery)
         package["text_y_init"] = package["text_rect"].y
 
         return package
@@ -804,7 +809,5 @@ class UIManager:
 # _________________________- Fonctions d'activation -_________________________
     def activate_theme(self):
         """application: nouveau thème"""
-        for text_init, text, menu, name in self.generated_texts:
-            new_text= text_init.copy() # copie pour conserver la version blanche
-            new_text.fill(self.get_color(menu, name), special_flags=pygame.BLEND_RGB_MULT) # teinte de la copie pour appliquer le nouvea thème
-            text.blit(new_text, (0, 0)) # changement du texte
+        for text_dict in self.generated_texts.values():
+            text_dict["text"] = text_dict["font"].render(text_dict["content"], 1, self.get_color(text_dict["menu"], text_dict["name"])) # copie pour conserver la version blanche

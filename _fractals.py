@@ -133,3 +133,7 @@ class Fractals:
             self.turtle.do_left(90)
         yield
         yield from self.draw_dragon_recursive(size / 1.4142, depth - 1, -1)
+
+        # remplissage
+        if self.turtle.get("filling") and len(self.turtle.all_points) >= 3:
+            pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get("filling", multiple=("r", "g", "b", "a")), self.turtle.all_points)

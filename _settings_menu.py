@@ -17,8 +17,8 @@ class SettingsMenu:
 
         # titre
         self.title_back = pygame.Rect(0, 0, self.surface_width, 40)
-        self.title_text, self.title_text_rect = self.ui_manager.generate_text("Propriétés", 25, self.name, "title")
-        self.title_text_rect.midleft = (self.surface_width * 0.05, 20)
+        self.title_text = self.ui_manager.generate_text("Propriétés", 25, self.name, "title")
+        self.title_text["rect"].midleft = (self.surface_width * 0.05, 20)
 
         """boutton de repli"""
         self.collapse_button_dict = self.ui_manager.generate_collapse_button("right", 0, self.surface_height / 2, anchor="midleft")
@@ -208,8 +208,8 @@ class SettingsMenu:
 
         # texte
         if content.get("description") is not None:
-            package["text"], package["text_rect"] = self.ui_manager.generate_text(f"{content['description']}", parameters["text_fontsize"],self.name, "text", wlimit=parameters["text_wlimit"], end=" :")
-            package["text_rect"].left = parameters["x_offset"]
+            package["text"] = self.ui_manager.generate_text(f"{content['description']}", parameters["text_fontsize"],self.name, "text", wlimit=parameters["text_wlimit"], end=" :")
+            package["text"]["rect"].left = parameters["x_offset"]
 
         # éléments interactifs
         setting_handler = self.parameters.get(content['category'], {}).get("generate", lambda _: {})(content, (package["text_rect"].right if content.get("description") is not None else 0) + parameters["x_offset"])
@@ -218,12 +218,12 @@ class SettingsMenu:
     
         return package
     
-    def generate_value(self, value: int, x: int) -> dict:
+    def generate_value(self, value: int, x: int, update=False) -> dict:
         """génère un compteur (qui affiche la valeur)"""
         parameters = self.parameters["general"] # raccourci
-        value_text, value_text_rect = self.ui_manager.generate_text(str(value), parameters["value_fontsize"], self.name, "text", wlimit=parameters["value_wlimit"]) # génération du texte
-        value_text_rect.left = x # fixation de la coordonnée x
-        return {"value_text": value_text, "value_text_rect": value_text_rect}
+        value_text = self.ui_manager.generate_text(str(value), parameters["value_fontsize"], self.name, "text", wlimit=parameters["value_wlimit"], update=update) # génération du texte
+        value_text["text_rect"].left = x # fixation de la coordonnée x
+        return {"value_text": value_text}
     
     def generate_setting_section(self, content: dict, _: int) -> dict:
         """génère une section"""
@@ -273,8 +273,8 @@ class SettingsMenu:
             package[f"{button[0]}_back"] = pygame.Rect(x + i * (parameters["button_width"] + parameters["button_space"]), 0, parameters["button_width"], parameters["button_height"])
 
             # texte des boutons
-            package[f"{button[0]}_text"], package[f"{button[0]}_text_rect"] = self.ui_manager.generate_text(button[1], parameters["text_fontsize"], self.name, "text")
-            package[f"{button[0]}_text_rect"].center = package[f"{button[0]}_back"].center
+            package[f"{button[0]}_text"] = self.ui_manager.generate_text(button[1], parameters["text_fontsize"], self.name, "text")
+            package[f"{button[0]}"]["text_rect"].center = package[f"{button[0]}_back"].center
         
         return package
 
@@ -335,7 +335,7 @@ class SettingsMenu:
             package["thumb"].centerx = min(max(left_limit + (right_limit - left_limit) * (content["value"] - content["value_min"]) / (content["value_max"] - content["value_min"]), left_limit), right_limit) # on fait un "snap" afin de faire correspondre l'arrondi
 
             # génération de la valeur textuelle
-            value_dict = self.generate_value(content["value"], package["value_text_rect"].left)
+            value_dict = self.generate_value(content["value"], package["value_text_rect"].left, update=True)
             package["value_text"], _ = value_dict["value_text"], value_dict["value_text_rect"]
     
         # affichage
