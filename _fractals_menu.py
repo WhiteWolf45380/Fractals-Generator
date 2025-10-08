@@ -18,7 +18,7 @@ class FractalsMenu:
         """titre"""
         self.title_back = pygame.Rect(0, 0, self.surface_width, 40)
         self.title_text = self.ui_manager.generate_text("Sélection du motif", 25, self.name, "title")
-        self.title_text["text_rect"].midleft = (self.surface_width * 0.05, 20)
+        self.title_text["rect"].midleft = (self.surface_width * 0.05, 20)
 
         """boutton de repli"""
         self.collapse_button_dict = self.ui_manager.generate_collapse_button("left", self.surface_width, self.surface_height / 2, anchor="midright")
@@ -120,7 +120,7 @@ class FractalsMenu:
 
         # affichage du titre
         pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "title_highlight"), self.title_back)
-        self.surface.blit(self.title_text, self.title_text_rect)
+        self.surface.blit(self.title_text["text"], self.title_text["rect"])
 
         # trait pour accentuer la démarquation
         pygame.draw.line(self.surface, self.ui_manager.get_color(self.name, "line"), (self.surface_width - 2, 0), (self.surface_width - 2, self.surface_height), width=2)
@@ -193,7 +193,7 @@ class FractalsMenu:
         fontsize = min(max(8, int(package["image_rect"].width / (self.parameters["text_len_mean"] * self.parameters["text_font_factor"]))), 30)
         package["text"] = self.ui_manager.generate_text(content["description"], fontsize, self.name, "text", wlimit=package["image_rect"].width*1.2)
         package["text"]["rect"].center = (package["image_rect"].centerx, package["image_rect"].bottom + fontsize * self.parameters["text_y_offset_factor"])
-        package["text_y_init"] = package["text_rect"].y
+        package["text_y_init"] = package["text"]["rect"].y
 
         # mise à jour de la position totale la plus basse
         self.last_y = package["image_rect"].bottom + package["image_rect"].height * self.parameters["rows_space_factor"]
@@ -207,7 +207,7 @@ class FractalsMenu:
 
         # défilement
         package["image_rect"].y = package["image_y_init"] - y_offset
-        package["text_rect"].y = package["text_y_init"] - y_offset
+        package["text"]["rect"].y = package["text_y_init"] - y_offset
 
         # pattern survolé
         is_current = content["name"] == self.main.turtle.get("pattern")
@@ -240,4 +240,4 @@ class FractalsMenu:
         # affichage
         self.surface.blit(image, image_rect) # image
         pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "selection") if is_current else (80, 80, 80), image_rect, 3) # bordure
-        self.surface.blit(package["text"], package["text_rect"]) # description
+        self.surface.blit(package["text"]["text"], package["text"]["rect"]) # description

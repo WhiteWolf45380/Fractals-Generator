@@ -378,7 +378,7 @@ class UIManager:
     def generate_text(self, content: str, fontsize: int, menu: str, name: str, font="default", wlimit: int=0, end="" , recursive=False, update=False):
         """génère un texte pygame"""
         if recursive: # si appel récursif
-            content += "."
+            content += "..."
         content += end # fin définie            
 
         # version blanche pour la teinte
@@ -387,12 +387,12 @@ class UIManager:
         text_rect = text.get_rect()
 
         # vérification de la taille limite
-        if wlimit > 0 and text_rect.width > wlimit and len(content) > 3 + len(end):
-            text = self.generate_text(content[:len(content)-len(end)-(2 if recursive else 1)], fontsize, menu, name, font=font, wlimit=wlimit, end=end, recursive=True)
+        if wlimit > 0 and text_rect.width > wlimit and len(content) > 5 + len(end):
+            text = self.generate_text(content[:len(content)-len(end)-(4 if recursive else 1)], fontsize, menu, name, font=font, wlimit=wlimit, end=end, recursive=True)
         else:
             # stockage du texte
             _id = self.generated_texts_next_id
-            self.generated_texts[_id] = {"text": text, "text_rect": text_rect, "menu": menu, "name": name, "content": content, "font": font, "fontsize": fontsize}
+            self.generated_texts[_id] = {"text": text, "rect": text_rect, "menu": menu, "name": name, "content": content, "font": font, "fontsize": fontsize}
             text = self.generated_texts[_id]
             self.generated_texts_next_id += 1
 
@@ -484,7 +484,7 @@ class UIManager:
         # texte
         package["text"] = self.generate_text(description, int(height*0.68), menu, "section", wlimit=width*0.8)
         package["text"]["rect"].midleft = (package["back"].left + width * 0.04, package["back"].centery)
-        package["text_y_init"] = package["text_rect"].y
+        package["text_y_init"] = package["text"]["rect"].y
 
         return package
     
@@ -518,8 +518,8 @@ class UIManager:
         package["back"] = pygame.Rect(parameters["item_back_offset"], y, parameters["surface_width"] - parameters["item_back_offset"] * 2, parameters["item_height"])
 
         # contenu général des items
-        package["text"], package["text_rect"] = self.generate_text(content["description"], parameters["item_fontsize"], "text_menu", "text", wlimit=parameters["surface_width"] * 0.6)
-        package["text_rect"].midleft = (parameters["item_text_x_offset"], package["back"].centery)
+        package["text"] = self.generate_text(content["description"], parameters["item_fontsize"], "text_menu", "text", wlimit=parameters["surface_width"] * 0.6)
+        package["text"]["rect"].midleft = (parameters["item_text_x_offset"], package["back"].centery)
 
         # contenu propre à chaque type d'item
         dynamic_content = self.text_menu_settings.get(content["type"], {}).get("generate", lambda **kwargs: {})(content=content, y=y, back=package["back"], surface_rect=surface_rect)
@@ -669,11 +669,11 @@ class UIManager:
 
         # défilement
         package["back"].y = package["back_y_init"] - y_offset
-        package["text_rect"].y = package["text_y_init"] - y_offset
+        package["text"]["rect"].y = package["text_y_init"] - y_offset
 
         # affichage
         pygame.draw.rect(surface, self.get_color(menu, "section_highlight"), package["back"])
-        surface.blit(package["text"], package["text_rect"])
+        surface.blit(package["text"]["text"], package["text"]["rect"])
 
     def update_text_menu(self, content: dict, surface: pygame.Surface, menu: str="toolbar"):
         """met à jour un menu textuel"""
@@ -710,7 +710,7 @@ class UIManager:
         self.text_menu_settings.get(content["type"], {}).get("update", lambda a, b, c, d, e: None)(content, surface, surface_rect, menu=menu, hovered=hovered)
 
         # texte
-        surface.blit(content["text"], content["text_rect"])
+        surface.blit(content["text"]["text"], content["text"]["rect"])
     
     def update_text_menu_item_normal(self, content: dict, surface: pygame.Surface, surface_rect: pygame.Rect, menu: str="toolbar", hovered: bool=False):
         "met à jour un item de menu textuel de type normal"

@@ -27,24 +27,45 @@ class Turtle:
 
         """paramètres turtle"""
         self.parameters_init = {
-            "pattern": "koch_triangles", # motif
+            # motif
+            "pattern": "koch_triangles", # choix du motif
+
+            # géométrie
             "depth": 10, # profondeur de récursion
             "size": 100, # taille du motif
-            "x_offset": 0, # décalage x
-            "y_offset": 0, # décalage y
             "start_angle": 0, # angle de la figure
+
+            # lignes
             "width": 1, # épaisseur
             "color_r": 255, # canal rouge
             "color_g": 255, # canal vert
             "color_b": 255, # canal bleu
             "color_a": 255, # opacité
+
+            # remplissage
             "filling": False, # remplissage
             "filling_r": 255, # remplissage rouge
             "filling_g": 0, # remplissage vert
             "filling_b": 0, # remplissage bleu
             "filling_a": 255, # remplissage opacité
+
+            # position
             "centered": True, # ancre
-            "speed": 5, # vitesse d'éxécution
+            "x_offset": 0, # décalage x
+            "y_offset": 0, # décalage y
+
+            # création
+            "creation_type": "radial", # type de motif (radial, tree, spiral, grid)
+            "motif_shape": "circle", # forme répétée : (triangle, square, circle, line)
+            "directions": 6, # nombre de branches à la racine
+            "directions_angle": 360, # cone des racines
+            "divisions": 2, # nombre de sous-éléments à chaque niveau
+            "divisions_angle": 30, # décalage angulaire appliqué à chaque niveau
+            "divisions_scale_factor": 70, # réduction de taille à chaque niveau
+
+            "speed": 10, # vitesse d'éxécution
+            "clear": True, # remise à blanc du dessin
+
             "x": 0, # position x (not to define)
             "y": 0, # position y (not to define)
             "angle": 0, # angle (not to define)
@@ -97,27 +118,32 @@ class Turtle:
             traceback.print_exc()
             self.current_generator = None
             print(f"[Painting] Error during the drawing start")
+    
+    def draw_circle(self, x: int, y: int, radius: int, centered=True):
+        """dessine un cercle"""
+        if not centered:
+            angle = math.radians(self.get("angle")) # récupération de l'angle
+            x = x + math.cos(angle) * radius # décalage horizontal
+            y = y + math.sin(angle) * radius # décalage vertical
+        abs_x, abs_y = self.get_pos(x, y) # récupération des coordonnées absolues
+        color = self.get("color", multiple=("r", "g", "b", "a")) # couleur du contour
+        if self.get("filling"): # si remplissage
+            filling = self.get("filling", multiple=("r", "g", "b", "a")) # couleur de remplissage
+            pygame.draw.circle(self.turtle_surface, filling, (int(abs_x), int(abs_y)), int(radius)) # remplissage
+        pygame.draw.circle(self.turtle_surface, color, (int(abs_x), int(abs_y)), int(radius), self.get("width")) # contour
 
-    def get(self, parameter: str) -> int | str | tuple:
-        """renvoie la valeur du paramètre demandé"""
-        if parameter not in self.parameters:
-            print(f"[Turtle] Error : undefined parameter : {parameter}")
-            return
-        return self.parameters[parameter]
-
+# _________________________- Outils -_________________________
     def push(self, settings_dict: dict):
         """récupère les valeurs des propriétés avant le lancement du dessin"""
         for setting in settings_dict:
             if setting in self.parameters:
                 self.parameters[setting] = settings_dict[setting]["value"]
 
-# _________________________- Outils -_________________________
-
     def get(self, parameter: str, multiple: tuple=None) -> str | int | tuple:
         """retourne le paramètre correspondant"""
         if multiple is not None:
             return tuple(self.parameters.get(f"{parameter}_{single}", 0) for single in multiple)
-        return self.parameters.get(parameter, None)
+        return self.parameters.get(parameter)
     
     def change(self, parameter: str, value, index=None):
         """change la valeur d'un paramètre"""
@@ -145,8 +171,9 @@ class Turtle:
 
     def do_reset(self):
         """reset du tableau"""
-        self.surface.fill(self.ui_manager.get_color(self.name, "back"))
-        self.turtle_surface.fill((0, 0, 0, 0))
+        if self.get("clear"):
+            self.surface.fill(self.ui_manager.get_color(self.name, "back"))
+            self.turtle_surface.fill((0, 0, 0, 0))
         self.do_goto(self.get("x_offset"), self.get("y_offset"))
         self.do_setheading(self.get("start_angle"))
     

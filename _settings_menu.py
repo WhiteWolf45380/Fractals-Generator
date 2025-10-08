@@ -36,7 +36,7 @@ class SettingsMenu:
         self.parameters = {
             "general": {
                 "text_fontsize": 20, # taille de la police des textes descriptif
-                "text_wlimit": self.surface_width * 0.35, # limite de longueur du texte
+                "text_wlimit": self.surface_width * 0.4, # limite de longueur du texte
                 "value_fontsize": 15, # taille de la police des valeurs
                 "value_wlimit": self.surface_width * 0.2, # limite de longueur des valeurs
                 "x_offset": 25, # décalage entre le texte et le contenu interactif
@@ -83,29 +83,34 @@ class SettingsMenu:
 
         """propriétés"""
         self.settings = { # caractéristiques des paramètres
-            "geometric": {"category": "section", "title": "-- Géométriques"},
+            "geometric": {"category": "section", "title": "-- Géométrie"},
             "depth": {"category": "bar", "description": "Profondeur", "value": 1, "value_min": 0, "value_max": 20},
-            "size": {"category": "bar", "description": "Taille", "value": 400, "value_min": 100, "value_max": 1500},
+            "size": {"category": "bar", "description": "Taille", "value": 400, "value_min": 50, "value_max": 1500},
             "start_angle": {"category": "bar", "description": "angle", "value": 0, "value_min": -180, "value_max": 180},
-            "visual_lines": {"category": "section", "title": "-- Visuelles (lignes)"},
+            "visual_lines": {"category": "section", "title": "-- Lignes"},
             "width": {"category": "bar", "description": "Epaisseur", "value": 1, "value_min": 1, "value_max": 20},
             "color_r": {"category": "bar", "description": "Canal rouge", "value": self.ui_manager.get_color(self.name, "line")[0], "value_min": 0, "value_max": 255},
             "color_g": {"category": "bar", "description": "Canal vert", "value": self.ui_manager.get_color(self.name, "line")[1], "value_min": 0, "value_max": 255},
             "color_b": {"category": "bar", "description": "Canal bleu", "value": self.ui_manager.get_color(self.name, "line")[2], "value_min": 0, "value_max": 255},
             "color_a": {"category": "bar", "description": "Opacité", "value": 255, "value_min": 0, "value_max": 255},
             "color_result": {"category": "color", "masters": ["color_r", "color_g", "color_b", "color_a"]},
-            "visual_filling": {"category": "section", "title": "-- Visuelles (remplissage)"},
+            "visual_filling": {"category": "section", "title": "-- Remplissage"},
             "filling": {"category": "toggle", "description": "Remplissage", "value": False},
             "filling_r": {"category": "bar", "description": "Canal rouge", "value": self.ui_manager.get_color(self.name, "line")[0], "value_min": 0, "value_max": 255},
             "filling_g": {"category": "bar", "description": "Canal vert", "value": self.ui_manager.get_color(self.name, "line")[1], "value_min": 0, "value_max": 255},
             "filling_b": {"category": "bar", "description": "Canal bleu", "value": self.ui_manager.get_color(self.name, "line")[2], "value_min": 0, "value_max": 255},
             "filling_a": {"category": "bar", "description": "Opacité", "value": 255, "value_min": 0, "value_max": 255},
             "filling_result": {"category": "color", "masters": ["filling_r", "filling_g", "filling_b", "filling_a"]},
-            "pos": {"category": "section", "title": "-- Positionnelles"},
+            "pos": {"category": "section", "title": "-- Position"},
             "centered": {"category": "toggle", "description": "Centré", "value": True},
             "x_offset": {"category": "bar", "description": "x (horizontal)", "value": 0, "value_min": -1000, "value_max": 1000},
             "y_offset": {"category": "bar", "description": "y (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
-            "generative": {"category": "section", "title": "-- Génératives"},
+            "generative": {"category": "section", "title": "-- Génération"},
+            "directions": {"category": "bar", "description": "Branches initiales", "value": 1, "value_min": 1, "value_max": 18},
+            "directions_angle": {"category": "bar", "description": "Ouverture branches", "value": 360, "value_min": 0, "value_max": 360},
+            "divisions": {"category": "bar", "description": "Sous-branches", "value": 1, "value_min": 1, "value_max": 9},
+            "divisions_angle": {"category": "bar", "description": "Ouverture sous-branches", "value": 60, "value_min": 0, "value_max": 360},
+            "divisions_scale_factor": {"category": "bar", "description": "Taille relative (%)", "value": 60, "value_min": 1, "value_max": 100},
         }
 
         # génération des paramètres
@@ -147,7 +152,7 @@ class SettingsMenu:
 
         # affichage du titre
         pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "title_highlight"), self.title_back)
-        self.surface.blit(self.title_text, self.title_text_rect)
+        self.surface.blit(self.title_text["text"], self.title_text["rect"])
         
         # trait pour accentuer la démarquation
         pygame.draw.line(self.surface, self.ui_manager.get_color(self.name, "line"), (0, 0), (0, self.surface_height), width=2)
@@ -212,7 +217,7 @@ class SettingsMenu:
             package["text"]["rect"].left = parameters["x_offset"]
 
         # éléments interactifs
-        setting_handler = self.parameters.get(content['category'], {}).get("generate", lambda _: {})(content, (package["text_rect"].right if content.get("description") is not None else 0) + parameters["x_offset"])
+        setting_handler = self.parameters.get(content['category'], {}).get("generate", lambda _: {})(content, (package["text"]["rect"].right if content.get("description") is not None else 0) + parameters["x_offset"])
         for key, value in setting_handler.items():
             package[key] = value
     
@@ -222,7 +227,7 @@ class SettingsMenu:
         """génère un compteur (qui affiche la valeur)"""
         parameters = self.parameters["general"] # raccourci
         value_text = self.ui_manager.generate_text(str(value), parameters["value_fontsize"], self.name, "text", wlimit=parameters["value_wlimit"], update=update) # génération du texte
-        value_text["text_rect"].left = x # fixation de la coordonnée x
+        value_text["rect"].left = x # fixation de la coordonnée x
         return {"value_text": value_text}
     
     def generate_setting_section(self, content: dict, _: int) -> dict:
@@ -249,14 +254,14 @@ class SettingsMenu:
         # compteur
         value_dict = self.generate_value(content["value"], bar.right + 15)
 
-        return {"bar": bar, "thumb": thumb, "value_text": value_dict["value_text"], "value_text_rect": value_dict["value_text_rect"]}
+        return {"bar": bar, "thumb": thumb, "value_text": value_dict["value_text"]}
     
     def generate_setting_color(self, content: dict, x: int) -> dict:
         """génère un rectangle de couleur (utile pour le résultat rgb)"""
         parameters = self.parameters["color"] # raccourci
 
         # rectangle
-        height = self.settings[content["masters"][-1]]["package"]["text_rect"].bottom - self.settings[content["masters"][0]]["package"]["text_rect"].top # hauteur variable
+        height = self.settings[content["masters"][-1]]["package"]["text"]["rect"].bottom - self.settings[content["masters"][0]]["package"]["text"]["rect"].top # hauteur variable
         rect = pygame.Rect(x, 0, parameters["width"], height)
         rect.left = x + parameters["x_offset"]
 
@@ -274,7 +279,7 @@ class SettingsMenu:
 
             # texte des boutons
             package[f"{button[0]}_text"] = self.ui_manager.generate_text(button[1], parameters["text_fontsize"], self.name, "text")
-            package[f"{button[0]}"]["text_rect"].center = package[f"{button[0]}_back"].center
+            package[f"{button[0]}_text"]["rect"].center = package[f"{button[0]}_back"].center
         
         return package
 
@@ -284,14 +289,14 @@ class SettingsMenu:
         package = content["package"] # raccourci
 
         if content.get("description") is not None: # mise à jour du contenu interactif avec description
-            package["text_rect"].top = y # repositionnement du texte
-            self.surface.blit(package["text"], package["text_rect"]) # blit du texte
+            package["text"]["rect"].top = y # repositionnement du texte
+            self.surface.blit(package["text"]["text"], package["text"]["rect"]) # blit du texte
             forced_next_y = self.parameters.get(content["category"], {}).get("update", lambda _: {})(content) 
     
         else: # mise à jour du contenu interactif sans description
             forced_next_y = self.parameters.get(content["category"], {}).get("update", lambda _: {})(content, y) 
         
-        return forced_next_y if forced_next_y is not None else package["text_rect"].bottom + self.parameters["general"]["settings_space"]
+        return forced_next_y if forced_next_y is not None else package["text"]["rect"].bottom + self.parameters["general"]["settings_space"]
     
     def update_setting_section(self, content: dict, y: int):
         """met à jour une section"""
@@ -307,9 +312,9 @@ class SettingsMenu:
         package = content["package"] # raccourci
 
         # mise à jour des positions verticales
-        package["bar"].centery = package["text_rect"].centery
+        package["bar"].centery = package["text"]["rect"].centery
         package["thumb"].centery = package["bar"].centery
-        package["value_text_rect"].centery = package["bar"].centery
+        package["value_text"]["rect"].centery = package["bar"].centery
 
         # si l'utilisateur survole la barre
         if self.ui_manager.is_mouse_hover(package["thumb"], self.surface_rect):
@@ -335,21 +340,21 @@ class SettingsMenu:
             package["thumb"].centerx = min(max(left_limit + (right_limit - left_limit) * (content["value"] - content["value_min"]) / (content["value_max"] - content["value_min"]), left_limit), right_limit) # on fait un "snap" afin de faire correspondre l'arrondi
 
             # génération de la valeur textuelle
-            value_dict = self.generate_value(content["value"], package["value_text_rect"].left, update=True)
-            package["value_text"], _ = value_dict["value_text"], value_dict["value_text_rect"]
+            value_dict = self.generate_value(content["value"], package["value_text"]["rect"].left, update=True)
+            package["value_text"]["text"], _ = value_dict["value_text"]["text"], value_dict["value_text"]["rect"]
     
         # affichage
         pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "bar"), package["bar"])
         pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, f"thumb_{'hover' if is_hovered or is_grabbed else 'idle'}"), package["thumb"])
-        self.surface.blit(package["value_text"], package["value_text_rect"])
+        self.surface.blit(package["value_text"]["text"], package["value_text"]["rect"])
 
     def update_setting_color(self, content: dict, _: int):
         """met à jour un rectangle de couleur"""
         package = content["package"] # raccourci
 
         # repositionnement
-        package["rect"].y = self.settings[content["masters"][0]]["package"]["text_rect"].top
-        package["rect"].height = self.settings[content["masters"][-1]]["package"]["text_rect"].bottom - self.settings[content["masters"][0]]["package"]["text_rect"].top
+        package["rect"].y = self.settings[content["masters"][0]]["package"]["text"]["rect"].top
+        package["rect"].height = self.settings[content["masters"][-1]]["package"]["text"]["rect"].bottom - self.settings[content["masters"][0]]["package"]["text"]["rect"].top
 
         # affichage
         pygame.draw.rect(self.surface, tuple(self.settings[content["masters"][i]]["value"] for i in range(3)), package["rect"])
@@ -364,8 +369,8 @@ class SettingsMenu:
         # mise à jour des boutons
         for button in ["true", "false"]:
             # repositionnement
-            package[f"{button}_back"].centery = package["text_rect"].centery
-            package[f"{button}_text_rect"].centery = package["text_rect"].centery
+            package[f"{button}_back"].centery = package["text"]["rect"].centery
+            package[f"{button}_text"]["rect"].centery = package["text"]["rect"].centery
 
             # bouton survolé
             if self.ui_manager.is_mouse_hover(package[f"{button}_back"], self.surface_rect):
@@ -378,5 +383,5 @@ class SettingsMenu:
 
             # affichage
             pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, f"button_{'selected' if is_current else 'hover' if hovered else 'idle'}"), package[f"{button}_back"])
-            pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "selection") if is_current else (0, 0, 0, 40), package[f"{button}_back"], 1)
-            self.surface.blit(package[f"{button}_text"], package[f"{button}_text_rect"])
+            pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "selection") if is_current else (0, 0, 0, 80), package[f"{button}_back"], 1)
+            self.surface.blit(package[f"{button}_text"]["text"], package[f"{button}_text"]["rect"])

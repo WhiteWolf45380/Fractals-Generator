@@ -154,13 +154,13 @@ class ToolbarMenu:
         # texte du bouton
         text = self.ui_manager.generate_text(name, self.text_buttons_parameters["fontsize"], self.name, "text")
         text_hover = self.ui_manager.generate_text(name, self.text_buttons_parameters["fontsize"], self.name, "text_hover")
-        text_width = text["text_rect"].width + 30
+        text_width = text["rect"].width + 30
 
         # fond du bouton
         if anchor != "topleft": # calcul du coin haut gauche si ancre différente
             x, y = self.ui_manager.get_anchor_pos(x, y, text_width, parameters["height"], anchor)
         back = pygame.Rect(x, y, text_width, parameters["height"])
-        text["text_rect"].center = back.center
+        text["rect"].center = back.center
 
         return {"back": back, "text": text, "text_hover": text_hover}
     
@@ -183,4 +183,4 @@ class ToolbarMenu:
             pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "button_hover"), package["back"], border_radius=7)
 
         # texte
-        self.surface.blit(package["text_hover" if is_hovered or is_current and self.text_menus_opened else "text"], package["text_rect"])
+        self.surface.blit(package["text_hover" if is_hovered or is_current and self.text_menus_opened else "text"]["text"], package["text"]["rect"])
