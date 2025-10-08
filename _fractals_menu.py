@@ -52,17 +52,16 @@ class FractalsMenu:
         }
 
         """motifs disponibles"""
-        self.patterns = {
-            "creation": {"name": "creation", "section": "created_patterns", "description": "Crée ton motif"},
-            "koch_triangles": {"name": "koch_triangles", "section": "preset_patterns", "description": "Koch (triangles)"},
-            "koch_squares": {"name": "koch_squares", "section": "preset_patterns", "description": "Koch (carrés)"},
-            "dragon_curve": {"name": "dragon_curve", "section": "preset_patterns", "description": "Dragon Curve"}
-        }
+        self.patterns = {}
 
-        self.sections = {
+        # ajout des presets
+        for name, description, category in self.main.turtle.fractals.available_fractals_list:
+            self.patterns[name] = {"name": name, "section": category, "description": description}
+
+        self.sections = { # différentes sections
             "created_patterns": {"name": "created_patterns", "description": "-- Motifs créés"},
             "preset_patterns": {"name": "preset_patterns", "description": "-- Motifs prédéfinis"}
-        } # différentes sections
+        }
 
         # génération des motifs
         self.last_y = self.parameters["y_start"] # ulisé pour calculer la taille totale

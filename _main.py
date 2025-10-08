@@ -52,9 +52,9 @@ class Main:
         self.ui_manager = UIManager(self)
         self.menus = {} # ensemble des menus
         self.menus["toolbar"] = ToolbarMenu(self)
+        self.turtle = Turtle(self)
         self.menus["fractals"] = FractalsMenu(self)
         self.menus["settings"] = SettingsMenu(self)
-        self.turtle = Turtle(self)
 
         """appels de prélancement"""
         self.ui_manager.activate_theme()

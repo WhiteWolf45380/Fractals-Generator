@@ -55,8 +55,8 @@ class Turtle:
             "y_offset": 0, # décalage y
 
             # création
-            "creation_type": "radial", # type de motif (radial, tree, spiral, grid)
-            "motif_shape": "circle", # forme répétée : (triangle, square, circle, line)
+            "creation_type": "radial", # type de motif (radial, tree, incurved_tree, spiral)
+            "motif_shape": "square", # forme répétée : (triangle, square, circle, line)
             "directions": 6, # nombre de branches à la racine
             "directions_angle": 360, # cone des racines
             "divisions": 2, # nombre de sous-éléments à chaque niveau
@@ -174,15 +174,29 @@ class Turtle:
         if self.get("clear"):
             self.surface.fill(self.ui_manager.get_color(self.name, "back"))
             self.turtle_surface.fill((0, 0, 0, 0))
-        self.do_goto(self.get("x_offset"), self.get("y_offset"))
+        self.do_goto(self.get("x_offset"), self.get("y_offset"), add_point=not self.get("centered"))
         self.do_setheading(self.get("start_angle"))
     
-    def do_goto(self, x: float, y: float, add_point=True):
+    def do_goto(self, x: float, y: float, add_point=True, penup=True):
         """se rend à une position"""
+        if not penup: # traçage du trait
+            old_x, old_y = self.get_pos(self.get("x"), self.get("y"))
+            new_x, new_y = self.get_pos(x, y)
+            color = self.get("color", multiple=("r", "g", "b", "a"))
+            width = self.get("width")
+            
+            if width == 1:# ligne fine
+                pygame.draw.aaline(self.turtle_surface, color, (int(old_x), int(old_y)), (int(new_x), int(new_y)))
+            else:# ligne épaisse
+                radius = max(1, (width + 1) // 2)
+                pygame.draw.line(self.turtle_surface, color, (int(old_x), int(old_y)), (int(new_x), int(new_y)), width)
+                pygame.draw.circle(self.turtle_surface, color, (int(old_x), int(old_y)), radius)
+                pygame.draw.circle(self.turtle_surface, color, (int(new_x), int(new_y)), radius)
+
         self.change("x", x)
         self.change("y", y)
         if add_point:
-            self.all_points.append(self.get_pos(x, y))
+            self.all_points.append(self.get_pos(x, y))            
     
     def do_forward(self, distance: float, penup=False):
         """avance en dessinant"""
