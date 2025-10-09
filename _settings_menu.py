@@ -66,11 +66,13 @@ class SettingsMenu:
                 "text_fontsize": 16, # taille de la police
             },
             "choices": {
-                "back_width": 80, # largeur du fond
-                "back_height": 30, # hauteur du fond
+                "handler": self.handle_down_setting_choices, # fonction d'événement
+                "back_width": 200, # largeur du fond
+                "back_height": 27, # hauteur du fond
                 "text_fontsize": 15, # taille de la police
                 "text_x_offset": 5, # décalage horizontal du texte
-                "icon_width": 20, # largeur de l'icone
+                "icon_width": 25, # largeur de l'icone
+                "icon_size": 5, # taille de l'icone
             },
         }
 
@@ -91,7 +93,7 @@ class SettingsMenu:
         """propriétés"""
         self.settings = { # caractéristiques des paramètres
             "geometric": {"category": "section", "title": "-- Géométrie"},
-            "depth": {"category": "bar", "description": "Profondeur", "value": 1, "value_min": 0, "value_max": 20},
+            "depth": {"category": "bar", "description": "Profondeur", "value": 1, "value_min": 0, "value_max": 30},
             "size": {"category": "bar", "description": "Taille", "value": 400, "value_min": 50, "value_max": 1500},
             "start_angle": {"category": "bar", "description": "angle", "value": 0, "value_min": -180, "value_max": 180},
             "visual_lines": {"category": "section", "title": "-- Lignes"},
@@ -126,6 +128,9 @@ class SettingsMenu:
         for setting in self.settings:
             self.settings[setting]["name"] = setting # attribution d'un nom pour faciliter l'identification
             self.settings[setting]["package"] = self.generate_setting(self.settings[setting]) # génération du paramètre
+
+        # ajout des handlers
+        self.ui_manager.add_handler(self.name, "down_text_menu_item", self.ui_manager.handle_down_text_menu_item) # items des menus textuels
 
         """barre de défilement"""
         self.scroll_bar = self.ui_manager.generate_scroll_bar(self.surface_rect, 1, y_offset_start=self.title_back.height, back=True, hidden=True)
@@ -178,6 +183,7 @@ class SettingsMenu:
 # _________________________- Handlers controllers -_________________________
     def handle_left_click_down(self, button: str):
         """événements associés au clique souris gauche"""
+        print(self.ui_manager.mouse_hover)
         self.ui_manager.do_handler(self.name, f"down_{button}")
 
     def handle_left_click_up(self):
@@ -211,6 +217,10 @@ class SettingsMenu:
         """événement: clique sur un boutton oui/non"""
         setting, button = self.ui_manager.mouse_hover[2].split(".")
         self.settings[setting]["value"] = button == "true"
+        
+    def handle_down_setting_choices(self):
+        """événement(clique gauche): paramètre de type choix"""
+        print(self.ui_manager.mouse_hover)
 
 # _________________________- Création d'éléments -_________________________
     def generate_setting(self, content: dict) -> dict:
@@ -232,10 +242,10 @@ class SettingsMenu:
     
         return package
     
-    def generate_value(self, value: int, x: int, update=False) -> dict:
+    def generate_value(self, value: int, x: int) -> dict:
         """génère un compteur (qui affiche la valeur)"""
         parameters = self.parameters["general"] # raccourci
-        value_text = self.ui_manager.generate_text(str(value), parameters["value_fontsize"], self.name, "text", wlimit=parameters["value_wlimit"], update=update) # génération du texte
+        value_text = self.ui_manager.generate_text(str(value), parameters["value_fontsize"], self.name, "text", wlimit=parameters["value_wlimit"]) # génération du texte
         value_text["rect"].left = x # fixation de la coordonnée x
         return {"value_text": value_text}
     
@@ -302,11 +312,27 @@ class SettingsMenu:
         package["button_text"] = self.ui_manager.generate_text(self.ui_manager.get_item_value(content["name"]), parameters["text_fontsize"], self.name, "text", wlimit=parameters["back_width"] - parameters["icon_width"])
         package["button_text"]["rect"].midleft = (package["button_back"].left + parameters["text_x_offset"], package["button_back"].centery)
 
+        # icone du bouton
+        package["icon_back"] = pygame.Rect(package["button_back"].right - parameters["icon_width"], 0, parameters["icon_width"], parameters["back_height"])
+
+        package["icon_points_opened"] = [
+            (package["icon_back"].centerx - parameters["icon_size"], package["icon_back"].centery - parameters["icon_size"] // 2),
+            (package["icon_back"].centerx + parameters["icon_size"], package["icon_back"].centery - parameters["icon_size"] // 2),
+            (package["icon_back"].centerx, package["icon_back"].centery + parameters["icon_size"] // 2),
+        ]
+
+        package["icon_points_closed"] = [
+            (package["icon_back"].centerx + parameters["icon_size"] / 2, package["icon_back"].centery - parameters["icon_size"]),
+            (package["icon_back"].centerx + parameters["icon_size"] / 2, package["icon_back"].centery + parameters["icon_size"]),
+            (package["icon_back"].centerx - parameters["icon_size"] / 2, package["icon_back"].centery),
+        ]
+
         # menu de choix
-        text_menu_dict = {}
+        menu_x, menu_y = self.main.get_relative_pos(self.surface_rect, x=package["button_back"].left, y=package["button_back"].bottom)
+        package["choices_menu"] = {}
         for choice in content["choices"]:
-            text_menu_dict[choice[0]] = {"name": f"{content['name']}.{choice[0]}", "type": "value", "description": choice[1]}
-        package["choices_menu"] = self.ui_manager.generate_text_menu(text_menu_dict, package["button_back"].left, package["button_back"].bottom, forced_width=100, switch_x_offset=package["button_back"].width, switch_y_offset=package["button_back"].height)
+            package["choices_menu"][choice[0]] = {"name": f"{content['name']}.{choice[0]}", "type": "value", "description": choice[1]}
+        package["choices_menu"]["package"] = self.ui_manager.generate_text_menu(content["name"], package["choices_menu"], menu_x, menu_y, forced_width=100, switch_x_offset=package["button_back"].width, switch_y_offset=package["button_back"].height)
         
         return package
 
@@ -367,7 +393,7 @@ class SettingsMenu:
             package["thumb"].centerx = min(max(left_limit + (right_limit - left_limit) * (content["value"] - content["value_min"]) / (content["value_max"] - content["value_min"]), left_limit), right_limit) # on fait un "snap" afin de faire correspondre l'arrondi
 
             # génération de la valeur textuelle
-            value_dict = self.generate_value(content["value"], package["value_text"]["rect"].left, update=True)
+            value_dict = self.generate_value(content["value"], package["value_text"]["rect"].left)
             package["value_text"]["text"], _ = value_dict["value_text"]["text"], value_dict["value_text"]["rect"]
     
         # affichage
@@ -417,7 +443,27 @@ class SettingsMenu:
         """met à jour un paramètre de type choix"""
         package = content["package"] # raccourci
 
+        # repositionnement
         package["button_back"].centery = package["text"]["rect"].centery
+        package["icon_back"].midright = package["button_back"].midright
 
-        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "button_idle"), package["button_back"], border_radius=3)
-        pygame.draw.rect(self.surface, (0, 0, 0, 200), package["button_back"], 1, border_radius=3)
+        # bouton survolé
+        if self.ui_manager.is_mouse_hover(package["button_back"], self.surface_rect):
+            hovered = self.ui_manager.ask_for_mouse_hover(self.name, "setting_choices", _id=content["name"])
+        else:
+            hovered = False
+
+        # fond
+        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, f"button_{'hover_smooth' if hovered else 'idle'}"), package["button_back"], border_radius=2)
+
+        # icone
+        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, f"button_{'hover' if hovered else 'hover_smooth'}"), package["icon_back"], border_radius=2)
+        points = [
+            (package[f"icon_points_{'opened' if self.ui_manager.get_menu_opened == content['name'] else 'closed'}"][0], package[f"icon_points_{'opened' if self.ui_manager.get_menu_opened == content['name'] else 'closed'}"][2]),
+            (package[f"icon_points_{'opened' if self.ui_manager.get_menu_opened == content['name'] else 'closed'}"][1], package[f"icon_points_{'opened' if self.ui_manager.get_menu_opened == content['name'] else 'closed'}"][2])
+        ]
+        pygame.draw.line(self.surface, self.ui_manager.get_color(self.name, "icon"), (points[0][0][0],points[0][0][1] + package["button_back"].y), (points[0][1][0], points[0][1][1] + package["button_back"].y), 2)
+        pygame.draw.line(self.surface, self.ui_manager.get_color(self.name, "icon"), (points[1][0][0], points[1][0][1] + package["button_back"].y), (points[1][1][0], points[1][1][1] + package["button_back"].y), 2)
+
+        # border
+        pygame.draw.rect(self.surface, (40, 40, 40), package["button_back"], 1, border_radius=2)

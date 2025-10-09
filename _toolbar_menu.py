@@ -69,16 +69,12 @@ class ToolbarMenu:
             self.text_buttons[text_button]["name"] = text_button
             self.text_buttons[text_button]["package"] = self.generate_text_button(text_button, next_x_offset, self.surface_height // 2, anchor="midleft")
             # génération du menu textuel
-            self.text_menus[text_button]["package"] = self.ui_manager.generate_text_menu(self.text_menus[text_button], self.text_buttons[text_button]["package"]["back"].left, self.text_buttons[text_button]["package"]["back"].bottom)
+            self.text_menus[text_button]["package"] = self.ui_manager.generate_text_menu(text_button, self.text_menus[text_button], self.text_buttons[text_button]["package"]["back"].left, self.text_buttons[text_button]["package"]["back"].bottom)
             next_x_offset = self.text_buttons[text_button]["package"]["back"].right
 
         # ajout des handlers
         self.ui_manager.add_handler(self.name, "down_text_button", self.handle_down_text_button) # bouttons textuels
         self.ui_manager.add_handler(self.name, "down_text_menu_item", self.ui_manager.handle_down_text_menu_item) # items des menus textuels
-
-        """variables utiles"""
-        self.text_menus_opened = False
-        self.text_menus_current = ""
 
     def update(self):
         """Mise à jour de la barre d'outils"""
@@ -104,8 +100,9 @@ class ToolbarMenu:
         self.main.screen.blit(self.surface, self.surface_rect)
 
         # blit du menu ouvert
-        if self.text_menus_opened:
-            self.ui_manager.update_text_menu(self.text_menus[self.text_menus_current], self.main.screen, self.main.screen.get_rect())
+        current_text_menu = self.ui_manager.get_menu_opened()
+        if current_text_menu in self.text_menus:
+            self.ui_manager.update_text_menu(self.text_menus[current_text_menu], self.main.screen, self.main.screen.get_rect())
 
 # _________________________- Handlers controllers -_________________________
     def handle_left_click_down(self, button: str):
@@ -136,16 +133,10 @@ class ToolbarMenu:
 
     def handle_down_text_button(self):
         """événement(clique gauche): bouton textuel"""
-        self.text_menus_opened = not self.text_menus_opened
-        if self.text_menus_opened:
-            self.text_menus_current = self.ui_manager.mouse_hover[2]
-            self.ui_manager.do_close_choices_menus()
+        name = self.ui_manager.mouse_hover[2]
+        if self.ui_manager.current_text_menu_just_closed != name:
+            self.ui_manager.ask_for_menu_opening(self.text_menus[name], self.name)
     
-    def handle_down_text_menu(self):
-        """événement indépendant(clique gauche): bouton textuel"""
-        if self.text_menus_opened and not self.text_menus[self.text_menus_current]["package"]["surface_rect"].collidepoint((self.main.mouse_x, self.main.mouse_y)) and not self.text_buttons[self.text_menus_current]["package"]["back"].collidepoint(self.main.get_relative_pos(self.surface_rect)):
-            self.text_menus_opened = False
-
 # _________________________- Création d'éléments -_________________________
     def generate_text_button(self, name: str, x: int, y: int, anchor: str="topleft") -> dict:
         """génère un boutton de type texte"""
@@ -172,15 +163,14 @@ class ToolbarMenu:
         # mouse hover
         if self.ui_manager.is_mouse_hover(package["back"], self.surface_rect):
             is_hovered = self.ui_manager.ask_for_mouse_hover(self.name, "text_button", _id=content["name"])
-            if self.text_menus_opened and self.text_menus_current != self.ui_manager.mouse_hover[2]:
-                self.text_menus_current = self.ui_manager.mouse_hover[2]
-                self.ui_manager.do_close_choices_menus()
+            if self.ui_manager.get_menu_opened() in self.text_menus and self.ui_manager.get_menu_opened() != self.ui_manager.mouse_hover[2]:
+                self.ui_manager.ask_for_menu_opening(self.text_menus[self.ui_manager.mouse_hover[2]], self.name)
         else:
             is_hovered = False
         
-        is_current = content["name"] == self.text_menus_current
-        if is_hovered or is_current and self.text_menus_opened: # fond
+        is_current = content["name"] == self.ui_manager.get_menu_opened()
+        if is_hovered or is_current: # fond
             pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "button_hover"), package["back"], border_radius=7)
 
         # texte
-        self.surface.blit(package["text_hover" if is_hovered or is_current and self.text_menus_opened else "text"]["text"], package["text"]["rect"])
+        self.surface.blit(package["text_hover" if is_hovered or is_current else "text"]["text"], package["text"]["rect"])

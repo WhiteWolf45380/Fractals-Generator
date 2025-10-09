@@ -23,7 +23,7 @@ class UIManager:
                     "back": (69, 72, 75, 250),
                     "text": (255, 255, 255),
                     "item_hover": (52, 55, 58, 250),
-                    "item_icon": (150, 150, 150),
+                    "item_icon": (147, 150, 153),
                 },
                 "fractals": {
                     "back": (50, 53, 56, 255), 
@@ -32,15 +32,16 @@ class UIManager:
                     "text": (225, 230, 240),
                     "title_highlight": (170, 173, 176),
                     "section_highlight": (84, 87, 90),
-                    "line": (180, 180, 180), 
+                    "line": (173, 180, 183), 
                     "selection": (20, 180, 255, 200),
-                    "button_idle": (70, 70, 70, 250),
-                    "button_hover": (90, 90, 90, 250),
-                    "button_selected": (105, 105, 105, 250),
-                    "collapse_idle": (240, 240, 240),
-                    "collapse_hover": (170, 170, 170),
-                    "collapse_logo_idle": (10, 10, 10),
-                    "collapse_logo_hover": (240, 240, 240),
+                    "button_idle": (67, 70, 73, 250),
+                    "button_hover": (87, 90, 93, 250),
+                    "icon": (147, 150, 153),
+                    "button_selected": (102, 105, 108, 250),
+                    "collapse_idle": (237, 240, 243),
+                    "collapse_hover": (167, 170, 173),
+                    "collapse_logo_idle": (7, 10, 13),
+                    "collapse_logo_hover": (237, 240, 243),
                     "scroll_bar_back": (45, 48, 51),
                     "scroll_bar_thumb_idle": (73, 76, 79),
                     "scroll_bar_thumb_hover": (83, 86, 89),
@@ -52,18 +53,20 @@ class UIManager:
                     "text": (220, 225, 235),
                     "title_highlight": (160, 163, 166),
                     "section_highlight": (74, 77, 80),
-                    "line": (180, 180, 180),
+                    "line": (177, 180, 183),
                     "selection": (20, 180, 255, 200),
-                    "button_idle": (65, 65, 65, 250),
-                    "button_hover": (85, 85, 85, 250),
-                    "button_selected": (100, 100, 100, 250),
-                    "bar": (70, 70, 70),
-                    "thumb_idle": (150, 150, 150),
-                    "thumb_hover": (240, 240, 240),
-                    "collapse_idle": (221, 221, 221),
-                    "collapse_hover": (160, 160, 160),
-                    "collapse_logo_idle": (10, 10, 10),
-                    "collapse_logo_hover": (240, 240, 240),
+                    "button_idle": (62, 65, 68, 250),
+                    "button_hover": (82, 85, 88, 250),
+                    "button_hover_smooth": (73, 75, 78, 250),
+                    "icon": (147, 150, 153),
+                    "button_selected": (97, 100, 103, 250),
+                    "bar": (67, 70, 73),
+                    "thumb_idle": (147, 150, 153),
+                    "thumb_hover": (237, 240, 243),
+                    "collapse_idle": (218, 221, 224),
+                    "collapse_hover": (157, 160, 163),
+                    "collapse_logo_idle": (7, 10, 13),
+                    "collapse_logo_hover": (237, 240, 243),
                     "scroll_bar_back": (37, 40, 43),
                     "scroll_bar_thumb_idle": (65, 68, 71),
                     "scroll_bar_thumb_hover": (75, 78, 81),
@@ -99,6 +102,7 @@ class UIManager:
                     "selection": (40, 60, 255, 240),
                     "button_idle": (190, 190, 190, 250),
                     "button_hover": (170, 170, 170, 250),
+                    "icon": (90, 90, 90),
                     "button_selected": (155, 155, 155, 250),
                     "collapse_idle": (17, 17, 17),
                     "collapse_hover": (100, 100, 100),
@@ -119,6 +123,8 @@ class UIManager:
                     "selection": (45, 65, 255, 240),
                     "button_idle": (195, 195, 195, 250),
                     "button_hover": (175, 175, 175),
+                    "button_hover_smooth": (185, 185, 185, 250),
+                    "icon": (90, 90, 90),
                     "button_selected": (160, 160, 160, 250),
                     "bar": (150, 150, 150),
                     "thumb_idle": (105, 105, 105),
@@ -163,6 +169,7 @@ class UIManager:
                     "button_idle": (220, 218, 214, 250),
                     "button_hover": (200, 198, 193, 250),
                     "button_selected": (185, 183, 178, 250),
+                    "icon": (80, 80, 80),
                     "collapse_idle": (40, 40, 40),
                     "collapse_hover": (100, 100, 100),
                     "collapse_logo_idle": (240, 240, 240),
@@ -182,7 +189,9 @@ class UIManager:
                     "selection": (70, 100, 255, 240),
                     "button_idle": (225, 222, 218, 250),
                     "button_hover": (205, 202, 198),
+                    "button_hover_smooth": (215, 212, 208, 250),
                     "button_selected": (185, 182, 178, 250),
+                    "icon": (80, 80, 80),
                     "bar": (160, 160, 160),
                     "thumb_idle": (115, 115, 115),
                     "thumb_hover": (70, 70, 70),
@@ -267,7 +276,7 @@ class UIManager:
 
             # stockage des valeurs
         self.text_menus_items_values = {
-            "theme": [False, "dark"], # thème (light, mid-light, dark...)
+            "theme": "dark", # thème (light, mid-light, dark...)
             "creation_type": "spiral", # type de génération (radial, tree, incurved_tree, spiral...)
             "motif_shape": "line", # forme du motif génératif (line, square, triangle, circle...)
         }
@@ -278,6 +287,8 @@ class UIManager:
         """variables générales"""
         self.mouse_hover = None # boutton survolé (tuple(category, name))
         self.mouse_grabbing = None # barre attrapée (tuple(category, name))
+        self.current_text_menu = None # menu textuel ouvert (tuple(content, menu))
+        self.current_text_menu_just_closed = None # le menu vient d'être fermé
         
         """handlers (on y stock des fonctions événements)"""
         self.handlers = {"toolbar": {}, "fractals": {}, "settings": {}}
@@ -305,6 +316,10 @@ class UIManager:
             return self.mouse_grabbing[0] == category and self.mouse_grabbing[1] == name
         return self.mouse_grabbing == (category, name, _id)
     
+    def is_menu_opened(self, name: str):
+        """vérifie si le menu textuel est ouvert"""
+        return self.current_text_menu[0].get("name", "") == name
+    
 # _________________________- recherches de données -_________________________
     def get_item_value(self, name: str) -> all:
         """renvoie la valeur d'un item"""
@@ -325,6 +340,12 @@ class UIManager:
     def get_anchor_pos(self, x: int, y: int, width: int, height: int, anchor: str) -> tuple:
         """renvoie la position de l'angle haut gauche d'un élément en fonction de son point d'ancrage"""
         return x + width * self.anchors_offsets.get(anchor, (0, 0))[0], y + height * self.anchors_offsets.get(anchor, (0, 0))[1]
+    
+    def get_menu_opened(self) -> str:
+        """renvoie le menu actuellement ouvert"""
+        if self.current_text_menu is None:
+            return
+        return self.current_text_menu[0].get("package", {}).get("name")
     
     def get_ease_in(self, progression: float, intensity: int=1) -> float:
         """Progression : commence lentement -> finit vite"""
@@ -350,17 +371,26 @@ class UIManager:
         
 # _________________________- Demandes dynamiques -_________________________
     def ask_for_mouse_hover(self, category: str, name: str, _id: str="") -> bool:
-        """assigne is possible le mouse_hover au boutton passé"""
+        """assigne si possible le mouse_hover au boutton passé"""
         if self.mouse_grabbing is None:
             self.mouse_hover = (category, name, _id)
             return True
         return False
     
     def ask_for_mouse_grabbing(self, category: str, name: str, _id: str="") -> bool:
-        """assigne is possible le mouse_grabbing à la barre passée"""
+        """assigne si possible le mouse_grabbing à la barre passée"""
         self.mouse_grabbing = (category, name, _id)
         self.mouse_hover = None # annulation du mouse_hover
         return True
+    
+    def ask_for_menu_opening(self, content: dict, menu: str):
+        """assigne le current_text_menu au menu passé"""
+        self.do_close_choices_menus()
+        self.current_text_menu = (content, menu)
+    
+    def ask_for_menu_closing(self):
+        """assigne le current_text_menu à None"""
+        self.current_text_menu = None
 
     def add_handler(self, category: str, name: str, handler: callable):
         """ajoute un événement à un boutton"""
@@ -377,7 +407,7 @@ class UIManager:
                 item[0] = False
 
 # _________________________- Création d'éléments -_________________________
-    def generate_text(self, content: str, fontsize: int, menu: str, name: str, font="default", wlimit: int=0, end="" , recursive=False, update=False):
+    def generate_text(self, content: str, fontsize: int, menu: str, name: str, font="default", wlimit: int=0, end="" , recursive=False):
         """génère un texte pygame"""
         if recursive: # si appel récursif
             content += "..."
@@ -490,7 +520,7 @@ class UIManager:
 
         return package
     
-    def generate_text_menu(self, content: dict, x: int, y: int, forced_width: int=0, switch_x_offset: int= 0, switch_y_offset: int=0) -> dict:
+    def generate_text_menu(self, name: str, content: dict, x: int, y: int, forced_width: int=0, switch_x_offset: int= 0, switch_y_offset: int=0) -> dict:
         """génère un menu textuel"""
         package = {} # dictionnaire final
         parameters = self.text_menu_settings["general"] # raccourci
@@ -512,6 +542,9 @@ class UIManager:
         # clipping
         package["surface"] = pygame.transform.scale(package["surface"], (package["surface_rect"].width, 1 + min(parameters["surface_height_max"], parameters["item_back_offset"] * 2 + (i_save + 1) * parameters["item_height"])))
         package["surface_rect"] = package["surface"].get_rect(topleft=(x, y))
+
+        # variables utiles
+        package["name"] = name
 
         return package
     
@@ -586,7 +619,7 @@ class UIManager:
         package["choices_menu"] = {}
         for choice, description in content["choices"]:
             package["choices_menu"][choice] = {"name": f"{content['name']}.{choice}", "type": "value", "description": description}
-        package["choices_menu"]["package"] = self.generate_text_menu(package["choices_menu"], surface_rect.left + back.right, surface_rect.top + y - self.text_menu_settings["general"]["item_back_offset"], forced_width=200)
+        package["choices_menu"]["package"] = self.generate_text_menu(content["name"], package["choices_menu"], surface_rect.left + back.right, surface_rect.top + y - self.text_menu_settings["general"]["item_back_offset"], forced_width=200)
 
         # stockage de l'état (menu de choix : ouvert/fermé) et de la valeur par défaut dans un dictionnaire général
         self.text_menus_items_values[content["name"]] = [False, content["value"]]
@@ -787,6 +820,14 @@ class UIManager:
 
         # offset vertical réel
         scroll_bar["y_dif"] = int(progression * (scroll_bar["bar_rect"].height / scroll_bar["ratio"] - scroll_bar["bar_rect"].height))
+    
+    def handle_down_text_menu(self):
+        """événement: vérifie que le clique se trouve dans le menu sinon il est fermé"""
+        name = self.get_menu_opened()
+        self.current_text_menu_just_closed = None
+        if name is not None and not self.current_text_menu[0]["package"]["surface_rect"].collidepoint((self.main.mouse_x, self.main.mouse_y)):
+            self.current_text_menu_just_closed = self.get_menu_opened()
+            self.ask_for_menu_closing()
     
     def handle_down_text_menu_item(self):
         """événement: clic sur un item de menu textuel"""

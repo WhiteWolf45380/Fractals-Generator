@@ -83,6 +83,10 @@ class Main:
             self.menus["settings"].update()
             self.menus["toolbar"].update()
 
+            # affichage des menus textuels
+            if self.ui_manager.get_menu_opened() is not None:
+                self.ui_manager.update_text_menu(self.ui_manager.current_text_menu[0], self.screen, self.screen.get_rect(), self.ui_manager.current_text_menu[1])
+
             # vérification des entrées utilisateur
             self.handle_inputs()
                   
@@ -98,7 +102,7 @@ class Main:
             
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1: # clique gauche (appuyé)
                 # événements indépendants
-                self.menus["toolbar"].handle_down_text_menu()
+                self.ui_manager.handle_down_text_menu()
                 
                 if self.ui_manager.mouse_hover is not None: # si un boutton est survolé
                     self.menus[self.ui_manager.mouse_hover[0]].handle_left_click_down(self.ui_manager.mouse_hover[1])
