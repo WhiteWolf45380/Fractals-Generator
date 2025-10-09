@@ -267,7 +267,9 @@ class UIManager:
 
             # stockage des valeurs
         self.text_menus_items_values = {
-            "theme": [False, "dark"]
+            "theme": [False, "dark"], # thème (light, mid-light, dark...)
+            "creation_type": "spiral", # type de génération (radial, tree, incurved_tree, spiral...)
+            "motif_shape": "line", # forme du motif génératif (line, square, triangle, circle...)
         }
 
             # stockage intermédiaire pour adapter les priorités des blit
@@ -488,13 +490,17 @@ class UIManager:
 
         return package
     
-    def generate_text_menu(self, content: dict, x: int, y: int) -> dict:
+    def generate_text_menu(self, content: dict, x: int, y: int, forced_width: int=0, switch_x_offset: int= 0, switch_y_offset: int=0) -> dict:
         """génère un menu textuel"""
         package = {} # dictionnaire final
         parameters = self.text_menu_settings["general"] # raccourci
 
+        # sauvegarde des décalages en cas de menu dépassant de l'écran
+        package["switch_x_offset"] = switch_x_offset
+        package["switch_y_offset"] = switch_y_offset
+
         # surface
-        package["surface"] = pygame.Surface((parameters["surface_width"], parameters["surface_height_max"]), pygame.SRCALPHA)
+        package["surface"] = pygame.Surface((forced_width if forced_width > 0 else parameters["surface_width"], parameters["surface_height_max"]), pygame.SRCALPHA)
         package["surface_rect"] = package["surface"].get_rect(topleft=(x, y))
 
         # génération des éléments
@@ -504,7 +510,7 @@ class UIManager:
             i_save = i
         
         # clipping
-        package["surface"] = pygame.transform.scale(package["surface"], (parameters["surface_width"], 1 + min(parameters["surface_height_max"], parameters["item_back_offset"] * 2 + (i_save + 1) * parameters["item_height"])))
+        package["surface"] = pygame.transform.scale(package["surface"], (package["surface_rect"].width, 1 + min(parameters["surface_height_max"], parameters["item_back_offset"] * 2 + (i_save + 1) * parameters["item_height"])))
         package["surface_rect"] = package["surface"].get_rect(topleft=(x, y))
 
         return package
@@ -515,10 +521,10 @@ class UIManager:
         parameters = self.text_menu_settings["general"] # raccourci
 
         # fond
-        package["back"] = pygame.Rect(parameters["item_back_offset"], y, parameters["surface_width"] - parameters["item_back_offset"] * 2, parameters["item_height"])
+        package["back"] = pygame.Rect(parameters["item_back_offset"], y, surface_rect.width - parameters["item_back_offset"] * 2, parameters["item_height"])
 
         # contenu général des items
-        package["text"] = self.generate_text(content["description"], parameters["item_fontsize"], "text_menu", "text", wlimit=parameters["surface_width"] * 0.6)
+        package["text"] = self.generate_text(content["description"], parameters["item_fontsize"], "text_menu", "text", wlimit=surface_rect.width * 0.6)
         package["text"]["rect"].midleft = (parameters["item_text_x_offset"], package["back"].centery)
 
         # contenu propre à chaque type d'item
@@ -580,7 +586,7 @@ class UIManager:
         package["choices_menu"] = {}
         for choice, description in content["choices"]:
             package["choices_menu"][choice] = {"name": f"{content['name']}.{choice}", "type": "value", "description": description}
-        package["choices_menu"]["package"] = self.generate_text_menu(package["choices_menu"], surface_rect.left + back.right, surface_rect.top + y - self.text_menu_settings["general"]["item_back_offset"])
+        package["choices_menu"]["package"] = self.generate_text_menu(package["choices_menu"], surface_rect.left + back.right, surface_rect.top + y - self.text_menu_settings["general"]["item_back_offset"], forced_width=200)
 
         # stockage de l'état (menu de choix : ouvert/fermé) et de la valeur par défaut dans un dictionnaire général
         self.text_menus_items_values[content["name"]] = [False, content["value"]]
@@ -675,9 +681,16 @@ class UIManager:
         pygame.draw.rect(surface, self.get_color(menu, "section_highlight"), package["back"])
         surface.blit(package["text"]["text"], package["text"]["rect"])
 
-    def update_text_menu(self, content: dict, surface: pygame.Surface, menu: str="toolbar"):
+    def update_text_menu(self, content: dict, surface: pygame.Surface, surface_rect: pygame.Surface, menu: str="toolbar"):
         """met à jour un menu textuel"""
         package = content["package"] # raccourci
+
+        # vérification que l'on se trouve dans l'écran
+        rect = package["surface_rect"].copy()
+        if package["surface_rect"].right > surface_rect.right:
+            rect.x -= package["switch_x_offset"]
+        if package["surface_rect"].bottom > surface_rect.bottom:
+            rect.bottom = package["surface_rect"].top - package["switch_y_offset"]
 
         # reset du fond avec border radius
         pygame.draw.rect(package["surface"], self.get_color("text_menu", "back"), package["surface"].get_rect(), border_radius=5)
@@ -736,7 +749,7 @@ class UIManager:
         
         # affichage du menu de choix si menu ouvert
         if self.text_menus_items_values[content["name"]][0]:
-            self.choices_menus_to_blit.append((content["choices_menu"], self.main.screen, menu))
+            self.choices_menus_to_blit.append((content["choices_menu"], self.main.screen, self.main.screen.get_rect(), menu))
     
     def update_text_menu_item_value(self, content: dict, surface: pygame.Surface, surface_rect: pygame.Rect, menu: str="toolbar", hovered: bool=False):
         "met à jour un item de menu textuel de type valeur"

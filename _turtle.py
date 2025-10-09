@@ -55,8 +55,8 @@ class Turtle:
             "y_offset": 0, # décalage y
 
             # création
-            "creation_type": "radial", # type de motif (radial, tree, incurved_tree, spiral)
-            "motif_shape": "square", # forme répétée : (triangle, square, circle, line)
+            "creation_type": self.ui_manager.get_item_value("creation_type"), # type de motif (radial, tree, incurved_tree, spiral)
+            "motif_shape": self.ui_manager.get_item_value("motif_shape"), # forme répétée : (triangle, square, circle, line)
             "directions": 6, # nombre de branches à la racine
             "directions_angle": 360, # cone des racines
             "divisions": 2, # nombre de sous-éléments à chaque niveau
@@ -84,6 +84,12 @@ class Turtle:
             9: 5000,
             10: 10000,
         }
+
+        # type de génération disponibles
+        self.available_types = [("radial", "Radiale"), ("tree", "Arborescente"), ("incurved_tree", "Arborescente incurvée"), ("spiral", "Spirale")]
+        
+        # formes de motif disponibles
+        self.available_shapes = [("line", "Ligne"), ("square", "Carré"), ("triangle", "Triangle"), ("circle", "Cercle")]
 
         """stockage des fractals"""
         self.fractals = Fractals(self)
@@ -119,15 +125,16 @@ class Turtle:
             self.current_generator = None
             print(f"[Painting] Error during the drawing start")
     
-    def draw_circle(self, x: int, y: int, radius: int, centered=True):
+    def draw_circle(self, x: int, y: int, radius: int, centered=True, fill=False):
         """dessine un cercle"""
-        if not centered:
+        if not centered: # si non centré -> dessine devant
             angle = math.radians(self.get("angle")) # récupération de l'angle
             x = x + math.cos(angle) * radius # décalage horizontal
             y = y + math.sin(angle) * radius # décalage vertical
         abs_x, abs_y = self.get_pos(x, y) # récupération des coordonnées absolues
+
         color = self.get("color", multiple=("r", "g", "b", "a")) # couleur du contour
-        if self.get("filling"): # si remplissage
+        if fill: # si remplissage
             filling = self.get("filling", multiple=("r", "g", "b", "a")) # couleur de remplissage
             pygame.draw.circle(self.turtle_surface, filling, (int(abs_x), int(abs_y)), int(radius)) # remplissage
         pygame.draw.circle(self.turtle_surface, color, (int(abs_x), int(abs_y)), int(radius), self.get("width")) # contour
@@ -137,7 +144,10 @@ class Turtle:
         """récupère les valeurs des propriétés avant le lancement du dessin"""
         for setting in settings_dict:
             if setting in self.parameters:
-                self.parameters[setting] = settings_dict[setting]["value"]
+                if "value" in settings_dict[setting]:
+                    self.parameters[setting] = settings_dict[setting]["value"]
+                else:
+                    self.parameters[setting] = self.ui_manager.get_item_value(setting)
 
     def get(self, parameter: str, multiple: tuple=None) -> str | int | tuple:
         """retourne le paramètre correspondant"""

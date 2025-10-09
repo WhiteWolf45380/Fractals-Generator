@@ -105,7 +105,7 @@ class ToolbarMenu:
 
         # blit du menu ouvert
         if self.text_menus_opened:
-            self.ui_manager.update_text_menu(self.text_menus[self.text_menus_current], self.main.screen)
+            self.ui_manager.update_text_menu(self.text_menus[self.text_menus_current], self.main.screen, self.main.screen.get_rect())
 
 # _________________________- Handlers controllers -_________________________
     def handle_left_click_down(self, button: str):

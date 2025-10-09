@@ -64,7 +64,14 @@ class SettingsMenu:
                 "button_height": 30, # hauteur des boutons oui/non
                 "button_space": 8, # espace entre les deux boutons
                 "text_fontsize": 16, # taille de la police
-            }
+            },
+            "choices": {
+                "back_width": 80, # largeur du fond
+                "back_height": 30, # hauteur du fond
+                "text_fontsize": 15, # taille de la police
+                "text_x_offset": 5, # décalage horizontal du texte
+                "icon_width": 20, # largeur de l'icone
+            },
         }
 
         # auto adressage des fonctions
@@ -106,6 +113,8 @@ class SettingsMenu:
             "x_offset": {"category": "bar", "description": "x (horizontal)", "value": 0, "value_min": -1000, "value_max": 1000},
             "y_offset": {"category": "bar", "description": "y (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
             "generative": {"category": "section", "title": "-- Génération"},
+            "creation_type": {"category": "choices", "description": "Type", "choices": self.main.turtle.available_types},
+            "motif_shape": {"category": "choices", "description": "Forme", "choices": self.main.turtle.available_shapes},
             "directions": {"category": "bar", "description": "Branches initiales", "value": 1, "value_min": 1, "value_max": 18},
             "directions_angle": {"category": "bar", "description": "Ouverture branches", "value": 360, "value_min": 0, "value_max": 360},
             "divisions": {"category": "bar", "description": "Sous-branches", "value": 1, "value_min": 1, "value_max": 9},
@@ -269,7 +278,7 @@ class SettingsMenu:
     
     def generate_setting_toggle(self, content: dict, x: int) -> dict:
         """génère un paramètre de type alternatif"""
-        parameters = self.parameters["toggle"]
+        parameters = self.parameters["toggle"] # raccourci
         package = {} # dictionnaire final
 
         # génération des boutons
@@ -280,6 +289,24 @@ class SettingsMenu:
             # texte des boutons
             package[f"{button[0]}_text"] = self.ui_manager.generate_text(button[1], parameters["text_fontsize"], self.name, "text")
             package[f"{button[0]}_text"]["rect"].center = package[f"{button[0]}_back"].center
+        
+        return package
+    
+    def generate_setting_choices(self, content: dict, x: int) -> dict:
+        """génère un paramètre de type choix"""
+        parameters = self.parameters["choices"] # raccourci
+        package = {} # dictionnaire final
+
+        # bouton de choix
+        package["button_back"] = pygame.Rect(x, 0, parameters["back_width"], parameters["back_height"])
+        package["button_text"] = self.ui_manager.generate_text(self.ui_manager.get_item_value(content["name"]), parameters["text_fontsize"], self.name, "text", wlimit=parameters["back_width"] - parameters["icon_width"])
+        package["button_text"]["rect"].midleft = (package["button_back"].left + parameters["text_x_offset"], package["button_back"].centery)
+
+        # menu de choix
+        text_menu_dict = {}
+        for choice in content["choices"]:
+            text_menu_dict[choice[0]] = {"name": f"{content['name']}.{choice[0]}", "type": "value", "description": choice[1]}
+        package["choices_menu"] = self.ui_manager.generate_text_menu(text_menu_dict, package["button_back"].left, package["button_back"].bottom, forced_width=100, switch_x_offset=package["button_back"].width, switch_y_offset=package["button_back"].height)
         
         return package
 
@@ -385,3 +412,12 @@ class SettingsMenu:
             pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, f"button_{'selected' if is_current else 'hover' if hovered else 'idle'}"), package[f"{button}_back"])
             pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "selection") if is_current else (0, 0, 0, 80), package[f"{button}_back"], 1)
             self.surface.blit(package[f"{button}_text"]["text"], package[f"{button}_text"]["rect"])
+
+    def update_setting_choices(self, content: dict):
+        """met à jour un paramètre de type choix"""
+        package = content["package"] # raccourci
+
+        package["button_back"].centery = package["text"]["rect"].centery
+
+        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "button_idle"), package["button_back"], border_radius=3)
+        pygame.draw.rect(self.surface, (0, 0, 0, 200), package["button_back"], 1, border_radius=3)

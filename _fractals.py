@@ -222,7 +222,7 @@ class Fractals:
                 yield
                 self.turtle.do_right(90)
         elif motif_shape == "circle":
-            self.turtle.draw_circle(self.turtle.get("x"), self.turtle.get("y"), size, centered=False)
+            self.turtle.draw_circle(self.turtle.get("x"), self.turtle.get("y"), size / 2, centered=False)
             yield
         elif motif_shape == "line":
             self.turtle.do_forward(size)
@@ -526,12 +526,12 @@ class Fractals:
         cx, cy = self.turtle.get("x"), self.turtle.get("y")
         
         # Cercle central
-        self.turtle.draw_circle(cx, cy, size, centered=True)
+        self.turtle.draw_circle(cx, cy, size / 4, centered=True)
         yield
         
         # Lancement de la récursion avec plusieurs branches radiales
         num_branches = 8  # nombre de branches principales
-        yield from self.draw_circle_limit_universe(cx, cy, size, self.turtle.get("depth"), num_branches)
+        yield from self.draw_circle_limit_universe(cx, cy, size / 4, self.turtle.get("depth"), num_branches)
 
     def draw_circle_limit_universe(self, cx: float, cy: float, initial_radius: float, depth: int, num_branches: int):
         """récursion circle limit : tous les cercles référencés au centre initial"""
@@ -545,16 +545,13 @@ class Fractals:
             # Rayon des cercles diminue hyperboliquement avec la distance
             # Formule inspirée du disque de Poincaré
             distance_factor = 1 + ring * 0.4  # facteur de distance du centre
-            child_radius = initial_radius / (distance_factor ** 1.5)
+            child_radius = initial_radius / (distance_factor ** 2)
             
             if child_radius < 1:  # trop petit, on arrête
                 return
             
             # Distance depuis le centre initial
-            ring_distance = initial_radius + sum(
-                initial_radius / ((1 + i * 0.4) ** 1.5) 
-                for i in range(1, ring + 1)
-            )
+            ring_distance = initial_radius + sum(initial_radius / ((1 + i * 0.4) ** 1.5) for i in range(1, ring + 1))
             
             # Nombre de cercles dans cet anneau (augmente avec la distance)
             circles_in_ring = num_branches * (ring + 1)
@@ -634,13 +631,9 @@ class Fractals:
 
     # _________________- Mandala Fractal -_________________
     def init_mandala_fractal(self, size: float):
-        """mandala avec pétales fractals"""
-        if self.turtle.get("centered"):
-            cx, cy = 0, 0
-        else:
-            cx, cy = self.turtle.get("x"), self.turtle.get("y")
-        
-        yield from self.draw_mandala_recursive(cx, cy, size, 0, self.turtle.get("depth"), 12)
+        """mandala avec pétales fractals"""        
+        x, y = self.turtle.get("x"), self.turtle.get("y")
+        yield from self.draw_mandala_recursive(x, y, size, 0, self.turtle.get("depth"), 12)
 
     def draw_mandala_recursive(self, cx: float, cy: float, radius: float, rotation: float, depth: int, petals: int):
         """mandala avec rotation et récursion"""
@@ -650,7 +643,7 @@ class Fractals:
             return
         
         # Cercle central
-        self.turtle.draw_circle(cx, cy, radius * 0.2, centered=True)
+        self.turtle.draw_circle(cx, cy, radius * 0.76, centered=True)
         yield
         
         # Pétales
@@ -660,7 +653,7 @@ class Fractals:
             petal_y = cy + math.sin(math.radians(angle)) * radius
             petal_radius = radius * 0.3
             
-            self.turtle.draw_circle(petal_x, petal_y, petal_radius, centered=True)
+            self.turtle.draw_circle(petal_x, petal_y, petal_radius * 0.8, centered=True, fill=self.turtle.get("filling"))
             yield
             
             # Lignes au centre
