@@ -149,6 +149,14 @@ class Main:
             return self.get_relative_pos(mutiple[0], x=relative_x, y=relative_y, mutiple=mutiple.pop(0))
         return relative_x, relative_y
     
+    def get_absolute_pos(self, rect: pygame.Rect, x: int, y: int, mutiple: list=[]) -> tuple:
+        """renvoie la position absolue depuis un rect"""
+        relative_x = x + rect.left
+        relative_y = y + rect.top
+        if len(mutiple) > 0: # rects embriqués
+            return self.get_absolute_pos(mutiple[0], relative_x, relative_y, mutiple=mutiple.pop(0))
+        return relative_x, relative_y
+    
     @staticmethod
     def snap_value(n: int | float, value_min: int, value_max: int) -> int:
         """snap une valeur (arrondi complexe)"""

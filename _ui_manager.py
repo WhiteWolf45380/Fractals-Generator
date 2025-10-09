@@ -276,7 +276,7 @@ class UIManager:
 
             # stockage des valeurs
         self.text_menus_items_values = {
-            "theme": "dark", # thème (light, mid-light, dark...)
+            "theme": [False, "dark"], # thème (light, mid-light, dark...)
             "creation_type": "spiral", # type de génération (radial, tree, incurved_tree, spiral...)
             "motif_shape": "line", # forme du motif génératif (line, square, triangle, circle...)
         }
@@ -520,14 +520,10 @@ class UIManager:
 
         return package
     
-    def generate_text_menu(self, name: str, content: dict, x: int, y: int, forced_width: int=0, switch_x_offset: int= 0, switch_y_offset: int=0) -> dict:
+    def generate_text_menu(self, name: str, content: dict, x: int, y: int, forced_width: int=0, forced_border_radius: int=5) -> dict:
         """génère un menu textuel"""
         package = {} # dictionnaire final
         parameters = self.text_menu_settings["general"] # raccourci
-
-        # sauvegarde des décalages en cas de menu dépassant de l'écran
-        package["switch_x_offset"] = switch_x_offset
-        package["switch_y_offset"] = switch_y_offset
 
         # surface
         package["surface"] = pygame.Surface((forced_width if forced_width > 0 else parameters["surface_width"], parameters["surface_height_max"]), pygame.SRCALPHA)
@@ -545,6 +541,7 @@ class UIManager:
 
         # variables utiles
         package["name"] = name
+        package["border_radius"] = forced_border_radius
 
         return package
     
@@ -718,16 +715,9 @@ class UIManager:
         """met à jour un menu textuel"""
         package = content["package"] # raccourci
 
-        # vérification que l'on se trouve dans l'écran
-        rect = package["surface_rect"].copy()
-        if package["surface_rect"].right > surface_rect.right:
-            rect.x -= package["switch_x_offset"]
-        if package["surface_rect"].bottom > surface_rect.bottom:
-            rect.bottom = package["surface_rect"].top - package["switch_y_offset"]
-
         # reset du fond avec border radius
-        pygame.draw.rect(package["surface"], self.get_color("text_menu", "back"), package["surface"].get_rect(), border_radius=5)
-        pygame.draw.rect(package["surface"], (0, 0, 0, 30), package["surface"].get_rect(), 1, border_radius=5) # shadow border
+        pygame.draw.rect(package["surface"], self.get_color("text_menu", "back"), package["surface"].get_rect(), border_radius=package["border_radius"])
+        pygame.draw.rect(package["surface"], (0, 0, 0, 30), package["surface"].get_rect(), 1, border_radius=package["border_radius"]) # shadow border
 
         # mise à jour des items
         self.choices_menus_to_blit = [] # reset du stockage intermédiaire
@@ -852,14 +842,17 @@ class UIManager:
     
     def handle_down_text_menu_item_value(self, item_name: str):
         """événement: clique sur un item de menu textuel de type choix"""
-        self.text_menus_items_values[item_name][1] = self.mouse_hover[2].split(".")[2] # changement de choix
+        self.text_menus_items_values[item_name] = self.mouse_hover[2].split(".")[2] # changement de choix
         
         # potentielle fonction d'activation
         funct_name = f"activate_{item_name}"
         funct = getattr(self, funct_name, None)
         if funct:
             funct()
-    
+
+        # fermeture automatique
+        self.ask_for_menu_closing()
+
 # _________________________- Fonctions d'activation -_________________________
     def activate_theme(self):
         """application: nouveau thème"""

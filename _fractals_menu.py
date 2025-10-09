@@ -60,10 +60,11 @@ class FractalsMenu:
 
         self.sections = { # différentes sections
             "created_patterns": {"name": "created_patterns", "description": "-- Motifs créés"},
-            "preset_patterns": {"name": "preset_patterns", "description": "-- Motifs prédéfinis"}
+            "preset_patterns": {"name": "preset_patterns", "description": "-- Motifs prédéfinis"},
+            "special_patterns": {"name": "special_patterns", "description": "-- Motifs spéciaux"},
         }
 
-        # génération des motifs
+       # génération des motifs
         self.last_y = self.parameters["y_start"] # ulisé pour calculer la taille totale
         current_section = "" # section actuelle
         skip = 0 # décalage dû aux séparateurs de sections (fins de ligne forcées)
@@ -71,10 +72,18 @@ class FractalsMenu:
         for i, pattern in enumerate(self.patterns):
             # changement de section
             if self.patterns[pattern]["section"] != current_section:
-                skip += self.parameters["cols_number"] - i % self.parameters["cols_number"] if i > 0 and self.parameters["cols_number"] > 1 else 0 # retour à la ligne
-                skip_y +=  max(10, self.parameters["sections_space"] - self.parameters["sections_space_variation"] * self.parameters["cols_number"]) + self.parameters["section_title_back_height"] # décalage de section
+                # Calculer skip AVANT de changer la section
+                if i > 0 and self.parameters["cols_number"] > 1:
+                    current_col = (i + skip) % self.parameters["cols_number"]
+                    if current_col != 0:  # Si on n'est pas en début de ligne
+                        skip += self.parameters["cols_number"] - current_col  # Compléter la ligne
+                
+                # Mettre à jour skip_y APRÈS avoir calculé skip
+                skip_y += max(10, self.parameters["sections_space"] - self.parameters["sections_space_variation"] * self.parameters["cols_number"]) + self.parameters["section_title_back_height"]
+                
                 current_section = self.patterns[pattern]["section"] # application du changement
                 self.sections[current_section]["package"] = self.ui_manager.generate_section(self.sections[current_section]["description"], self.ui_manager.scroll_bar_settings["width"], self.last_y, self.surface_width - self.ui_manager.scroll_bar_settings["width"] - 2, self.parameters["section_title_back_height"], menu=self.name) # génération du titre de section
+            
             # génération du motif
             self.patterns[pattern]["package"] = self.generate_pattern_button(self.patterns[pattern], i+skip, y_offset=skip_y)
         

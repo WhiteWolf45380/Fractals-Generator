@@ -183,7 +183,6 @@ class SettingsMenu:
 # _________________________- Handlers controllers -_________________________
     def handle_left_click_down(self, button: str):
         """événements associés au clique souris gauche"""
-        print(self.ui_manager.mouse_hover)
         self.ui_manager.do_handler(self.name, f"down_{button}")
 
     def handle_left_click_up(self):
@@ -220,7 +219,9 @@ class SettingsMenu:
         
     def handle_down_setting_choices(self):
         """événement(clique gauche): paramètre de type choix"""
-        print(self.ui_manager.mouse_hover)
+        name = self.ui_manager.mouse_hover[2]
+        if self.ui_manager.current_text_menu_just_closed != name:
+            self.ui_manager.ask_for_menu_opening(self.settings[name]["package"]["choices_menu"], self.name)
 
 # _________________________- Création d'éléments -_________________________
     def generate_setting(self, content: dict) -> dict:
@@ -328,11 +329,11 @@ class SettingsMenu:
         ]
 
         # menu de choix
-        menu_x, menu_y = self.main.get_relative_pos(self.surface_rect, x=package["button_back"].left, y=package["button_back"].bottom)
+        menu_x, menu_y = self.main.get_absolute_pos(self.surface_rect, x=package["button_back"].left, y=package["button_back"].bottom)
         package["choices_menu"] = {}
         for choice in content["choices"]:
             package["choices_menu"][choice[0]] = {"name": f"{content['name']}.{choice[0]}", "type": "value", "description": choice[1]}
-        package["choices_menu"]["package"] = self.ui_manager.generate_text_menu(content["name"], package["choices_menu"], menu_x, menu_y, forced_width=100, switch_x_offset=package["button_back"].width, switch_y_offset=package["button_back"].height)
+        package["choices_menu"]["package"] = self.ui_manager.generate_text_menu(content["name"], package["choices_menu"], menu_x, menu_y, forced_width=200, forced_border_radius=2)
         
         return package
 
@@ -446,18 +447,22 @@ class SettingsMenu:
         # repositionnement
         package["button_back"].centery = package["text"]["rect"].centery
         package["icon_back"].midright = package["button_back"].midright
+        package["choices_menu"]["package"]["surface_rect"].y = package["button_back"].bottom + self.surface_rect.top
 
         # bouton survolé
         if self.ui_manager.is_mouse_hover(package["button_back"], self.surface_rect):
-            hovered = self.ui_manager.ask_for_mouse_hover(self.name, "setting_choices", _id=content["name"])
+            is_hovered = self.ui_manager.ask_for_mouse_hover(self.name, "setting_choices", _id=content["name"])
         else:
-            hovered = False
+            is_hovered = False
+
+        # choix en cours de modification
+        is_current = self.ui_manager.get_menu_opened() == content["name"]
 
         # fond
-        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, f"button_{'hover_smooth' if hovered else 'idle'}"), package["button_back"], border_radius=2)
+        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, f"button_{'hover_smooth' if is_hovered or is_current else 'idle'}"), package["button_back"], border_radius=2)
 
         # icone
-        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, f"button_{'hover' if hovered else 'hover_smooth'}"), package["icon_back"], border_radius=2)
+        pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, f"button_{'hover' if is_hovered or is_current else 'hover_smooth'}"), package["icon_back"], border_radius=2)
         points = [
             (package[f"icon_points_{'opened' if self.ui_manager.get_menu_opened == content['name'] else 'closed'}"][0], package[f"icon_points_{'opened' if self.ui_manager.get_menu_opened == content['name'] else 'closed'}"][2]),
             (package[f"icon_points_{'opened' if self.ui_manager.get_menu_opened == content['name'] else 'closed'}"][1], package[f"icon_points_{'opened' if self.ui_manager.get_menu_opened == content['name'] else 'closed'}"][2])

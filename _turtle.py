@@ -69,6 +69,8 @@ class Turtle:
             "x": 0, # position x (not to define)
             "y": 0, # position y (not to define)
             "angle": 0, # angle (not to define)
+            "color_start": (255, 255, 255, 255), # couleur des lignes initial
+            "filling_start": (255, 0, 0, 255), # remplissage initial
         }
         self.parameters = self.parameters_init.copy()
 
@@ -86,7 +88,7 @@ class Turtle:
         }
 
         # type de génération disponibles
-        self.available_types = [("radial", "Radiale"), ("tree", "Arborescente"), ("incurved_tree", "Arborescente incurvée"), ("spiral", "Spirale")]
+        self.available_types = [("radial", "Radiale"), ("tree", "Arbre"), ("incurved_tree", "Arbre incurvé"), ("spiral", "Spirale")]
         
         # formes de motif disponibles
         self.available_shapes = [("line", "Ligne"), ("square", "Carré"), ("triangle", "Triangle"), ("circle", "Cercle")]
@@ -133,9 +135,9 @@ class Turtle:
             y = y + math.sin(angle) * radius # décalage vertical
         abs_x, abs_y = self.get_pos(x, y) # récupération des coordonnées absolues
 
-        color = self.get("color", multiple=("r", "g", "b", "a")) # couleur du contour
+        color = self.get("color_start") # couleur du contour
         if fill: # si remplissage
-            filling = self.get("filling", multiple=("r", "g", "b", "a")) # couleur de remplissage
+            filling = self.get("filling_start") # couleur de remplissage
             pygame.draw.circle(self.turtle_surface, filling, (int(abs_x), int(abs_y)), int(radius)) # remplissage
         pygame.draw.circle(self.turtle_surface, color, (int(abs_x), int(abs_y)), int(radius), self.get("width")) # contour
 
@@ -148,6 +150,9 @@ class Turtle:
                     self.parameters[setting] = settings_dict[setting]["value"]
                 else:
                     self.parameters[setting] = self.ui_manager.get_item_value(setting)
+        
+        self.parameters["color_start"] = self.get("color", multiple=["r", "g", "b", "a"])
+        self.parameters["filling_start"] = self.get("filling", multiple=["r", "g", "b", "a"])
 
     def get(self, parameter: str, multiple: tuple=None) -> str | int | tuple:
         """retourne le paramètre correspondant"""
@@ -192,7 +197,7 @@ class Turtle:
         if not penup: # traçage du trait
             old_x, old_y = self.get_pos(self.get("x"), self.get("y"))
             new_x, new_y = self.get_pos(x, y)
-            color = self.get("color", multiple=("r", "g", "b", "a"))
+            color = self.get("color_start")
             width = self.get("width")
             
             if width == 1:# ligne fine
@@ -217,7 +222,7 @@ class Turtle:
 
         # traçage du trait
         if not penup:
-            color = self.get("color", multiple=("r", "g", "b", "a"))
+            color = self.get("color_start")
             width = self.get("width")
             
             if width == 1:# ligne fine
