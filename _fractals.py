@@ -675,6 +675,55 @@ class Fractals:
             
             yield from self.draw_pentagon_recursive(child_points, depth - 1)
 
+    # _________________- Circle limit -_________________
+    def init_circle_limit(self, size: float):
+        """dessine un motif circle limit à la Escher"""
+        cx, cy = self.turtle.get("x"), self.turtle.get("y")
+        
+        # Cercle central
+        self.turtle.draw_circle(cx, cy, size / 2, centered=True, fill=self.turtle.get("filling"))
+        yield
+        
+        # Lancement de la récursion avec plusieurs branches radiales
+        num_branches = 6  # nombre de branches principales
+        yield from self.draw_circle_limit_recursive(cx, cy, size / 2, self.turtle.get("depth"), num_branches)
+
+    def draw_circle_limit_recursive(self, cx: float, cy: float, initial_radius: float, depth: int, num_branches: int):
+        """récursion circle limit : cercles qui s'insèrent entre les précédents"""
+        if depth == 0:
+            return
+
+        # Calcul des anneaux concentriques depuis le centre initial
+        for ring in range(1, depth + 1):
+            # Rayon des cercles diminue avec la distance
+            child_radius = initial_radius / (1.8 ** ring)
+            
+            if child_radius < 1:  # trop petit, on arrête
+                return
+            
+            # Distance depuis le centre : les cercles se touchent tangentiellement
+            ring_distance = initial_radius + child_radius
+            for i in range(1, ring):
+                ring_distance += 2 * (initial_radius / (1.8 ** i))
+            
+            # Nombre de cercles dans cet anneau
+            circles_in_ring = num_branches * (2 ** ring)
+            
+            # Décalage angulaire pour intercaler entre les cercles précédents
+            angle_offset = (math.pi / (num_branches * (2 ** (ring - 1)))) if ring > 1 else 0
+            
+            # Dessiner tous les cercles de cet anneau
+            for i in range(circles_in_ring):
+                angle = (2 * math.pi * i) / circles_in_ring + angle_offset
+                
+                # Position calculée depuis le centre initial
+                x = cx + math.cos(angle) * ring_distance
+                y = cy + math.sin(angle) * ring_distance
+                
+                # Dessiner le cercle
+                self.turtle.draw_circle(x, y, child_radius, centered=True, fill=self.turtle.get("filling"))
+                yield
+
     # _________________- Circle universe -_________________
     def init_circle_universe(self, size: float):
         """dessine un motif circle limit à la Escher"""
