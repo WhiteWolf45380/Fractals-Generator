@@ -69,10 +69,13 @@ class SettingsMenu:
                 "handler": self.handle_down_setting_choices, # fonction d'événement
                 "back_width": 200, # largeur du fond
                 "back_height": 27, # hauteur du fond
-                "text_fontsize": 15, # taille de la police
-                "text_x_offset": 5, # décalage horizontal du texte
+                "text_fontsize": 18, # taille de la police
+                "text_x_offset": 10, # décalage horizontal du texte
                 "icon_width": 25, # largeur de l'icone
                 "icon_size": 5, # taille de l'icone
+            },
+            "space": {
+                "height": 50,
             },
         }
 
@@ -96,6 +99,7 @@ class SettingsMenu:
             "depth": {"category": "bar", "description": "Profondeur", "value": 1, "value_min": 0, "value_max": 30},
             "size": {"category": "bar", "description": "Taille", "value": 400, "value_min": 50, "value_max": 1500},
             "start_angle": {"category": "bar", "description": "angle", "value": 0, "value_min": -180, "value_max": 180},
+
             "visual_lines": {"category": "section", "title": "-- Lignes"},
             "width": {"category": "bar", "description": "Epaisseur", "value": 1, "value_min": 1, "value_max": 20},
             "color_r": {"category": "bar", "description": "Canal rouge", "value": self.ui_manager.get_color(self.name, "line")[0], "value_min": 0, "value_max": 255},
@@ -103,6 +107,17 @@ class SettingsMenu:
             "color_b": {"category": "bar", "description": "Canal bleu", "value": self.ui_manager.get_color(self.name, "line")[2], "value_min": 0, "value_max": 255},
             "color_a": {"category": "bar", "description": "Opacité", "value": 255, "value_min": 0, "value_max": 255},
             "color_result": {"category": "color", "masters": ["color_r", "color_g", "color_b", "color_a"]},
+
+            "color_gradient_space": {"category": "space"},
+
+            "color_gradient": {"category": "toggle", "description": "Dégradé", "value": False},
+            "color_gradient_intensity": {"category": "bar", "description": "Intensité", "value": 1, "value_min": 1, "value_max": 10},
+            "color_gradient_r": {"category": "bar", "description": "Canal rouge", "value": self.ui_manager.get_color(self.name, "line")[0], "value_min": 0, "value_max": 255},
+            "color_gradient_g": {"category": "bar", "description": "Canal vert", "value": self.ui_manager.get_color(self.name, "line")[1], "value_min": 0, "value_max": 255},
+            "color_gradient_b": {"category": "bar", "description": "Canal bleu", "value": self.ui_manager.get_color(self.name, "line")[2], "value_min": 0, "value_max": 255},
+            "color_gradient_a": {"category": "bar", "description": "Opacité", "value": 255, "value_min": 0, "value_max": 255},
+            "color_gradient_result": {"category": "color", "masters": ["color_gradient_r", "color_gradient_g", "color_gradient_b", "color_gradient_a"]},
+
             "visual_filling": {"category": "section", "title": "-- Remplissage"},
             "filling": {"category": "toggle", "description": "Remplissage", "value": False},
             "filling_r": {"category": "bar", "description": "Canal rouge", "value": self.ui_manager.get_color(self.name, "line")[0], "value_min": 0, "value_max": 255},
@@ -110,10 +125,21 @@ class SettingsMenu:
             "filling_b": {"category": "bar", "description": "Canal bleu", "value": self.ui_manager.get_color(self.name, "line")[2], "value_min": 0, "value_max": 255},
             "filling_a": {"category": "bar", "description": "Opacité", "value": 255, "value_min": 0, "value_max": 255},
             "filling_result": {"category": "color", "masters": ["filling_r", "filling_g", "filling_b", "filling_a"]},
+
+            "filling_gradient_space": {"category": "space"},
+
+            "filling_gradient": {"category": "toggle", "description": "Dégradé", "value": False},
+            "filling_gradient_r": {"category": "bar", "description": "Canal rouge", "value": self.ui_manager.get_color(self.name, "line")[0], "value_min": 0, "value_max": 255},
+            "filling_gradient_g": {"category": "bar", "description": "Canal vert", "value": self.ui_manager.get_color(self.name, "line")[1], "value_min": 0, "value_max": 255},
+            "filling_gradient_b": {"category": "bar", "description": "Canal bleu", "value": self.ui_manager.get_color(self.name, "line")[2], "value_min": 0, "value_max": 255},
+            "filling_gradient_a": {"category": "bar", "description": "Opacité", "value": 255, "value_min": 0, "value_max": 255},
+            "filling_gradient_result": {"category": "color", "masters": ["filling_gradient_r", "filling_gradient_g", "filling_gradient_b", "filling_gradient_a"]},
+
             "pos": {"category": "section", "title": "-- Position"},
             "centered": {"category": "toggle", "description": "Centré", "value": True},
             "x_offset": {"category": "bar", "description": "x (horizontal)", "value": 0, "value_min": -1000, "value_max": 1000},
             "y_offset": {"category": "bar", "description": "y (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
+
             "generative": {"category": "section", "title": "-- Génération"},
             "creation_type": {"category": "choices", "description": "Type", "choices": self.main.turtle.available_types},
             "motif_shape": {"category": "choices", "description": "Forme", "choices": self.main.turtle.available_shapes},
@@ -310,7 +336,15 @@ class SettingsMenu:
 
         # bouton de choix
         package["button_back"] = pygame.Rect(x, 0, parameters["back_width"], parameters["back_height"])
-        package["button_text"] = self.ui_manager.generate_text(self.ui_manager.get_item_value(content["name"]), parameters["text_fontsize"], self.name, "text", wlimit=parameters["back_width"] - parameters["icon_width"])
+        
+        # save des descriptions
+        package["descriptions"] = {}
+        for choice in content["choices"]:
+            package["descriptions"][choice[0]] = choice[1]
+
+        # texte
+        package["button_text_current"] = self.ui_manager.get_item_value(content["name"]) 
+        package["button_text"] = self.ui_manager.generate_text(package["descriptions"][self.ui_manager.get_item_value(content["name"])], parameters["text_fontsize"], self.name, "text", wlimit=parameters["back_width"] - parameters["icon_width"])
         package["button_text"]["rect"].midleft = (package["button_back"].left + parameters["text_x_offset"], package["button_back"].centery)
 
         # icone du bouton
@@ -335,6 +369,13 @@ class SettingsMenu:
             package["choices_menu"][choice[0]] = {"name": f"{content['name']}.{choice[0]}", "type": "value", "description": choice[1]}
         package["choices_menu"]["package"] = self.ui_manager.generate_text_menu(content["name"], package["choices_menu"], menu_x, menu_y, forced_width=200, forced_border_radius=2)
         
+        return package
+    
+    def generate_setting_space(self, content: dict, _: int):
+        """génère un espace dans les paramètres"""
+        package = {} # dictionnaire final
+        parameters = self.parameters["space"]
+        package["space"] = parameters["height"]
         return package
 
 # _________________________- Mise à jour d'éléments -_________________________
@@ -411,7 +452,7 @@ class SettingsMenu:
         package["rect"].height = self.settings[content["masters"][-1]]["package"]["text"]["rect"].bottom - self.settings[content["masters"][0]]["package"]["text"]["rect"].top
 
         # affichage
-        pygame.draw.rect(self.surface, tuple(self.settings[content["masters"][i]]["value"] for i in range(3)), package["rect"])
+        pygame.draw.rect(self.surface, tuple(self.settings[content["masters"][i]]["value"] for i in range(4)), package["rect"])
         pygame.draw.rect(self.surface, (0, 0, 0), package["rect"], self.parameters["color"]["border"])
 
         return self.settings_y_next
@@ -443,9 +484,11 @@ class SettingsMenu:
     def update_setting_choices(self, content: dict):
         """met à jour un paramètre de type choix"""
         package = content["package"] # raccourci
+        parameters = self.parameters["choices"] # raccourci
 
         # repositionnement
         package["button_back"].centery = package["text"]["rect"].centery
+        package["button_text"]["rect"].centery = package["button_back"].centery
         package["icon_back"].midright = package["button_back"].midright
         package["choices_menu"]["package"]["surface_rect"].y = package["button_back"].bottom + self.surface_rect.top
 
@@ -461,6 +504,14 @@ class SettingsMenu:
         # fond
         pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, f"button_{'hover_smooth' if is_hovered or is_current else 'idle'}"), package["button_back"], border_radius=2)
 
+        # texte
+        if self.ui_manager.get_item_value(content["name"]) != package["button_text_current"]:
+            midleft_save = package["button_text"]["rect"].midleft
+            package["button_text"] = self.ui_manager.generate_text(package["descriptions"][self.ui_manager.get_item_value(content["name"])], parameters["text_fontsize"], self.name, "text", wlimit=parameters["back_width"] - parameters["icon_width"])
+            package["button_text"]["rect"].midleft = midleft_save
+            package["button_text_current"] = self.ui_manager.get_item_value(content["name"])
+        self.surface.blit(package["button_text"]["text"], package["button_text"]["rect"])
+
         # icone
         pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, f"button_{'hover' if is_hovered or is_current else 'hover_smooth'}"), package["icon_back"], border_radius=2)
         points = [
@@ -472,3 +523,8 @@ class SettingsMenu:
 
         # border
         pygame.draw.rect(self.surface, (40, 40, 40), package["button_back"], 1, border_radius=2)
+
+    def update_setting_space(self, content: dict, y: int):
+        """met à jour l'espace"""
+        package = content["package"]
+        return y + package["space"]

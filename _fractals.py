@@ -105,11 +105,11 @@ class Fractals:
     def draw_radial_recursive(self, size: int, depth: int):
         """génération récursive radiale"""
         if depth == 0:
-            yield from self.draw_motif(size, self.turtle.get("motif_shape"))
+            yield from self.draw_motif(size, self.turtle.get("motif_shape"), depth=depth)
             return
 
         # Dessine le motif principal
-        yield from self.draw_motif(size, self.turtle.get("motif_shape"))
+        yield from self.draw_motif(size, self.turtle.get("motif_shape"), depth=depth)
 
         # Prépare les sous-motifs
         divisions = self.turtle.get("divisions")
@@ -126,7 +126,7 @@ class Fractals:
 
         for _ in range(divisions):
             # Avance avant de créer la récursion
-            self.turtle.do_forward(size * 0.5, penup=True)
+            self.turtle.do_forward(size * 0.5, penup=True, depth=0)
             yield from self.draw_radial_recursive(size * scale_factor, depth - 1)
             self.turtle.do_goto(x, y)
             self.turtle.do_setheading(base_angle)
@@ -138,7 +138,7 @@ class Fractals:
 
     def draw_tree_recursive(self, size: int, depth: int):
         """génération récursive en arborescence"""
-        yield from self.draw_motif(size, self.turtle.get("motif_shape")) # trait
+        yield from self.draw_motif(size, self.turtle.get("motif_shape"), depth=depth) # trait
         if depth == 0:
             return
         
@@ -156,7 +156,7 @@ class Fractals:
         if depth == 0:
             self.turtle.do_goto(x, y)
             self.turtle.do_setheading(angle)
-            yield from self.draw_motif(size, self.turtle.get("motif_shape"))
+            yield from self.draw_motif(size, self.turtle.get("motif_shape"), depth=depth)
             return
 
         # Paramètres fractals
@@ -184,7 +184,7 @@ class Fractals:
         # Dessine le motif actuel après ses enfants
         self.turtle.do_goto(x, y)
         self.turtle.do_setheading(angle)
-        yield from self.draw_motif(size, self.turtle.get("motif_shape"))
+        yield from self.draw_motif(size, self.turtle.get("motif_shape"), depth=depth)
 
     def draw_single_spiral(self, x: float, y: float, angle: float, final_size: float, depth: int):
         """Dessine une seule spirale avec précision grâce aux divisions"""
@@ -204,7 +204,7 @@ class Fractals:
             # Place le turtle et dessine le motif
             self.turtle.do_goto(current_x, current_y)
             self.turtle.do_setheading(current_angle)
-            yield from self.draw_motif(current_size, self.turtle.get("motif_shape"))
+            yield from self.draw_motif(current_size, self.turtle.get("motif_shape"), depth=depth)
 
             # Avance légèrement pour le prochain segment
             self.turtle.do_forward(current_size, penup=True)
@@ -219,7 +219,7 @@ class Fractals:
         yield from self.draw_single_spiral(current_x, current_y, current_angle, final_size, depth - 1)
 
     # _________________- Formes -_________________
-    def draw_motif(self, size, motif_shape):
+    def draw_motif(self, size, motif_shape, depth=0):
         """dessine une forme géométrique"""
         if motif_shape == "triangle":
             local_points = [self.turtle.get_pos(self.turtle.get("x"), self.turtle.get("y"))] # points du triangle
@@ -230,8 +230,8 @@ class Fractals:
                 self.turtle.do_right(120)
             
             if self.turtle.get("filling"): # remplissage
-                pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get("filling_start"), local_points)
-            pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get("color_start"), local_points, self.turtle.get("width"))
+                pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get_color("filling", depth=depth), local_points)
+            pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get_color("color", depth=depth), local_points, self.turtle.get("width"))
             
         elif motif_shape == "square":
             local_points = [self.turtle.get_pos(self.turtle.get("x"), self.turtle.get("y"))] # points du carré
@@ -242,15 +242,15 @@ class Fractals:
                 self.turtle.do_right(90)
 
             if self.turtle.get("filling"): # remplissage
-                pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get("filling_start"), local_points)
-            pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get("color_start"), local_points, self.turtle.get("width"))
+                pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get_color("filling", depth=depth), local_points)
+            pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get_color("color", depth=depth), local_points, self.turtle.get("width"))
 
         elif motif_shape == "circle":
             self.turtle.draw_circle(self.turtle.get("x"), self.turtle.get("y"), size / 2, centered=False, fill=self.turtle.get("filling")) # dessin du cercle
             yield
 
         elif motif_shape == "line":
-            self.turtle.do_forward(size) # dessin de la ligne
+            self.turtle.do_forward(size, depth=depth) # dessin de la ligne
             yield
 
     # _________________- Flocon de Koch (triangles)-_________________
@@ -266,38 +266,36 @@ class Fractals:
         
         # dessin
         for _ in range(3):
-            yield from self.draw_koch_triangles_recursive(size, self.turtle.get("depth"))
+            yield from self.draw_koch_triangles_recursive(size, depth=self.turtle.get("depth"))
             self.turtle.do_right(120)
         
         # remplissage
         if self.turtle.get("filling") and len(self.turtle.all_points) >= 3:
-            pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get("filling_start"), self.turtle.all_points)
+            pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get_color("filling", depth=0), self.turtle.all_points)
 
-    def draw_koch_triangles_recursive(self, size, max_depth, depth=0):
+    def draw_koch_triangles_recursive(self, size, depth=0):
         """Récursion pour dessiner un flocon de Koch (carrés)"""
-        if depth == max_depth:
-            self.turtle.do_forward(size)
+        if depth == 0:
+            print(depth)
+            self.turtle.do_forward(size, depth=depth)
             yield
             return
         
         new_size = size / 3
         
-        yield from self.draw_koch_triangles_recursive(new_size, max_depth, depth+1)
+        yield from self.draw_koch_triangles_recursive(new_size, depth - 1)
         self.turtle.do_left(60)
-        yield from self.draw_koch_triangles_recursive(new_size, max_depth, depth+1)
+        yield from self.draw_koch_triangles_recursive(new_size, depth - 1)
         self.turtle.do_right(120)
-        yield from self.draw_koch_triangles_recursive(new_size, max_depth, depth+1)
+        yield from self.draw_koch_triangles_recursive(new_size, depth - 1)
         self.turtle.do_left(60)
-        yield from self.draw_koch_triangles_recursive(new_size, max_depth, depth+1)
+        yield from self.draw_koch_triangles_recursive(new_size, depth - 1)
 
     # _________________- Flocon de Koch (carrés)-_________________
     def init_koch_squares(self, size, **kwargs):
         """dessine un flocon de Koch (carrés)"""
-        max_depth = self.turtle.get("depth")
-        centered = self.turtle.get("centered")
-
         # centrage
-        if centered:
+        if self.turtle.get("centered"):
             start_angle = self.turtle.get("start_angle")
             offset_x, offset_y = -size/2, -size/2
             rx, ry = self.turtle.get_rotated_offset(offset_x, offset_y, start_angle)
@@ -305,34 +303,33 @@ class Fractals:
         
         # dessin
         for _ in range(4):
-            yield from self.draw_koch_squares_recursive(size, max_depth)
+            yield from self.draw_koch_squares_recursive(size, self.turtle.get("depth"))
             self.turtle.do_right(90)
 
         # remplissage
         if self.turtle.get("filling") and len(self.turtle.all_points) >= 3:
-            pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get("filling_start"), self.turtle.all_points)
+            pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get_color("filling", depth=0), self.turtle.all_points)
 
     def draw_koch_squares_recursive(self, size, max_depth, depth=0):
         """Récursion pour dessiner un flocon de Kosh (carrés)"""
-        if depth == max_depth:
-            self.turtle.do_forward(size)
+        if depth == 0:
+            self.turtle.do_forward(size, depth=depth)
             yield
             return
         
         new_size = size / 3
         
-        yield from self.draw_koch_squares_recursive(new_size, max_depth, depth+1)
+        yield from self.draw_koch_squares_recursive(new_size, depth - 1)
         self.turtle.do_left(180)
         for _ in range(3):
             self.turtle.do_right(90)
-            yield from self.draw_koch_squares_recursive(new_size, max_depth, depth+1)
+            yield from self.draw_koch_squares_recursive(new_size, depth - 1)
         self.turtle.do_left(90)
-        yield from self.draw_koch_squares_recursive(new_size, max_depth, depth+1)
+        yield from self.draw_koch_squares_recursive(new_size, depth - 1)
 
     # _________________- Dragon Curve -_________________
     def init_dragon_curve(self, size, **kwargs):
-        """Dessine un Dragon Curve (île) progressivement"""
-        max_depth = self.turtle.get("depth")
+        """Dessine un Dragon Curve (dual) progressivement"""
         centered = self.turtle.get("centered")
 
         if centered:
@@ -350,23 +347,23 @@ class Fractals:
                 11: (-160, 160),
                 12: (-175, 175),
             }
-            offset = DRAGON_CENTER_OFFSET.get(max_depth, (0,0))
+            offset = DRAGON_CENTER_OFFSET.get(self.turtle.get("depth"), (0,0))
             start_angle = self.turtle.get("start_angle")
             rx, ry = self.turtle.get_rotated_offset(offset[0], offset[1], start_angle)
             self.turtle.do_goto(rx + self.turtle.get("x_offset"), ry + self.turtle.get("y_offset"))
 
-        yield from self.draw_dragon_recursive(size, max_depth, 1)
+        yield from self.draw_dragon_recursive(size, self.turtle.get("depth"), 1)
         self.turtle.do_right(90)
-        yield from self.draw_dragon_recursive(size, max_depth, -1)
+        yield from self.draw_dragon_recursive(size, self.turtle.get("depth"), -1)
 
         # remplissage
         if self.turtle.get("filling") and len(self.turtle.all_points) >= 3:
-            pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get("filling_start"), self.turtle.all_points)
+            pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get_color("filling", depth=0), self.turtle.all_points)
 
     def draw_dragon_recursive(self, size, depth, sign=1):
         """Récursion pour dessiner Dragon Curve"""
         if depth == 0:
-            self.turtle.do_forward(size)
+            self.turtle.do_forward(size, depth=depth)
             yield
             return
         
@@ -381,28 +378,24 @@ class Fractals:
 # _________________- Corners Carrés -_________________
     def init_corners_squares(self, size: float):
         """Carrés dans les coins, toujours à l'intérieur du parent"""
+        cx, cy = self.turtle.get("x"), self.turtle.get("y")
+        
+        # Position du coin haut-gauche du carré principal
         if self.turtle.get("centered"):
-            cx, cy = 0, 0
-        else:
-            cx, cy = self.turtle.get("x"), self.turtle.get("y")
+            cx -= size / 2
+            cy -= size / 2
         
-        # Position du coin bas-gauche du carré principal
-        start_x = cx - size / 2
-        start_y = cy - size / 2
-        
-        yield from self.draw_corners_squares_recursive(start_x, start_y, size, self.turtle.get("depth"))
+        yield from self.draw_corners_squares_recursive(cx, cy, size, self.turtle.get("depth"))
 
     def draw_corners_squares_recursive(self, x: float, y: float, size: float, depth: int):
         """Dessine un carré puis place des carrés plus petits dans ses coins"""
-        import math
-        
         # Se positionner au départ du carré
         self.turtle.do_goto(x, y)
         
         # Dessiner le carré (4 côtés)
         for _ in range(4):
             self.turtle.do_setheading(self.turtle.get("angle"))
-            self.turtle.do_forward(size)
+            self.turtle.do_forward(size, depth=depth)
             yield
             self.turtle.do_right(90)
         
@@ -423,32 +416,24 @@ class Fractals:
         for corner_x, corner_y in corners:
             yield from self.draw_corners_squares_recursive(corner_x, corner_y, child_size, depth - 1)
 
-
     # _________________- Corners Triangles -_________________
     def init_corners_triangles(self, size: float):
-        """Triangles dans les sommets, toujours à l'intérieur du parent"""
-        import math
-        
-        if self.turtle.get("centered"):
-            cx, cy = 0, 0
-        else:
-            cx, cy = self.turtle.get("x"), self.turtle.get("y")
+        """Triangles dans les sommets, toujours à l'intérieur du parent""" 
+        cx, cy = self.turtle.get("x"), self.turtle.get("y")
         
         height = size * math.sqrt(3) / 2
         
-        # Triangle équilatéral centré
+        # triangle équilatéral centré
         points = [
-            (cx, cy - height * 2/3),  # sommet haut
-            (cx - size/2, cy + height/3),  # bas gauche
-            (cx + size/2, cy + height/3)  # bas droit
+            (cx, cy - height * 2/3), # sommet haut
+            (cx - size/2, cy + height/3), # bas gauche
+            (cx + size/2, cy + height/3) # bas droit
         ]
         
         yield from self.draw_corners_triangles_recursive(points, self.turtle.get("depth"))
 
     def draw_corners_triangles_recursive(self, points: list, depth: int):
         """Dessine un triangle puis place des triangles plus petits à ses sommets"""
-        import math
-        
         # Dessiner le triangle
         self.turtle.do_goto(points[0][0], points[0][1])
         
@@ -463,7 +448,7 @@ class Fractals:
             
             # Orienter et tracer
             self.turtle.do_setheading(angle)
-            self.turtle.do_forward(distance)
+            self.turtle.do_forward(distance, depth=depth)
             yield
         
         if depth == 0:
@@ -518,21 +503,19 @@ class Fractals:
 
     def draw_corners_circles_recursive(self, cx: float, cy: float, size: float, depth: int):
         """Dessine un carré avec un cercle inscrit, puis des cercles plus petits aux coins"""
-        import math
-        
         # Dessiner le carré englobant
         half = size / 2
         self.turtle.do_goto(cx - half, cy - half)
         self.turtle.do_setheading(0)
         
         for _ in range(4):
-            self.turtle.do_forward(size)
+            self.turtle.do_forward(size, depth=depth)
             yield
             self.turtle.do_right(90)
         
         # Cercle inscrit dans le carré
         radius = size / 2
-        self.turtle.draw_circle(cx, cy, radius, centered=True)
+        self.turtle.draw_circle(cx, cy, radius, centered=True, depth=depth)
         yield
         
         if depth == 0:
@@ -578,7 +561,7 @@ class Fractals:
             
             # Orienter et tracer la branche
             self.turtle.do_setheading(angle)
-            self.turtle.do_forward(arm_length)
+            self.turtle.do_forward(arm_length, depth=depth)
             yield
         
         if depth == 0:
@@ -636,7 +619,7 @@ class Fractals:
             
             # Orienter et tracer
             self.turtle.do_setheading(angle)
-            self.turtle.do_forward(distance)
+            self.turtle.do_forward(distance, depth=depth)
             yield
         
         if depth == 0:
@@ -797,7 +780,7 @@ class Fractals:
         
         corners = [(x, y)]
         for i in range(4):
-            self.turtle.do_forward(size)
+            self.turtle.do_forward(size, depth=depth)
             corners.append((self.turtle.get("x"), self.turtle.get("y")))
             yield
             self.turtle.do_right(90)
@@ -888,7 +871,7 @@ class Fractals:
         """récursion hexaflake"""        
         if depth == 0:
             self.turtle.do_goto(x1, y1, add_point=False)
-            self.turtle.do_goto(x2, y2, penup=penup)
+            self.turtle.do_goto(x2, y2, penup=penup, depth=depth)
             yield
             return
         
@@ -944,9 +927,9 @@ class Fractals:
         # Tracer l'iris
         self.turtle.do_goto(iris_points[0][0], iris_points[0][1])
         for point in iris_points:
-            self.turtle.do_goto(point[0], point[1], penup=False)
+            self.turtle.do_goto(point[0], point[1], penup=False, depth=0)
             yield
-        self.turtle.do_goto(iris_points[0][0], iris_points[0][1], penup=False)
+        self.turtle.do_goto(iris_points[0][0], iris_points[0][1], penup=False, depth=0)
         yield
         
         # La pupille - un trou noir tourbillonnant
@@ -961,7 +944,7 @@ class Fractals:
             if i == 0:
                 self.turtle.do_goto(x, y)
             else:
-                self.turtle.do_goto(x, y, penup=False)
+                self.turtle.do_goto(x, y, penup=False, depth=0)
                 yield
         
         # Lancer la récursion fractale
@@ -1023,9 +1006,9 @@ class Fractals:
         # Tracer le cristal
         self.turtle.do_goto(crystal_points[0][0], crystal_points[0][1])
         for point in crystal_points:
-            self.turtle.do_goto(point[0], point[1], penup=False)
+            self.turtle.do_goto(point[0], point[1], penup=False, depth=depth)
             yield
-        self.turtle.do_goto(crystal_points[0][0], crystal_points[0][1], penup=False)
+        self.turtle.do_goto(crystal_points[0][0], crystal_points[0][1], penup=False, depth=depth)
         yield
         
         # Bifurcation : deux cristaux plus petits aux pointes
@@ -1063,14 +1046,14 @@ class Fractals:
             points.append((px, py))
             
             if i > 0:
-                self.turtle.do_goto(px, py, penup=False)
+                self.turtle.do_goto(px, py, penup=False, depth=depth)
                 yield
         
         # Ventouses le long du tentacule
         for i in range(2, segments - 1, 2):
             sucker_x, sucker_y = points[i]
             sucker_radius = size * 0.15 * (1 - i / segments)
-            self.turtle.draw_circle(sucker_x, sucker_y, sucker_radius, centered=True)
+            self.turtle.draw_circle(sucker_x, sucker_y, sucker_radius, centered=True, depth=depth)
             yield
         
         # Récursion à l'extrémité avec division
@@ -1093,7 +1076,7 @@ class Fractals:
         
         # Tige de connexion
         self.turtle.do_goto(x, y)
-        self.turtle.do_goto(bud_x, bud_y, penup=False)
+        self.turtle.do_goto(bud_x, bud_y, penup=False, depth=depth)
         yield
         
         # Mini-iris (pentagone pour différencier du parent)
@@ -1109,13 +1092,13 @@ class Fractals:
         # Tracer le mini-iris
         self.turtle.do_goto(iris_points[0][0], iris_points[0][1])
         for point in iris_points:
-            self.turtle.do_goto(point[0], point[1], penup=False)
+            self.turtle.do_goto(point[0], point[1], penup=False, depth=depth)
             yield
-        self.turtle.do_goto(iris_points[0][0], iris_points[0][1], penup=False)
+        self.turtle.do_goto(iris_points[0][0], iris_points[0][1], penup=False, depth=depth)
         yield
         
         # Pupille centrale
-        self.turtle.draw_circle(bud_x, bud_y, size * 0.15, centered=True)
+        self.turtle.draw_circle(bud_x, bud_y, size * 0.15, centered=True, depth=depth)
         yield
         
         # Cils radiaux
@@ -1129,7 +1112,7 @@ class Fractals:
             lash_y = point[1] + dy * 0.5
             
             self.turtle.do_goto(point[0], point[1])
-            self.turtle.do_goto(lash_x, lash_y, penup=False)
+            self.turtle.do_goto(lash_x, lash_y, penup=False, depth=depth)
             yield
         
         # Récursion : nouveaux bourgeons plus petits
@@ -1160,7 +1143,7 @@ class Fractals:
         
         # Cercle central
         inner_radius = size * 0.15
-        self.turtle.draw_circle(cx, cy, inner_radius, centered=True)
+        self.turtle.draw_circle(cx, cy, inner_radius, centered=True, depth=0)
         yield
         
         # Pétales de la rosace centrale
@@ -1173,7 +1156,7 @@ class Fractals:
             
             # Lignes radiales vers le centre
             self.turtle.do_goto(cx, cy)
-            self.turtle.do_goto(x, y, penup=False)
+            self.turtle.do_goto(x, y, penup=False, depth=0)
             yield
         
         # Arcs entre les pétales (effet dentelle)
@@ -1200,7 +1183,7 @@ class Fractals:
                 # Courbe de Bézier quadratique
                 bx = (1-t)**2 * p1[0] + 2*(1-t)*t * arc_x + t**2 * p2[0]
                 by = (1-t)**2 * p1[1] + 2*(1-t)*t * arc_y + t**2 * p2[1]
-                self.turtle.do_goto(bx, by, penup=False)
+                self.turtle.do_goto(bx, by, penup=False, depth=0)
                 yield
         
         # Lancer la récursion pour les voûtes et colonnes
@@ -1257,7 +1240,7 @@ class Fractals:
                 t = s / segments
                 bx = (1-t)**2 * left_base_x + 2*(1-t)*t * ctrl_left_x + t**2 * apex_x
                 by = (1-t)**2 * left_base_y + 2*(1-t)*t * ctrl_left_y + t**2 * apex_y
-                self.turtle.do_goto(bx, by, penup=False)
+                self.turtle.do_goto(bx, by, penup=False, depth=depth)
                 yield
             
             # Dessiner l'arc droit de la voûte
@@ -1265,17 +1248,17 @@ class Fractals:
                 t = s / segments
                 bx = (1-t)**2 * apex_x + 2*(1-t)*t * ctrl_right_x + t**2 * right_base_x
                 by = (1-t)**2 * apex_y + 2*(1-t)*t * ctrl_right_y + t**2 * right_base_y
-                self.turtle.do_goto(bx, by, penup=False)
+                self.turtle.do_goto(bx, by, penup=False, depth=depth)
                 yield
             
             # Fermer la base
-            self.turtle.do_goto(left_base_x, left_base_y, penup=False)
+            self.turtle.do_goto(left_base_x, left_base_y, penup=False, depth=depth)
             yield
             
             # === COLONNE DE CONNEXION ===
             # Ligne élégante du pétale parent à la voûte
             self.turtle.do_goto(px, py)
-            self.turtle.do_goto(struct_x, struct_y, penup=False)
+            self.turtle.do_goto(struct_x, struct_y, penup=False, depth=depth)
             yield
             
             # === ROSACE INTÉRIEURE ===
@@ -1284,7 +1267,7 @@ class Fractals:
             rosace_x = struct_x + math.cos(angle) * vault_height * 0.4
             rosace_y = struct_y + math.sin(angle) * vault_height * 0.4
             
-            self.turtle.draw_circle(rosace_x, rosace_y, rosace_radius, centered=True)
+            self.turtle.draw_circle(rosace_x, rosace_y, rosace_radius, centered=True, depth=depth)
             yield
             
             # Petits rayons dans la rosace
@@ -1295,7 +1278,7 @@ class Fractals:
                 mini_y = rosace_y + math.sin(mini_angle) * rosace_radius
                 
                 self.turtle.do_goto(rosace_x, rosace_y)
-                self.turtle.do_goto(mini_x, mini_y, penup=False)
+                self.turtle.do_goto(mini_x, mini_y, penup=False, depth=depth)
                 yield
             
             # === ORNEMENTS LATÉRAUX ===
@@ -1305,14 +1288,14 @@ class Fractals:
                 volute_y = struct_y + math.sin(angle + math.pi/2 * side) * vault_width * 0.4
                 volute_radius = child_size * 0.12
                 
-                self.turtle.draw_circle(volute_x, volute_y, volute_radius, centered=True)
+                self.turtle.draw_circle(volute_x, volute_y, volute_radius, centered=True, depth=depth)
                 yield
                 
                 # Connexion élégante à la voûte
                 connect_x = struct_x + math.cos(angle + math.pi/2 * side) * vault_width * 0.25
                 connect_y = struct_y + math.sin(angle + math.pi/2 * side) * vault_width * 0.25
                 self.turtle.do_goto(connect_x, connect_y)
-                self.turtle.do_goto(volute_x, volute_y, penup=False)
+                self.turtle.do_goto(volute_x, volute_y, penup=False, depth=depth)
                 yield
         
         # === RÉCURSION ===
@@ -1398,12 +1381,12 @@ class Fractals:
                 r = radius * wave
                 x = cx + math.cos(angle) * r
                 y = cy + math.sin(angle) * r
-                self.turtle.do_goto(x, y, penup=False)
+                self.turtle.do_goto(x, y, penup=False, depth=depth)
                 yield
         
         # Noyau central lumineux
         core_radius = size * 0.12
-        self.turtle.draw_circle(cx, cy, core_radius, centered=True)
+        self.turtle.draw_circle(cx, cy, core_radius, centered=True, depth=depth)
         yield
         
         # Points de germination (8 positions)
@@ -1418,12 +1401,12 @@ class Fractals:
             
             # Petit cercle de germination
             sprout_radius = size * 0.08
-            self.turtle.draw_circle(sx, sy, sprout_radius, centered=True)
+            self.turtle.draw_circle(sx, sy, sprout_radius, centered=True, depth=depth)
             yield
             
             # Lien au centre
             self.turtle.do_goto(cx, cy)
-            self.turtle.do_goto(sx, sy, penup=False)
+            self.turtle.do_goto(sx, sy, penup=False, depth=depth)
             yield
         
         # RÉCURSION vers stade 2
@@ -1470,7 +1453,7 @@ class Fractals:
                 t = s / segments
                 bx = (1-t)**2 * base_x + 2*(1-t)*t * left_mid_x + t**2 * tip_x
                 by = (1-t)**2 * base_y + 2*(1-t)*t * left_mid_y + t**2 * tip_y
-                self.turtle.do_goto(bx, by, penup=False)
+                self.turtle.do_goto(bx, by, penup=False, depth=depth)
                 yield
             
             # Courbe droite du pétale
@@ -1478,19 +1461,19 @@ class Fractals:
                 t = s / segments
                 bx = (1-t)**2 * tip_x + 2*(1-t)*t * right_mid_x + t**2 * base_x
                 by = (1-t)**2 * tip_y + 2*(1-t)*t * right_mid_y + t**2 * base_y
-                self.turtle.do_goto(bx, by, penup=False)
+                self.turtle.do_goto(bx, by, penup=False, depth=depth)
                 yield
             
             petal_positions.append((tip_x, tip_y, angle))
             
             # Nervure centrale du pétale
             self.turtle.do_goto(base_x, base_y)
-            self.turtle.do_goto(tip_x, tip_y, penup=False)
+            self.turtle.do_goto(tip_x, tip_y, penup=False, depth=depth)
             yield
         
         # Cœur de la fleur (pistil)
         pistil_radius = size * 0.12
-        self.turtle.draw_circle(cx, cy, pistil_radius, centered=True)
+        self.turtle.draw_circle(cx, cy, pistil_radius, centered=True, depth=depth)
         yield
         
         # Étamines autour du pistil
@@ -1501,12 +1484,12 @@ class Fractals:
             stamen_y = cy + math.sin(angle) * stamen_dist
             
             self.turtle.do_goto(cx, cy)
-            self.turtle.do_goto(stamen_x, stamen_y, penup=False)
+            self.turtle.do_goto(stamen_x, stamen_y, penup=False, depth=depth)
             yield
             
             # Anthère (bout de l'étamine)
             anther_radius = size * 0.04
-            self.turtle.draw_circle(stamen_x, stamen_y, anther_radius, centered=True)
+            self.turtle.draw_circle(stamen_x, stamen_y, anther_radius, centered=True, depth=depth)
             yield
         
         # RÉCURSION vers stade 3
@@ -1526,7 +1509,7 @@ class Fractals:
         # Anneaux de choc
         for ring in range(3):
             ring_radius = core_radius * (1 + ring * 0.8)
-            self.turtle.draw_circle(cx, cy, ring_radius, centered=True)
+            self.turtle.draw_circle(cx, cy, ring_radius, centered=True, depth=depth)
             yield
         
         # Rayons énergétiques
@@ -1555,14 +1538,14 @@ class Fractals:
                 zap_x = base_x + math.cos(perp_angle) * perturb
                 zap_y = base_y + math.sin(perp_angle) * perturb
                 
-                self.turtle.do_goto(zap_x, zap_y, penup=False)
+                self.turtle.do_goto(zap_x, zap_y, penup=False, depth=depth)
                 yield
             
             ray_positions.append((end_x, end_y, angle))
             
             # Éclat à l'extrémité
             spark_radius = size * 0.08
-            self.turtle.draw_circle(end_x, end_y, spark_radius, centered=True)
+            self.turtle.draw_circle(end_x, end_y, spark_radius, centered=True, depth=depth)
             yield
             
             # Mini-rayons secondaires
@@ -1573,7 +1556,7 @@ class Fractals:
                 mini_y = end_y + math.sin(mini_angle) * mini_length
                 
                 self.turtle.do_goto(end_x, end_y)
-                self.turtle.do_goto(mini_x, mini_y, penup=False)
+                self.turtle.do_goto(mini_x, mini_y, penup=False, depth=depth)
                 yield
         
         # RÉCURSION vers stade 4
@@ -1595,21 +1578,21 @@ class Fractals:
         # Tracer l'hexagone
         self.turtle.do_goto(hex_points[0][0], hex_points[0][1])
         for point in hex_points:
-            self.turtle.do_goto(point[0], point[1], penup=False)
+            self.turtle.do_goto(point[0], point[1], penup=False, depth=depth)
             yield
-        self.turtle.do_goto(hex_points[0][0], hex_points[0][1], penup=False)
+        self.turtle.do_goto(hex_points[0][0], hex_points[0][1], penup=False, depth=depth)
         yield
         
         # Étoile intérieure (connexions diagonales)
         for i in range(6):
             for j in range(i + 2, min(i + 4, 6)):
                 self.turtle.do_goto(hex_points[i][0], hex_points[i][1])
-                self.turtle.do_goto(hex_points[j][0], hex_points[j][1], penup=False)
+                self.turtle.do_goto(hex_points[j][0], hex_points[j][1], penup=False, depth=depth)
                 yield
         
         # Fleur de vie au centre
         flower_radius = size * 0.15
-        self.turtle.draw_circle(cx, cy, flower_radius, centered=True)
+        self.turtle.draw_circle(cx, cy, flower_radius, centered=True, depth=depth)
         yield
         
         # 6 cercles autour formant la fleur de vie
@@ -1620,16 +1603,14 @@ class Fractals:
             fy = cy + math.sin(angle) * flower_radius
             flower_circles.append((fx, fy, angle))
             
-            self.turtle.draw_circle(fx, fy, flower_radius, centered=True)
+            self.turtle.draw_circle(fx, fy, flower_radius, centered=True, depth=depth)
             yield
         
         # Runes/symboles aux som
 
 # _________________- L'Arbre des Dimensions -_________________
     def init_dimension_tree(self, size: float):
-        """L'Arbre des Dimensions - récursion infinie spectaculaire"""
-        import math
-        
+        """L'Arbre des Dimensions"""
         if self.turtle.get("centered"):
             cx, cy = 0, 0
         else:
@@ -1641,13 +1622,13 @@ class Fractals:
         
         # Dessiner le tronc comme un portail
         self.turtle.do_goto(cx - trunk_width/2, cy - size/2)
-        self.turtle.do_goto(cx - trunk_width/2, cy - size/2 + trunk_height, penup=False)
+        self.turtle.do_goto(cx - trunk_width/2, cy - size/2 + trunk_height, penup=False, depth=0)
         yield
-        self.turtle.do_goto(cx + trunk_width/2, cy - size/2 + trunk_height, penup=False)
+        self.turtle.do_goto(cx + trunk_width/2, cy - size/2 + trunk_height, penup=False, depth=0)
         yield
-        self.turtle.do_goto(cx + trunk_width/2, cy - size/2, penup=False)
+        self.turtle.do_goto(cx + trunk_width/2, cy - size/2, penup=False, depth=0)
         yield
-        self.turtle.do_goto(cx - trunk_width/2, cy - size/2, penup=False)
+        self.turtle.do_goto(cx - trunk_width/2, cy - size/2, penup=False, depth=0)
         yield
         
         # Racines énergétiques
@@ -1659,7 +1640,7 @@ class Fractals:
             root_y = cy - size/2 + math.sin(root_angle) * root_length
             
             self.turtle.do_goto(cx, cy - size/2)
-            self.turtle.do_goto(root_x, root_y, penup=False)
+            self.turtle.do_goto(root_x, root_y, penup=False, depth=0)
             yield
         
         # Point de départ de la récursion (sommet du tronc)
@@ -1675,7 +1656,7 @@ class Fractals:
         if depth == 0 or size < 2:
             # Même au dernier niveau, dessiner quelque chose de beau
             leaf_radius = max(2, size * 0.3)
-            self.turtle.draw_circle(x, y, leaf_radius, centered=True)
+            self.turtle.draw_circle(x, y, leaf_radius, centered=True, depth=depth)
             yield
             return
         
@@ -1702,13 +1683,13 @@ class Fractals:
                 if i == 0:
                     self.turtle.do_goto(curr_x, curr_y)
                 else:
-                    self.turtle.do_goto(curr_x, curr_y, penup=False)
+                    self.turtle.do_goto(curr_x, curr_y, penup=False, depth=depth)
                     yield
             
         elif style == 1:
             # STYLE CRISTALLIN : branche droite avec arêtes
             self.turtle.do_goto(x, y)
-            self.turtle.do_goto(end_x, end_y, penup=False)
+            self.turtle.do_goto(end_x, end_y, penup=False, depth=depth)
             yield
             
             # Arêtes cristallines
@@ -1721,7 +1702,7 @@ class Fractals:
                 edge_end_y = edge_y + math.sin(math.radians(edge_angle)) * edge_length
                 
                 self.turtle.do_goto(edge_x, edge_y)
-                self.turtle.do_goto(edge_end_x, edge_end_y, penup=False)
+                self.turtle.do_goto(edge_end_x, edge_end_y, penup=False, depth=depth)
                 yield
         
         else:
@@ -1738,17 +1719,17 @@ class Fractals:
                 if i == 0:
                     self.turtle.do_goto(curr_x, curr_y)
                 else:
-                    self.turtle.do_goto(curr_x, curr_y, penup=False)
+                    self.turtle.do_goto(curr_x, curr_y, penup=False, depth=depth)
                     yield
         
         # === NŒUD DIMENSIONNEL AU BOUT DE LA BRANCHE ===
         node_radius = size * 0.12
-        self.turtle.draw_circle(end_x, end_y, node_radius, centered=True)
+        self.turtle.draw_circle(end_x, end_y, node_radius, centered=True, depth=depth)
         yield
         
         # Cercle intérieur du nœud
         inner_radius = node_radius * 0.5
-        self.turtle.draw_circle(end_x, end_y, inner_radius, centered=True)
+        self.turtle.draw_circle(end_x, end_y, inner_radius, centered=True, depth=depth)
         yield
         
         # === MOTIF UNIQUE AU NŒUD (change avec la génération) ===
@@ -1760,7 +1741,7 @@ class Fractals:
                 cross_x = end_x + math.cos(math.radians(cross_angle)) * node_radius * 1.5
                 cross_y = end_y + math.sin(math.radians(cross_angle)) * node_radius * 1.5
                 self.turtle.do_goto(end_x, end_y)
-                self.turtle.do_goto(cross_x, cross_y, penup=False)
+                self.turtle.do_goto(cross_x, cross_y, penup=False, depth=depth)
                 yield
         
         elif pattern == 1:
@@ -1776,7 +1757,7 @@ class Fractals:
                 if i == 0:
                     self.turtle.do_goto(spiral_x, spiral_y)
                 else:
-                    self.turtle.do_goto(spiral_x, spiral_y, penup=False)
+                    self.turtle.do_goto(spiral_x, spiral_y, penup=False, depth=depth)
                     yield
         
         elif pattern == 2:
@@ -1786,7 +1767,7 @@ class Fractals:
                 star_x = end_x + math.cos(math.radians(star_angle)) * node_radius * 1.8
                 star_y = end_y + math.sin(math.radians(star_angle)) * node_radius * 1.8
                 self.turtle.do_goto(end_x, end_y)
-                self.turtle.do_goto(star_x, star_y, penup=False)
+                self.turtle.do_goto(star_x, star_y, penup=False, depth=depth)
                 yield
         
         else:
@@ -1799,12 +1780,12 @@ class Fractals:
                 if tri_i == 0:
                     self.turtle.do_goto(tri_x, tri_y)
                 else:
-                    self.turtle.do_goto(tri_x, tri_y, penup=False)
+                    self.turtle.do_goto(tri_x, tri_y, penup=False, depth=depth)
                     yield
             # Fermer le triangle
             tri_x = end_x + math.cos(math.radians(angle)) * node_radius * 1.5
             tri_y = end_y + math.sin(math.radians(angle)) * node_radius * 1.5
-            self.turtle.do_goto(tri_x, tri_y, penup=False)
+            self.turtle.do_goto(tri_x, tri_y, penup=False, depth=depth)
             yield
         
         # === RÉCURSION : CRÉER LES BRANCHES ENFANTS ===
@@ -1872,13 +1853,13 @@ class Fractals:
         # Dessiner le carré central
         half = size / 6  # Taille du carré central (1/3 de la taille totale)
         self.turtle.do_goto(cx - half, cy - half)
-        self.turtle.do_goto(cx + half, cy - half, penup=False)
+        self.turtle.do_goto(cx + half, cy - half, penup=False, depth=depth)
         yield
-        self.turtle.do_goto(cx + half, cy + half, penup=False)
+        self.turtle.do_goto(cx + half, cy + half, penup=False, depth=depth)
         yield
-        self.turtle.do_goto(cx - half, cy + half, penup=False)
+        self.turtle.do_goto(cx - half, cy + half, penup=False, depth=depth)
         yield
-        self.turtle.do_goto(cx - half, cy - half, penup=False)
+        self.turtle.do_goto(cx - half, cy - half, penup=False, depth=depth)
         yield
         
         # Taille des carrés enfants
@@ -1916,13 +1897,13 @@ class Fractals:
         if depth == 0 or size < 3:
             # Dessiner le carré plein
             self.turtle.do_goto(x, y)
-            self.turtle.do_goto(x + size, y, penup=False)
+            self.turtle.do_goto(x + size, y, penup=False, depth=depth)
             yield
-            self.turtle.do_goto(x + size, y + size, penup=False)
+            self.turtle.do_goto(x + size, y + size, penup=False, depth=depth)
             yield
-            self.turtle.do_goto(x, y + size, penup=False)
+            self.turtle.do_goto(x, y + size, penup=False, depth=depth)
             yield
-            self.turtle.do_goto(x, y, penup=False)
+            self.turtle.do_goto(x, y, penup=False, depth=depth)
             yield
             return
         
@@ -1968,7 +1949,7 @@ class Fractals:
             end_y = cy + math.sin(rad) * arm_length
             
             self.turtle.do_goto(cx, cy)
-            self.turtle.do_goto(end_x, end_y, penup=False)
+            self.turtle.do_goto(end_x, end_y, penup=False, depth=depth)
             yield
         
         # Ratio d'or
@@ -2016,7 +1997,7 @@ class Fractals:
         end_y = y + math.sin(rad) * length
         
         self.turtle.do_goto(x, y)
-        self.turtle.do_goto(end_x, end_y, penup=False)
+        self.turtle.do_goto(end_x, end_y, penup=False, depth=depth)
         yield
         
         # 3 branches enfants
