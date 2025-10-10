@@ -19,7 +19,7 @@ class Turtle:
         self.surface_rect = self.surface.get_rect(midbottom=(self.main.screen_width / 2, self.main.screen_height)) # placement en bas au centre de l'écran
 
         """zone de dessin"""
-        self.turtle_surface_side = 5000
+        self.turtle_surface_side = 3000
         self.turtle_surface = pygame.Surface((self.turtle_surface_side, self.turtle_surface_side), pygame.SRCALPHA)
         self.turtle_surface_rect = self.turtle_surface.get_rect(center=self.surface.get_rect().center)
         self.turtle_surface_centerx = self.turtle_surface_rect.centerx
@@ -415,9 +415,12 @@ class Turtle:
             delta_x = self.main.mouse_x - self.grabbing_painting_x
             delta_y = self.main.mouse_y - self.grabbing_painting_y
             
+            # limite dynamique selon le zoom
+            max_drag = 3000 * max(1.0, self.zoom_level)
+            
             # mise à jour des accumulateurs de déplacement
-            self.turtle_surface_x_drag = min(max(self.turtle_surface_x_drag + delta_x, -3000), 3000)
-            self.turtle_surface_y_drag = min(max(self.turtle_surface_y_drag + delta_y, -3000), 3000)
+            self.turtle_surface_x_drag = min(max(self.turtle_surface_x_drag + delta_x, -max_drag), max_drag)
+            self.turtle_surface_y_drag = min(max(self.turtle_surface_y_drag + delta_y, -max_drag), max_drag)
             
             # relâchement
             self.grabbing_painting = False
