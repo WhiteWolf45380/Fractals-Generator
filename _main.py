@@ -85,7 +85,7 @@ class Main:
 
             # affichage des menus textuels
             if self.ui_manager.get_menu_opened() is not None:
-                self.ui_manager.update_text_menu(self.ui_manager.current_text_menu[0], self.screen, self.screen.get_rect(), self.ui_manager.current_text_menu[1])
+                self.ui_manager.update_text_menu(self.ui_manager.current_text_menu[0], self.screen, self.ui_manager.current_text_menu[1])
 
             # vérification des entrées utilisateur
             self.handle_inputs()

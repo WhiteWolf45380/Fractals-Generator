@@ -43,6 +43,7 @@ class Turtle:
             "color_a": 255, # opacité
 
             "color_gradient": False, # dégradé
+            "color_gradient_type": "linear", # type de progression
             "color_gradient_intensity": 1, # itensité du dégradé
             "color_gradient_r": 255, # dégradé rouge
             "color_gradient_g": 255, # dégradé vert
@@ -57,6 +58,7 @@ class Turtle:
             "filling_a": 255, # remplissage opacité
 
             "filling_gradient": False, # dégradé
+            "filling_gradient_type": "linear", # type de progression
             "filling_gradient_intensity": 1, # itensité du dégradé
             "filling_gradient_r": 255, # dégradé rouge
             "filling_gradient_g": 0, # dégradé vert
@@ -72,7 +74,7 @@ class Turtle:
             "creation_type": self.ui_manager.get_item_value("creation_type"), # type de motif (radial, tree, incurved_tree, spiral)
             "motif_shape": self.ui_manager.get_item_value("motif_shape"), # forme répétée : (triangle, square, circle, line)
             "directions": 6, # nombre de branches à la racine
-            "directions_angle": 360, # cone des racines
+            "directions_angle": 180, # cone des racines
             "divisions": 2, # nombre de sous-éléments à chaque niveau
             "divisions_angle": 30, # décalage angulaire appliqué à chaque niveau
             "divisions_scale_factor": 70, # réduction de taille à chaque niveau
@@ -101,7 +103,10 @@ class Turtle:
             10: 10000,
         }
 
-        # type de génération disponibles
+        # types de progression de dégradé disponibles
+        self.available_gradient_types = [("linear", "Linéaire"), ("exponential", "Exponentielle"), ("ease_in_out", "Quadratique"), ("symetrical", "Symétrique")]
+
+        # types de génération disponibles
         self.available_types = [("radial", "Radiale"), ("tree", "Arbre"), ("incurved_tree", "Arbre incurvé"), ("spiral", "Spirale")]
         
         # formes de motif disponibles
@@ -114,10 +119,8 @@ class Turtle:
         self.current_generator = None # stockage du générateur
         self.pause = False # paramètre de pause
         self.all_points = [] # stockage de tous les points du dessin pour le remplissage
-        self.gradients = { # stockage des dégradés
-            "color": [],
-            "filling": [],
-        }
+        self.lines_count_max = 1 # nombre de ligne théorique
+        self.lines_count = 0 # compte le nombre de lignes pour calculer le ratio du dégradé
 
     def update(self):
         """mise à jour du dessin"""
@@ -145,19 +148,24 @@ class Turtle:
             self.current_generator = None
             print(f"[Painting] Error during the drawing start")
     
-    def draw_circle(self, x: int, y: int, radius: int, centered=True, fill=False, depth=0):
+    def draw_circle(self, x: int, y: int, radius: int, centered=True, fill=False):
         """dessine un cercle"""
+        # incrémentation du compteur
+        self.lines_count += 1
+
+
         if not centered: # si non centré -> dessine devant
             angle = math.radians(self.get("angle")) # récupération de l'angle
             x = x + math.cos(angle) * radius # décalage horizontal
             y = y + math.sin(angle) * radius # décalage vertical
         abs_x, abs_y = self.get_pos(x, y) # récupération des coordonnées absolues
 
-        color = self.get_color("color", depth=depth) # couleur du contour
+        color = self.get_color("color") # couleur du contour
         if fill: # si remplissage
-            filling = self.get_color("filling", depth=depth) # couleur de remplissage
+            filling = self.get_color("filling") # couleur de remplissage
             pygame.draw.circle(self.turtle_surface, filling, (int(abs_x), int(abs_y)), int(radius)) # remplissage
         pygame.draw.circle(self.turtle_surface, color, (int(abs_x), int(abs_y)), int(radius), self.get("width")) # contour
+
 
 # _________________________- Outils -_________________________
     def push(self, settings_dict: dict):
@@ -174,17 +182,6 @@ class Turtle:
         self.parameters["color_final"] = self.get("color_gradient", multiple=["r", "g", "b", "a"])
         self.parameters["filling_start"] = self.get("filling", multiple=["r", "g", "b", "a"])
         self.parameters["filling_final"] = self.get("filling_gradient", multiple=["r", "g", "b", "a"])
-
-        # oubli des anciens dégradés
-        for color in self.gradients:
-            self.gradients[color] = []
-
-        # précalcul des dégradés
-        for i in range(self.get("depth") + 1):
-            self.gradients["color"].append(self.get_interpolated_color(i, self.get("color_start"), self.get("color_final"), self.get("color_gradient_intensity")))
-        
-        for i in range(self.get("depth") + 1):
-            self.gradients["filling"].append(self.get_interpolated_color(i, self.get("filling_start"), self.get("filling_final"), self.get("filling_gradient_intensity")))
 
     def get(self, parameter: str, multiple: tuple=None) -> str | int | tuple:
         """retourne le paramètre correspondant"""
@@ -214,46 +211,69 @@ class Turtle:
         cos_a, sin_a = math.cos(rad), math.sin(rad)
         return x * cos_a - y * sin_a, x * sin_a + y * cos_a
 
-    def get_interpolated_color(self, current_depth: int, base_color: tuple[int], gradient_color: tuple[int], intensity: int=1) -> tuple[int]:
+    def get_interpolated_color(self, color_start: tuple[int], color_final: tuple[int], intensity: int, progression_type: str) -> tuple[int]:
         """Renvoie la couleur interpolée selon la profondeur"""
-        depth_target = 30 - (intensity - 1) * (25 / 9)  # 30 → 5 linéairement
+        progress = min(1.0, max(0.0, self.lines_count / max(self.lines_count_max, 1)))
+        intensity_factor = intensity / 100
+        print(self.lines_count, self.lines_count_max)
 
-        # ratio progressif exponentiel
-        factor = 1 - math.exp(-current_depth / depth_target)
-        factor = max(0.0, min(1.0, factor))  # sécurité bornée
+        if progression_type == "exponential":
+            factor = progress ** (0.3 + 2.7 * (1 - intensity_factor))
+
+        elif progression_type == "ease_in_out":
+            if progress < 0.5:
+                factor = 0.5 * (2 * progress) ** (2 + 8 * intensity_factor)
+            else:
+                factor = 1 - 0.5 * (2 * (1 - progress)) ** (2 + 8 * intensity_factor)
+
+        elif progression_type == "symetrical":
+            if progress < 0.5:
+                factor = (2 * progress) ** (0.5 + 2 * (1 - intensity_factor))
+            else:
+                factor = (2 * (1 - progress)) ** (0.5 + 2 * (1 - intensity_factor))
+    
+        else:
+            factor = progress
 
         # interpolation rgba
-        r = base_color[0] + (gradient_color[0] - base_color[0]) * factor
-        g = base_color[1] + (gradient_color[1] - base_color[1]) * factor
-        b = base_color[2] + (gradient_color[2] - base_color[2]) * factor
-        a = base_color[3] + (gradient_color[3] - base_color[3]) * factor
+        r = color_start[0] + (color_final[0] - color_start[0]) * factor
+        g = color_start[1] + (color_final[1] - color_start[1]) * factor
+        b = color_start[2] + (color_final[2] - color_start[2]) * factor
+        a = color_start[3] + (color_final[3] - color_start[3]) * factor
 
         return (int(r), int(g), int(b), int(a))
 
-    def get_color(self, category: str, depth: int=0) -> tuple[int]:
+    def get_color(self, category: str) -> tuple[int]:
         """renvoie la couleur correspondant à la catégorie"""
-        assert category in self.gradients
-        if self.get(f"{category}_gradient"):
-            return self.gradients[category][depth]
-        else:
-            return self.gradients[category][0]
+        if self.get(f"{category}_gradient"): # si dégradé -> interpolation
+            return self.get_interpolated_color(self.get(f"{category}_start"), self.get(f"{category}_final"), self.get(f"{category}_gradient_intensity"), self.get(f"{category}_gradient_type"))
+        else: # sinon -> couleur intiale
+            return self.get(f"{category}_start")
 
 # _________________________- Turtle -_________________________
 
     def do_reset(self):
-        """reset du tableau"""
+        """reset de turtle"""
+        # remise à blanc de la zone de dessin
         if self.get("clear"):
             self.surface.fill(self.ui_manager.get_color(self.name, "back"))
             self.turtle_surface.fill((0, 0, 0, 0))
-        self.do_goto(self.get("x_offset"), self.get("y_offset"), add_point=not self.get("centered"))
+        
+        # repositionnement
+        self.do_goto(self.get("x_offset"), self.get("y_offset"))
         self.do_setheading(self.get("start_angle"))
+
+        # mise par défaut du nombre de lignes théorique à 1
+        self.lines_count = 0
+        self.lines_count_max = 1
     
-    def do_goto(self, x: float, y: float, add_point=True, penup=True, depth=0):
+    def do_goto(self, x: float, y: float, penup: bool=True, add_line: bool=True):
         """se rend à une position"""
         if not penup: # traçage du trait
+            # récupération des paramètres
             old_x, old_y = self.get_pos(self.get("x"), self.get("y"))
             new_x, new_y = self.get_pos(x, y)
-            color = self.get_color("color", depth=depth)
+            color = self.get_color("color")
             width = self.get("width")
             
             if width == 1:# ligne fine
@@ -263,14 +283,23 @@ class Turtle:
                 pygame.draw.line(self.turtle_surface, color, (int(old_x), int(old_y)), (int(new_x), int(new_y)), width)
                 pygame.draw.circle(self.turtle_surface, color, (int(old_x), int(old_y)), radius)
                 pygame.draw.circle(self.turtle_surface, color, (int(new_x), int(new_y)), radius)
+            
+            # ajout du point final
+            self.all_points.append(self.get_pos(x, y)) 
 
+            if add_line: # incrémentation du nombre de traits
+                self.lines_count += 1
+
+        # repositionnement
         self.change("x", x)
-        self.change("y", y)
-        if add_point:
-            self.all_points.append(self.get_pos(x, y))            
+        self.change("y", y)                       
     
-    def do_forward(self, distance: float, penup=False, depth=0):
+    def do_forward(self, distance: float, penup: bool=False, add_line: bool=True):
         """avance en dessinant"""
+        # incrémentation du compteur
+        if add_line:
+            self.lines_count += 1
+
         # calcul des positions absolues initiales et finales
         x, y = self.get_pos(self.get("x"), self.get("y"))
         x_final = x + distance * math.cos(math.radians(self.get("angle")))
@@ -278,7 +307,8 @@ class Turtle:
 
         # traçage du trait
         if not penup:
-            color = self.get_color("color", depth=depth)
+            # récupéraition des paramètres
+            color = self.get_color("color")
             width = self.get("width")
             
             if width == 1:# ligne fine

@@ -277,6 +277,8 @@ class UIManager:
             # stockage des valeurs
         self.text_menus_items_values = {
             "theme": [False, "dark"], # thème (light, mid-light, dark...)
+            "color_gradient_type": "linear", # type de progression du dégradé (linear, exponential, ease_in_out)
+            "filling_gradient_type": "linear", # type de progression du dégradé (linear, exponential, ease_in_out)
             "creation_type": "spiral", # type de génération (radial, tree, incurved_tree, spiral...)
             "motif_shape": "line", # forme du motif génératif (line, square, triangle, circle...)
         }
@@ -520,7 +522,7 @@ class UIManager:
 
         return package
     
-    def generate_text_menu(self, name: str, content: dict, x: int, y: int, forced_width: int=0, forced_border_radius: int=5) -> dict:
+    def generate_text_menu(self, name: str, content: dict, x: int, y: int, forced_width: int=0, forced_border_radius: int=5, y_min: int=0) -> dict:
         """génère un menu textuel"""
         package = {} # dictionnaire final
         parameters = self.text_menu_settings["general"] # raccourci
@@ -542,6 +544,7 @@ class UIManager:
         # variables utiles
         package["name"] = name
         package["border_radius"] = forced_border_radius
+        package["y_min"] = y_min
 
         return package
     
@@ -711,7 +714,7 @@ class UIManager:
         pygame.draw.rect(surface, self.get_color(menu, "section_highlight"), package["back"])
         surface.blit(package["text"]["text"], package["text"]["rect"])
 
-    def update_text_menu(self, content: dict, surface: pygame.Surface, surface_rect: pygame.Surface, menu: str="toolbar"):
+    def update_text_menu(self, content: dict, surface: pygame.Surface, menu: str="toolbar"):
         """met à jour un menu textuel"""
         package = content["package"] # raccourci
 
@@ -772,7 +775,7 @@ class UIManager:
         
         # affichage du menu de choix si menu ouvert
         if self.text_menus_items_values[content["name"]][0]:
-            self.choices_menus_to_blit.append((content["choices_menu"], self.main.screen, self.main.screen.get_rect(), menu))
+            self.choices_menus_to_blit.append((content["choices_menu"], self.main.screen, menu))
     
     def update_text_menu_item_value(self, content: dict, surface: pygame.Surface, surface_rect: pygame.Rect, menu: str="toolbar", hovered: bool=False):
         "met à jour un item de menu textuel de type valeur"
