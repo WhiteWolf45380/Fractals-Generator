@@ -19,20 +19,19 @@ class ToolbarMenu:
         # bouttons liés au dessin
         self.buttons_next_x = self.surface_width * 0.99 # démarrage de l'axe x
         self.buttons = { # trois boutons
-            "edit": {},
             "pause": {},
             "start": {},            
         }
         for button in self.buttons:
-            image, image_rect = self.ui_manager.generate_image(f"{button}_button") # génération de l'image
+            image_idle, image_rect = self.ui_manager.generate_image(f"{button}_button_idle") # génération de l'image (idle)
+            image_hover, _ = self.ui_manager.generate_image(f"{button}_button_hover") # génération de l'image (hover)
             image_rect.midright = (self.buttons_next_x, self.surface_height / 2) # positionnement de l'image
             self.buttons_next_x = image_rect.left - 15 # calcul de la prochaine position
-            self.buttons[button] = {"image": image, "image_rect": image_rect} # ajout au dictionnaire
+            self.buttons[button] = {"image_idle": image_idle, "image_hover": image_hover, "image_rect": image_rect} # ajout au dictionnaire
         
             # ajout des événements (handlers)
         self.ui_manager.add_handler(self.name, "down_start_button", self.handle_down_start_button)
         self.ui_manager.add_handler(self.name, "down_pause_button", self.handle_down_pause_button)
-        self.ui_manager.add_handler(self.name, "down_edit_button", self.handle_down_edit_button)
 
         # boutons textuels
         self.text_buttons_parameters = {
@@ -44,6 +43,7 @@ class ToolbarMenu:
             "Fichier": {},
             "Affichage": {},
             "Outils": {},
+            "Génération": {},
             "Aide": {}
         }
 
@@ -51,12 +51,22 @@ class ToolbarMenu:
         self.text_menus = { # stockage des éléments
             "Fichier": {
             },
+
             "Affichage": {
-                "theme": {"name": "theme", "type": "choices", "description": "Thème","choices": [("light", "Clair"), ("mid-light", "Clair attenué"), ("dark", "Sombre")], "value": "dark"},
+                "theme": {"name": "theme", "type": "choices", "description": "Thème","choices": [("light", "Clair"), ("mid-light", "Clair attenué"), ("dark", "Sombre")], "value": "dark", "forced_width": 150},
             },
+
             "Outils": {
 
             },
+
+            "Génération": {
+                "speed": {"name": "speed", "type": "choices", "description": "Vitesse","choices": [(i, str(i)) for i in range(1, 11)], "value": 5, "forced_width": 80},
+                "clear": {"name": "clear", "type": "toggle", "description": "Effaçage", "value": True},
+                "back_to_center": {"name": "back_to_center", "type": "toggle", "description": "Retour au centre", "value": True},
+                "zoom_reset": {"name": "zoom_reset", "type": "toggle", "description": "Annulation du zoom", "value": True},
+            },
+
             "Aide": {
 
             }
@@ -91,10 +101,15 @@ class ToolbarMenu:
 
         # blit des différents boutons liés au dessin
         for button in self.buttons:
+            # bouton survolé
             if self.buttons[button]["image_rect"].collidepoint(self.main.get_relative_pos(self.surface_rect)):
-                if self.ui_manager.ask_for_mouse_hover(self.name, f"{button}_button"):            
-                    pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "button_hover"), self.buttons[button]["image_rect"], border_radius=2)
-            self.surface.blit(self.buttons[button]["image"], self.buttons[button]["image_rect"])
+                is_hovered = self.ui_manager.ask_for_mouse_hover(self.name, f"{button}_button")
+            else:
+                is_hovered = False   
+
+            if is_hovered:     
+                pygame.draw.rect(self.surface, self.ui_manager.get_color(self.name, "button_hover"), self.buttons[button]["image_rect"], border_radius=2)
+            self.surface.blit(self.buttons[button][f"image_{'hover' if is_hovered else 'idle'}"], self.buttons[button]["image_rect"])
         
         # affichage
         self.main.screen.blit(self.surface, self.surface_rect)
@@ -126,10 +141,6 @@ class ToolbarMenu:
     def handle_down_pause_button(self):
         """événement(clique gauche): bouton pause"""
         self.main.turtle.do_pause()
-
-    def handle_down_edit_button(self):
-        """événement(clique gauche): bouton d'édition de l'éxécution"""
-        pass
 
     def handle_down_text_button(self):
         """événement(clique gauche): bouton textuel"""

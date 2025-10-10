@@ -46,7 +46,7 @@ class Main:
 
         # design de la fenêtre
         pygame.display.set_caption("Fractals Generator - by Imagine having to do this project solo because none of your classmates can even understand what you wrote, lol ! xd")  # titre de la fenêtre
-        pygame.display.set_icon(pygame.image.load(self.get_path("assets/start_button.xcf")))  # icone de la fenêtre
+        pygame.display.set_icon(pygame.image.load(self.get_path("assets/start_button_hover.xcf")))  # icone de la fenêtre
         
         """sous classes"""
         self.ui_manager = UIManager(self)
@@ -106,15 +106,21 @@ class Main:
                 
                 if self.ui_manager.mouse_hover is not None: # si un boutton est survolé
                     self.menus[self.ui_manager.mouse_hover[0]].handle_left_click_down(self.ui_manager.mouse_hover[1])
+                elif not self.menus["fractals"].surface_rect.collidepoint((self.mouse_x, self.mouse_y)) and not self.menus["settings"].surface_rect.collidepoint((self.mouse_x, self.mouse_y)) and self.turtle.surface_rect.collidepoint((self.mouse_x, self.mouse_y)):
+                    self.turtle.do_grab_painting()
             
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1: # clique gauche (relaché)
                 self.ui_manager.mouse_grabbing = None
+                self.turtle.do_release_painting()
                 for menu in self.menus.values(): # tous les menus
                     menu.handle_left_click_up()
             
             elif event.type == pygame.MOUSEWHEEL: # molette
-                for menu in self.menus.values(): # tous les menus
-                    menu.handle_mousewheel(-event.y)
+                if not self.menus["fractals"].surface_rect.collidepoint((self.mouse_x, self.mouse_y)) and not self.menus["settings"].surface_rect.collidepoint((self.mouse_x, self.mouse_y)) and self.turtle.surface_rect.collidepoint((self.mouse_x, self.mouse_y)):
+                    self.turtle.do_zoom(event.y)
+                else:
+                    for menu in self.menus.values(): # tous les menus
+                        menu.handle_mousewheel(-event.y)
     
     def calc_screen_offsets(self):
         """calcul les décalages dû aux dimensions de fenêtre incompatibles"""

@@ -22,8 +22,28 @@ class Turtle:
         self.turtle_surface_side = 5000
         self.turtle_surface = pygame.Surface((self.turtle_surface_side, self.turtle_surface_side), pygame.SRCALPHA)
         self.turtle_surface_rect = self.turtle_surface.get_rect(center=self.surface.get_rect().center)
+        self.turtle_surface_centerx = self.turtle_surface_rect.centerx
+        self.turtle_surface_centery = self.turtle_surface_rect.centery
+
+        """drag"""
+        self.grabbing_painting = False # attrape le dessin
+        self.grabbing_painting_x = 0 # position horizontal du curseur au moment d'attraper le dessin
+        self.grabbing_painting_y = 0 # position verticale du curseur au moment d'attraper le dessin
+        self.turtle_surface_x_drag = 0 # accumulateur de déplacement horizontal
+        self.turtle_surface_y_drag = 0 # accumulateur de déplacement vertical
         self.turtle_surface_x_offset = 0 # décalage de l'axe x
         self.turtle_surface_y_offset = 0 # décalage de l'axe y
+
+        """zoom"""
+        self.zoom_level = 1.0  # niveau de zoom (1.0 = 100%)
+        self.zoom_min = 0.1    # zoom minimum (10%)
+        self.zoom_max = 4.0    # zoom maximum (500%)
+        self.zoom_step = 0.1   # pas de zoom par cran de molette
+
+        # cache pour la surface zoomée
+        self.zoomed_surface_cache = None
+        self.zoomed_surface_cache_level = 1.0
+        self.needs_zoom_update = False
 
         """paramètres turtle"""
         self.parameters_init = {
@@ -81,6 +101,8 @@ class Turtle:
 
             "speed": 10, # vitesse d'éxécution
             "clear": True, # remise à blanc du dessin
+            "back_to_center": True, # retour au centre du dessin
+            "zoom_reset": True, # remise à la normal du zoom
 
             "x": 0, # position x (not to define)
             "y": 0, # position y (not to define)
@@ -124,20 +146,34 @@ class Turtle:
 
     def update(self):
         """mise à jour du dessin"""
-        self.surface.fill(self.ui_manager.get_color(self.name, "back"))
+        self.surface.fill(self.ui_manager.get_color(self.name, "back")) # refresh
+
+        # poursuite du dessin
+        is_drawing = False
         if self.current_generator and not self.pause:
             try:
-                for _ in range(self.get_speed()):  # nombre de segments dessinés par frame
+                for _ in range(self.get_speed()): # nombre de segments dessinés par frame
                     next(self.current_generator)
+                    is_drawing = True
             except StopIteration:
                 self.current_generator = None
-        self.surface.blit(self.turtle_surface, self.turtle_surface_rect)
+            
+        if is_drawing:
+            self.invalidate_zoom_cache()
+        
+        # mise à jour de la position (toujours)
+        self.do_update_painting_position()
+        
+        # affichage avec zoom (utilise le cache)
+        zoomed_surface = self.get_zoomed_surface()
+        self.surface.blit(zoomed_surface, self.turtle_surface_rect)
+        
         self.main.screen.blit(self.surface, self.surface_rect)
 
 # _________________________- Dessin -_________________________
     def draw(self):
         """prépare un dessin progressif"""
-        self.push(self.main.menus["settings"].settings)
+        self.push(self.main.menus["settings"].settings, second_dict=self.ui_manager.text_menus_items_values)
         self.do_reset() # remise du dessin à blanc
         self.all_points = [] # reset des points de dessin
                 
@@ -168,14 +204,19 @@ class Turtle:
 
 
 # _________________________- Outils -_________________________
-    def push(self, settings_dict: dict):
+    def push(self, settings_dict: dict, second_dict: dict=None):
         """récupère les valeurs des propriétés avant le lancement du dessin"""
         for setting in settings_dict:
-            if setting in self.parameters:
-                if "value" in settings_dict[setting]:
+            if setting in self.parameters and "value" in settings_dict[setting]:
                     self.parameters[setting] = settings_dict[setting]["value"]
-                else:
-                    self.parameters[setting] = self.ui_manager.get_item_value(setting)
+        
+        if second_dict is not None:
+            for setting in second_dict:
+                    if setting in self.parameters:
+                        if type(second_dict[setting]) == list:
+                            self.parameters[setting] = second_dict[setting][1]
+                        else:
+                            self.parameters[setting] = second_dict[setting]
         
         # préchargement des couleurs
         self.parameters["color_start"] = self.get("color", multiple=["r", "g", "b", "a"])
@@ -203,7 +244,7 @@ class Turtle:
     
     def get_speed(self) -> int:
         """obtention de la vitesse de dessin"""
-        return self.speed_conversions[self.parameters["speed"]]
+        return self.speed_conversions[max(int(self.ui_manager.get_item_value("speed")) - (1 if self.get("filling") else 0), 1)]
     
     def get_rotated_offset(self, x, y, angle_deg):
         """obtention du centrage avec angle non nul"""
@@ -266,7 +307,19 @@ class Turtle:
         # mise par défaut du nombre de lignes théorique à 1
         self.lines_count = 0
         self.lines_count_max = 1
-    
+
+        # retour au centre du dessin
+        if self.get("back_to_center"):
+            self.turtle_surface_x_drag = 0
+            self.turtle_surface_y_drag = 0
+            self.grabbing_painting_x, self.grabbing_painting_y = self.main.mouse_x, self.main.mouse_y
+            self.do_update_painting_position()
+
+        # remise à la normale du zoom
+        self.invalidate_zoom_cache() # refresh du cache de zoom
+        if self.get("zoom_reset"):
+            self.do_zoom_reset()
+        
     def do_goto(self, x: float, y: float, penup: bool=True, add_line: bool=True):
         """se rend à une position"""
         if not penup: # traçage du trait
@@ -338,6 +391,8 @@ class Turtle:
     def do_right(self, angle: int):
         """tourne à droite"""
         self.parameters["angle"] = (self.parameters["angle"] + angle) % 360
+
+# _________________________- Extérieur à turtle -_________________________
     
     def do_pause(self):
         """met pause si un dessin est en cours"""
@@ -347,3 +402,121 @@ class Turtle:
     def do_unpause(self):
         """reprends le dessin"""
         self.pause = False
+    
+    def do_grab_painting(self):
+        """attrape le dessin"""
+        self.grabbing_painting = True
+        self.grabbing_painting_x, self.grabbing_painting_y = self.main.mouse_x, self.main.mouse_y
+
+    def do_release_painting(self):
+        """relâche le dessin"""
+        if self.grabbing_painting:
+            # calcul du déplacement effectué
+            delta_x = self.main.mouse_x - self.grabbing_painting_x
+            delta_y = self.main.mouse_y - self.grabbing_painting_y
+            
+            # mise à jour des accumulateurs de déplacement
+            self.turtle_surface_x_drag = min(max(self.turtle_surface_x_drag + delta_x, -3000), 3000)
+            self.turtle_surface_y_drag = min(max(self.turtle_surface_y_drag + delta_y, -3000), 3000)
+            
+            # relâchement
+            self.grabbing_painting = False
+
+    def do_update_painting_position(self):
+        """met à jour la position du dessin pendant le drag"""
+        # calcul du déplacement depuis le début du drag
+        delta_x = 0
+        delta_y = 0
+        if self.grabbing_painting:
+            delta_x = self.main.mouse_x - self.grabbing_painting_x
+            delta_y = self.main.mouse_y - self.grabbing_painting_y
+        
+        # calcul de la position avec zoom
+        total_offset_x = self.turtle_surface_x_drag + delta_x
+        total_offset_y = self.turtle_surface_y_drag + delta_y
+        
+        # mise à jour de la position de la zone de dessin
+        self.turtle_surface_rect.centerx = self.turtle_surface_centerx + total_offset_x
+        self.turtle_surface_rect.centery = self.turtle_surface_centery + total_offset_y
+        
+        # ajustement de la taille du rect selon le zoom
+        zoomed_size = int(self.turtle_surface_side * self.zoom_level)
+        self.turtle_surface_rect.width = zoomed_size
+        self.turtle_surface_rect.height = zoomed_size
+
+    def do_zoom(self, direction: int):
+        """Applique un zoom sur la zone de dessin"""
+        if direction == 0:
+            return
+        
+        # sauvegarde de l'ancien zoom
+        old_zoom = self.zoom_level
+        
+        # calcul du nouveau zoom
+        self.zoom_level += direction * self.zoom_step
+        self.zoom_level = min(max(self.zoom_level, self.zoom_min), self.zoom_max)
+        
+        # si le zoom n'a pas changé (limites atteintes), on arrête
+        if old_zoom == self.zoom_level:
+            return
+        
+        # marquer que le zoom a changé
+        self.needs_zoom_update = True
+        
+        # calcul du ratio de changement
+        zoom_ratio = self.zoom_level / old_zoom
+        
+        # position de la souris relative à la surface
+        mouse_x_rel = self.main.mouse_x - self.surface_rect.x
+        mouse_y_rel = self.main.mouse_y - self.surface_rect.y
+        
+        # position du centre de la surface de dessin avant zoom
+        center_x = self.turtle_surface_rect.centerx - self.surface_rect.x
+        center_y = self.turtle_surface_rect.centery - self.surface_rect.y
+        
+        # vecteur du centre vers la souris
+        dx = mouse_x_rel - center_x
+        dy = mouse_y_rel - center_y
+        
+        # ajustement du drag pour que le zoom se fasse vers la souris
+        self.turtle_surface_x_drag += dx * (1 - zoom_ratio)
+        self.turtle_surface_y_drag += dy * (1 - zoom_ratio)
+        
+        # mise à jour de la position
+        self.do_update_painting_position()
+
+    def do_zoom_reset(self):
+        """réinitialise le zoom à 100%"""
+        self.zoom_level = 1.0
+        self.needs_zoom_update = True
+        self.do_update_painting_position()
+
+    def invalidate_zoom_cache(self):
+        """invalide le cache du zoom (à appeler quand on dessine)"""
+        self.needs_zoom_update = True
+
+    def get_zoomed_surface(self):
+        """retourne la surface zoomée (avec cache)"""
+        if self.zoom_level == 1.0:
+            return self.turtle_surface
+        
+        # si le cache est valide, on le retourne
+        if (not self.needs_zoom_update and 
+            self.zoomed_surface_cache is not None and 
+            self.zoomed_surface_cache_level == self.zoom_level):
+            return self.zoomed_surface_cache
+        
+        # sinon on recalcule
+        new_width = int(self.turtle_surface_side * self.zoom_level)
+        new_height = int(self.turtle_surface_side * self.zoom_level)
+        
+        # zoom de la surface (smoothscale pour meilleure qualité)
+        self.zoomed_surface_cache = pygame.transform.smoothscale(
+            self.turtle_surface, 
+            (new_width, new_height)
+        )
+        
+        self.zoomed_surface_cache_level = self.zoom_level
+        self.needs_zoom_update = False
+        
+        return self.zoomed_surface_cache

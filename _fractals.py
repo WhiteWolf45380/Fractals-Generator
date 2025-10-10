@@ -1633,14 +1633,14 @@ class Fractals:
 
 # _________________- L'Arbre des Dimensions -_________________
     def init_dimension_tree(self, size: float):
-        """L'Arbre des Dimensions"""
-        cx, cy = self.turtle.get("x"), self.turtle.get("y")
-        if self.turtle.get("centered"):
-            cy += size
-        
+        """L'Arbre des Dimensions"""        
         # Tronc initial - portail dimensionnel
         trunk_height = size * 0.6
         trunk_width = size * 0.15
+
+        cx, cy = self.turtle.get("x"), self.turtle.get("y")
+        if self.turtle.get("centered"):
+            cy += trunk_height / 2
         
         # Dessiner le tronc comme un portail
         self.turtle.do_goto(cx - trunk_width/2, cy - size/2)
