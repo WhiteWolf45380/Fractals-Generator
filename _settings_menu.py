@@ -100,6 +100,11 @@ class SettingsMenu:
             "size": {"category": "bar", "description": "Taille", "value": 400, "value_min": 50, "value_max": 1500},
             "start_angle": {"category": "bar", "description": "angle", "value": 0, "value_min": -180, "value_max": 180},
 
+            "pos": {"category": "section", "title": "-- Position"},
+            "centered": {"category": "toggle", "description": "Centré", "value": True},
+            "x_offset": {"category": "bar", "description": "x (horizontal)", "value": 0, "value_min": -1000, "value_max": 1000},
+            "y_offset": {"category": "bar", "description": "y (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
+
             "visual_lines": {"category": "section", "title": "-- Lignes"},
             "width": {"category": "bar", "description": "Epaisseur", "value": 1, "value_min": 1, "value_max": 20},
             "color_r": {"category": "bar", "description": "Canal rouge", "value": self.ui_manager.get_color(self.name, "line")[0], "value_min": 0, "value_max": 255},
@@ -137,11 +142,6 @@ class SettingsMenu:
             "filling_gradient_b": {"category": "bar", "description": "Canal bleu", "value": self.ui_manager.get_color(self.name, "line")[2], "value_min": 0, "value_max": 255},
             "filling_gradient_a": {"category": "bar", "description": "Opacité", "value": 255, "value_min": 0, "value_max": 255},
             "filling_gradient_result": {"category": "color", "masters": ["filling_gradient_r", "filling_gradient_g", "filling_gradient_b", "filling_gradient_a"]},
-
-            "pos": {"category": "section", "title": "-- Position"},
-            "centered": {"category": "toggle", "description": "Centré", "value": True},
-            "x_offset": {"category": "bar", "description": "x (horizontal)", "value": 0, "value_min": -1000, "value_max": 1000},
-            "y_offset": {"category": "bar", "description": "y (vertical)", "value": 0, "value_min": -1000, "value_max": 1000},
 
             "generative": {"category": "section", "title": "-- Création"},
             "creation_type": {"category": "choices", "description": "Type", "choices": self.main.turtle.available_types},
@@ -272,10 +272,13 @@ class SettingsMenu:
     
         return package
     
-    def generate_value(self, value: int, x: int) -> dict:
+    def generate_value(self, value: int, x: int, replacing: dict=None) -> dict:
         """génère un compteur (qui affiche la valeur)"""
         parameters = self.parameters["general"] # raccourci
-        value_text = self.ui_manager.generate_text(str(value), parameters["value_fontsize"], self.name, "text", wlimit=parameters["value_wlimit"]) # génération du texte
+        if replacing is not None:
+            value_text = self.ui_manager.generate_text(str(value), parameters["value_fontsize"], self.name, "text", wlimit=parameters["value_wlimit"], forced_id=replacing.get("id")) # génération du texte
+        else:
+            value_text = self.ui_manager.generate_text(str(value), parameters["value_fontsize"], self.name, "text", wlimit=parameters["value_wlimit"]) # génération du texte
         value_text["rect"].left = x # fixation de la coordonnée x
         return {"value_text": value_text}
     
@@ -438,7 +441,7 @@ class SettingsMenu:
             package["thumb"].centerx = min(max(left_limit + (right_limit - left_limit) * (content["value"] - content["value_min"]) / (content["value_max"] - content["value_min"]), left_limit), right_limit) # on fait un "snap" afin de faire correspondre l'arrondi
 
             # génération de la valeur textuelle
-            value_dict = self.generate_value(content["value"], package["value_text"]["rect"].left)
+            value_dict = self.generate_value(content["value"], package["value_text"]["rect"].left, replacing=package["value_text"])
             package["value_text"]["text"], _ = value_dict["value_text"]["text"], value_dict["value_text"]["rect"]
     
         # affichage

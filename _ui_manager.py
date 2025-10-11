@@ -416,7 +416,7 @@ class UIManager:
                 item[0] = False
 
 # _________________________- Création d'éléments -_________________________
-    def generate_text(self, content: str, fontsize: int, menu: str, name: str, font="default", wlimit: int=0, end="" , recursive=False):
+    def generate_text(self, content: str, fontsize: int, menu: str, name: str, font="default", wlimit: int=0, end="" , recursive=False, forced_id: int=-1):
         """génère un texte pygame"""
         if recursive: # si appel récursif
             content += "..."
@@ -429,15 +429,19 @@ class UIManager:
 
         # vérification de la taille limite
         if wlimit > 0 and text_rect.width > wlimit and len(content) > 5 + len(end):
-            text = self.generate_text(content[:len(content)-len(end)-(4 if recursive else 1)], fontsize, menu, name, font=font, wlimit=wlimit, end=end, recursive=True)
+            text_dict = self.generate_text(content[:len(content)-len(end)-(4 if recursive else 1)], fontsize, menu, name, font=font, wlimit=wlimit, end=end, recursive=True, forced_id=forced_id)
+        elif forced_id in self.generated_texts:
+            self.generated_texts[forced_id]["text"] = text
+            self.generated_texts[forced_id]["content"] = content
+            text_dict = self.generated_texts[forced_id]
         else:
             # stockage du texte
             _id = self.generated_texts_next_id
-            self.generated_texts[_id] = {"text": text, "rect": text_rect, "menu": menu, "name": name, "content": content, "font": font, "fontsize": fontsize}
-            text = self.generated_texts[_id]
-            self.generated_texts_next_id += 1
+            self.generated_texts[_id] = {"text": text, "id": _id, "rect": text_rect, "menu": menu, "name": name, "content": content, "font": font, "fontsize": fontsize}
+            text_dict = self.generated_texts[_id]
+            self.generated_texts_next_id += 1            
 
-        return text
+        return text_dict
     
     def generate_image(self, path: str, width: int=0, height: int=0, smoothscale=True):
         """génère une image pygame"""

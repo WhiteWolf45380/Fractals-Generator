@@ -19,11 +19,14 @@ class Turtle:
         self.surface_rect = self.surface.get_rect(midbottom=(self.main.screen_width / 2, self.main.screen_height)) # placement en bas au centre de l'écran
 
         """zone de dessin"""
-        self.turtle_surface_side = 3000
+        self.turtle_surface_side = 2500
         self.turtle_surface = pygame.Surface((self.turtle_surface_side, self.turtle_surface_side), pygame.SRCALPHA)
         self.turtle_surface_rect = self.turtle_surface.get_rect(center=self.surface.get_rect().center)
         self.turtle_surface_centerx = self.turtle_surface_rect.centerx
         self.turtle_surface_centery = self.turtle_surface_rect.centery
+
+        """zone de dessin temporaire pur gérer la transparence"""
+        self.temp_draw_surface = pygame.Surface((self.turtle_surface_side, self.turtle_surface_side), pygame.SRCALPHA)
 
         """drag"""
         self.grabbing_painting = False # attrape le dessin
@@ -35,10 +38,10 @@ class Turtle:
         self.turtle_surface_y_offset = 0 # décalage de l'axe y
 
         """zoom"""
-        self.zoom_level = 1.0  # niveau de zoom (1.0 = 100%)
-        self.zoom_min = 0.1    # zoom minimum (10%)
-        self.zoom_max = 4.0    # zoom maximum (500%)
-        self.zoom_step = 0.1   # pas de zoom par cran de molette
+        self.zoom_level = 1.0 # niveau de zoom
+        self.zoom_min = 0.3 # zoom minimum
+        self.zoom_max = 4.0 # zoom maximum
+        self.zoom_step = 0.1 # pas de zoom par cran de molette
 
         # cache pour la surface zoomée
         self.zoomed_surface_cache = None
@@ -151,12 +154,18 @@ class Turtle:
         # poursuite du dessin
         is_drawing = False
         if self.current_generator and not self.pause:
+            # reset de temps_surface
+            self.temp_draw_surface.fill((0, 0, 0, 0))
+
             try:
                 for _ in range(self.get_speed()): # nombre de segments dessinés par frame
                     next(self.current_generator)
                     is_drawing = True
             except StopIteration:
                 self.current_generator = None
+            
+            # affichage des traits
+            self.turtle_surface.blit(self.temp_draw_surface, (0, 0))
             
         if is_drawing:
             self.invalidate_zoom_cache()
@@ -199,8 +208,8 @@ class Turtle:
         color = self.get_color("color") # couleur du contour
         if fill: # si remplissage
             filling = self.get_color("filling") # couleur de remplissage
-            pygame.draw.circle(self.turtle_surface, filling, (int(abs_x), int(abs_y)), int(radius)) # remplissage
-        pygame.draw.circle(self.turtle_surface, color, (int(abs_x), int(abs_y)), int(radius), self.get("width")) # contour
+            pygame.draw.circle(self.temp_draw_surface, filling, (int(abs_x), int(abs_y)), int(radius)) # remplissage
+        pygame.draw.circle(self.temp_draw_surface, color, (int(abs_x), int(abs_y)), int(radius), self.get("width")) # contour
 
 
 # _________________________- Outils -_________________________
@@ -323,6 +332,9 @@ class Turtle:
     def do_goto(self, x: float, y: float, penup: bool=True, add_line: bool=True):
         """se rend à une position"""
         if not penup: # traçage du trait
+            if add_line: # incrémentation du nombre de traits
+                self.lines_count += 1
+
             # récupération des paramètres
             old_x, old_y = self.get_pos(self.get("x"), self.get("y"))
             new_x, new_y = self.get_pos(x, y)
@@ -330,18 +342,15 @@ class Turtle:
             width = self.get("width")
             
             if width == 1:# ligne fine
-                pygame.draw.aaline(self.turtle_surface, color, (int(old_x), int(old_y)), (int(new_x), int(new_y)))
+                pygame.draw.aaline(self.temp_draw_surface, color, (int(old_x), int(old_y)), (int(new_x), int(new_y)))
             else:# ligne épaisse
                 radius = max(1, (width + 1) // 2)
-                pygame.draw.line(self.turtle_surface, color, (int(old_x), int(old_y)), (int(new_x), int(new_y)), width)
-                pygame.draw.circle(self.turtle_surface, color, (int(old_x), int(old_y)), radius)
-                pygame.draw.circle(self.turtle_surface, color, (int(new_x), int(new_y)), radius)
+                pygame.draw.line(self.temp_draw_surface, color, (int(old_x), int(old_y)), (int(new_x), int(new_y)), width)
+                pygame.draw.circle(self.temp_draw_surface, color, (int(old_x), int(old_y)), radius)
+                pygame.draw.circle(self.temp_draw_surface, color, (int(new_x), int(new_y)), radius)
             
             # ajout du point final
             self.all_points.append(self.get_pos(x, y)) 
-
-            if add_line: # incrémentation du nombre de traits
-                self.lines_count += 1
 
         # repositionnement
         self.change("x", x)
@@ -365,12 +374,12 @@ class Turtle:
             width = self.get("width")
             
             if width == 1:# ligne fine
-                pygame.draw.aaline(self.turtle_surface, color, (int(x), int(y)), (int(x_final), int(y_final)))
+                pygame.draw.aaline(self.temp_draw_surface, color, (int(x), int(y)), (int(x_final), int(y_final)))
             else:# ligne épaisse
                 radius = max(1, (width + 1) // 2)
-                pygame.draw.line(self.turtle_surface, color, (int(x), int(y)), (int(x_final), int(y_final)), width)
-                pygame.draw.circle(self.turtle_surface, color, (int(x), int(y)), radius)
-                pygame.draw.circle(self.turtle_surface, color, (int(x_final), int(y_final)), radius)
+                pygame.draw.line(self.temp_draw_surface, color, (int(x), int(y)), (int(x_final), int(y_final)), width)
+                pygame.draw.circle(self.temp_draw_surface, color, (int(x), int(y)), radius)
+                pygame.draw.circle(self.temp_draw_surface, color, (int(x_final), int(y_final)), radius)
             
             # ajout du point final
             self.all_points.append((x_final, y_final))

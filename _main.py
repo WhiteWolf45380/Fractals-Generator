@@ -45,7 +45,7 @@ class Main:
         self.screen_resized = pygame.display.set_mode((self.screen_resized_width, self.screen_resized_height), pygame.RESIZABLE)
 
         # design de la fenêtre
-        pygame.display.set_caption("Fractals Generator - by Imagine having to do this project solo because none of your classmates can even understand what you wrote, lol ! xd")  # titre de la fenêtre
+        pygame.display.set_caption("Fractals Generator - by HellTML")  # titre de la fenêtre
         pygame.display.set_icon(pygame.image.load(self.get_path("assets/start_button_hover.xcf")))  # icone de la fenêtre
         
         """sous classes"""

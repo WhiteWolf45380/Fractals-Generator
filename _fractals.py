@@ -58,15 +58,17 @@ class Fractals:
         """initialise un motif radial"""
         # position initiale
         x, y = self.turtle.get("x"), self.turtle.get("y")
+        angle = self.turtle.get("angle")
 
         # calcul du nombre de traits théorique
-        self.turtle.lines_count_max = self.turtle.get("directions") * (self.turtle.get("divisions")**(self.turtle.get("depth") + 1) - 1) / self.turtle.get("divisions") - 1
+        lines_per_branch = (self.turtle.get("divisions")**(self.turtle.get("depth") + 1) - 1) // max(self.turtle.get("divisions") - 1, 1)
+        self.turtle.lines_count_max = self.turtle.get("directions") * lines_per_branch
 
         # dessin des racines
         for i in range(self.turtle.get("directions")):
-            yield from self.draw_radial_recursive(size, self.turtle.get("depth")) # appel récursif
+            yield from self.draw_radial_recursive(size / 2, self.turtle.get("depth")) # appel récursif
             self.turtle.do_goto(x, y) # retour à la position initiale
-            self.turtle.do_setheading(self.turtle.get("angle") + (i + 1) * self.turtle.get("directions_angle") / self.turtle.get("directions")) # passage à la racine suivante
+            self.turtle.do_setheading(angle + (i + 1) * self.turtle.get("directions_angle") / self.turtle.get("directions")) # passage à la racine suivante
 
     def init_tree(self, size: int):
         """initialise un motif arborescent"""       
@@ -76,11 +78,12 @@ class Fractals:
         angle = self.turtle.get("angle")
 
         # calcul du nombre de traits théorique
-        self.turtle.lines_count_max = self.turtle.get("directions") * (self.turtle.get("divisions")**(self.turtle.get("depth") + 1) - 1) / self.turtle.get("divisions") - 1
+        lines_per_branch = max((self.turtle.get("divisions")**(self.turtle.get("depth") + 1) - 1) / max(self.turtle.get("divisions") - 1, 1), 1)
+        self.turtle.lines_count_max = self.turtle.get("directions") * lines_per_branch
 
         # dessin des racines
         for i in range(self.turtle.get("directions")):
-            yield from self.draw_tree_recursive(size, self.turtle.get("depth")) # appel récursif
+            yield from self.draw_tree_recursive(size * 0.4, self.turtle.get("depth")) # appel récursif
             self.turtle.do_goto(x, y) # retour à la position intiale
             self.turtle.do_setheading(angle + (i + 1) * self.turtle.get("directions_angle") // self.turtle.get("directions")) # passage à la racine suivante
 
@@ -92,11 +95,12 @@ class Fractals:
         angle = self.turtle.get("angle")
 
         # calcul du nombre de traits théorique
-        self.turtle.lines_count_max = self.turtle.get("directions") * (self.turtle.get("divisions")**(self.turtle.get("depth") + 1) - 1) / self.turtle.get("divisions") - 1
+        lines_per_branch = max((self.turtle.get("divisions")**(self.turtle.get("depth") + 1) - 1) / max(self.turtle.get("divisions") - 1, 1), 1)
+        self.turtle.lines_count_max = self.turtle.get("directions") * lines_per_branch
 
         # dessin des racines
         for i in range(self.turtle.get("directions")):
-            yield from self.draw_incurved_tree_recursive(size, self.turtle.get("depth"), self.turtle.get("x"), self.turtle.get("y"), self.turtle.get("angle"))
+            yield from self.draw_incurved_tree_recursive(size * 0.4, self.turtle.get("depth"), self.turtle.get("x"), self.turtle.get("y"), self.turtle.get("angle"))
             self.turtle.do_goto(x, y) # retour à la position initiale
             self.turtle.do_setheading(angle + (i + 1) * self.turtle.get("directions_angle") // self.turtle.get("directions")) # passage à la racine suivante
 
@@ -107,14 +111,13 @@ class Fractals:
         start_angle = self.turtle.get("angle")
         directions = self.turtle.get("directions")
         directions_angle = self.turtle.get("directions_angle")
-
-        # calcul du nombre de traits théorique
-        self.turtle.lines_count_max = self.turtle.get("directions") * self.turtle.get("divisions") * self.turtle.get("depth")
+        
+        self.turtle.lines_count_max = directions * self.turtle.get("divisions") * self.turtle.get("depth") 
 
         # dessin des racines
         for i in range(directions):
-            angle = (start_angle - directions_angle / 2) + i * (directions_angle / directions) # passage à la racine suivante
-            yield from self.draw_single_spiral(x, y, angle, size, self.turtle.get("depth")) # appel récursif
+            angle = (start_angle - directions_angle / 2) + i * (directions_angle / (directions - 1))
+            yield from self.draw_single_spiral(x, y, angle, size, self.turtle.get("depth") ) # appel récursif
 
     # _________________- Fonctions de génération récursive -_________________
     def draw_radial_recursive(self, size: int, depth: int):
@@ -140,7 +143,7 @@ class Fractals:
 
         # chaque sous-branche
         for i in range(divisions):
-            self.turtle.do_forward(size * 0.5, penup=True) # décalage avant
+            self.turtle.do_forward(size * 0.5, penup=True, add_line=False) # décalage avant
             yield from self.draw_radial_recursive(size * scale_factor, depth - 1) # appel récursif
 
             # repositionnement
@@ -156,6 +159,8 @@ class Fractals:
 
         # dessin du motif principal
         yield from self.draw_motif(size, self.turtle.get("motif_shape")) # motif  
+        if self.turtle.get("motif_shape") != "line":
+            self.turtle.do_forward(size * 0.5, penup=True, add_line=False)
         
         # préparation des sous-branches
         self.turtle.do_left(self.turtle.get("divisions_angle") / 2)
@@ -186,22 +191,22 @@ class Fractals:
         # calcul de l'angle de départ pour centrer les sous-branches
         start_angle = angle - divisions_angle * (divisions - 1) / 2
 
+        # dessine le motif actuel
+        self.turtle.do_goto(x, y)
+        self.turtle.do_setheading(angle)
+        yield from self.draw_motif(size, self.turtle.get("motif_shape"))
+
         # chaque sous-branche
         for i in range(divisions):
             # placement du sous-motif au centre du motif
             self.turtle.do_goto(x, y)
             self.turtle.do_setheading(start_angle + i * divisions_angle)
             # décalage pour positionner le sous-motif
-            self.turtle.do_forward(step_distance, penup=True)
+            self.turtle.do_forward(step_distance, penup=True, add_line=False)
             new_x, new_y = self.turtle.get("x"), self.turtle.get("y")
             new_angle = self.turtle.get("angle")
             # appel récursif
             yield from self.draw_incurved_tree_recursive(size * scale_factor, depth - 1, new_x, new_y, new_angle)
-
-        # dessine le motif actuel après ses sous-branches
-        self.turtle.do_goto(x, y)
-        self.turtle.do_setheading(angle)
-        yield from self.draw_motif(size, self.turtle.get("motif_shape"))
 
     def draw_single_spiral(self, x: float, y: float, angle: float, final_size: float, depth: int):
         """Dessine une seule spirale avec précision grâce aux divisions"""
@@ -247,7 +252,7 @@ class Fractals:
                 local_points.append(self.turtle.get_pos(self.turtle.get("x"), self.turtle.get("y"))) # ajout d'un sommet
                 yield
                 self.turtle.do_right(120)
-            
+        
             if self.turtle.get("filling"):
                 pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get_color("filling"), local_points) # remplissage
             pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get_color("color"), local_points, self.turtle.get("width")) # dessin du motif
@@ -259,7 +264,7 @@ class Fractals:
                 local_points.append(self.turtle.get_pos(self.turtle.get("x"), self.turtle.get("y"))) # ajout d'un coin
                 yield
                 self.turtle.do_right(90)
-
+    
             if self.turtle.get("filling"):
                 pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get_color("filling"), local_points) # remplissage
             pygame.draw.polygon(self.turtle.turtle_surface, self.turtle.get_color("color"), local_points, self.turtle.get("width")) # dessin du motif
@@ -269,7 +274,7 @@ class Fractals:
             yield
 
         elif motif_shape == "line":
-            self.turtle.do_forward(size) # dessin de la ligne
+            self.turtle.do_forward(size / 2) # dessin de la ligne
             yield
 
     # _________________- Flocon de Koch (triangles)-_________________
@@ -315,14 +320,20 @@ class Fractals:
         yield from self.draw_koch_triangles_recursive(new_size, depth - 1)
 
     # _________________- Flocon de Koch (carrés)-_________________
-    def init_koch_squares(self, size, **kwargs):
+    def init_koch_squares(self, size):
         """dessine un flocon de Koch (carrés)"""
+        # normalisation
+        size *= 0.8
+
         # centrage
         if self.turtle.get("centered"):
             start_angle = self.turtle.get("start_angle")
             offset_x, offset_y = -size/2, -size/2
             rx, ry = self.turtle.get_rotated_offset(offset_x, offset_y, start_angle)
             self.turtle.do_goto(rx + self.turtle.get("x_offset"), ry + self.turtle.get("y_offset"))
+        
+        # calcul du nombre de lignes théorique
+        self.turtle.lines_count_max = 4 * 5**self.turtle.get("depth")
         
         # dessin
         for _ in range(4):
@@ -352,10 +363,9 @@ class Fractals:
 
     # _________________- Dragon Curve -_________________
     def init_dragon_curve(self, size, **kwargs):
-        """Dessine un Dragon Curve (dual) progressivement"""
-        centered = self.turtle.get("centered")
-
-        if centered:
+        """Dessine un Dragon Curve (dual)"""
+        # centrage
+        if self.turtle.get("centered"):
             DRAGON_CENTER_OFFSET = {
                 1: (0, 0),
                 2: (-25, 25),
@@ -375,9 +385,13 @@ class Fractals:
             rx, ry = self.turtle.get_rotated_offset(offset[0], offset[1], start_angle)
             self.turtle.do_goto(rx + self.turtle.get("x_offset"), ry + self.turtle.get("y_offset"))
 
-        yield from self.draw_dragon_recursive(size, self.turtle.get("depth"), 1)
+        # calcul du nombre de lignes théorique
+        self.turtle.lines_count_max = 2**(self.turtle.get("depth") + 1)
+
+        # appels récursifs
+        yield from self.draw_dragon_recursive(size / 2, self.turtle.get("depth"), 1)
         self.turtle.do_right(90)
-        yield from self.draw_dragon_recursive(size, self.turtle.get("depth"), -1)
+        yield from self.draw_dragon_recursive(size / 2, self.turtle.get("depth"), -1)
 
         # remplissage
         if self.turtle.get("filling") and len(self.turtle.all_points) >= 3:
@@ -385,239 +399,252 @@ class Fractals:
 
     def draw_dragon_recursive(self, size, depth, sign=1):
         """Récursion pour dessiner Dragon Curve"""
-        if depth == 0:
+        if depth == 0: # cas de base
             self.turtle.do_forward(size)
             yield
             return
         
+        # appels récursifs
         yield from self.draw_dragon_recursive(size / 1.4142, depth - 1, 1)
-        if sign == 1:
+        if sign == 1: # rotation alternative
             self.turtle.do_right(90)
         else:
             self.turtle.do_left(90)
         yield
         yield from self.draw_dragon_recursive(size / 1.4142, depth - 1, -1)
 
-# _________________- Corners Carrés -_________________
-    def init_corners_squares(self, size: float):
-        """Carrés dans les coins, toujours à l'intérieur du parent"""
-        cx, cy = self.turtle.get("x"), self.turtle.get("y")
-        
-        # Position du coin haut-gauche du carré principal
-        if self.turtle.get("centered"):
-            cx -= size / 2
-            cy -= size / 2
-        
-        yield from self.draw_corners_squares_recursive(cx, cy, size, self.turtle.get("depth"))
-
-    def draw_corners_squares_recursive(self, x: float, y: float, size: float, depth: int):
-        """Dessine un carré puis place des carrés plus petits dans ses coins"""
-        # Se positionner au départ du carré
-        self.turtle.do_goto(x, y)
-        
-        # Dessiner le carré (4 côtés)
-        for _ in range(4):
-            self.turtle.do_setheading(self.turtle.get("angle"))
-            self.turtle.do_forward(size)
-            yield
-            self.turtle.do_right(90)
-        
-        if depth == 0:
-            return
-        
-        # Taille des carrés enfants
-        child_size = size / 3
-        
-        # Positions des 4 coins INTÉRIEURS
-        corners = [
-            (x, y),  # coin bas-gauche
-            (x + size - child_size, y),  # coin bas-droit
-            (x, y + size - child_size),  # coin haut-gauche
-            (x + size - child_size, y + size - child_size)  # coin haut-droit
-        ]
-        
-        for corner_x, corner_y in corners:
-            yield from self.draw_corners_squares_recursive(corner_x, corner_y, child_size, depth - 1)
-
     # _________________- Corners Triangles -_________________
     def init_corners_triangles(self, size: float):
-        """Triangles dans les sommets, toujours à l'intérieur du parent""" 
+        """triangles dans les sommets - division en 4 triangles"""
+        # position initiale
         cx, cy = self.turtle.get("x"), self.turtle.get("y")
-        
         height = size * math.sqrt(3) / 2
         
         # triangle équilatéral centré
         points = [
-            (cx, cy - height * 2/3), # sommet haut
-            (cx - size/2, cy + height/3), # bas gauche
-            (cx + size/2, cy + height/3) # bas droit
+            (cx, cy - height * 2/3),
+            (cx - size/2, cy + height/3),
+            (cx + size/2, cy + height/3)
         ]
+        
+        # Calcul théorique: 3 triangles par niveau (pas de triangle central)
+        self.turtle.lines_count_max = (3**(self.turtle.get("depth") + 1) - 1) / 2
         
         yield from self.draw_corners_triangles_recursive(points, self.turtle.get("depth"))
 
     def draw_corners_triangles_recursive(self, points: list, depth: int):
-        """Dessine un triangle puis place des triangles plus petits à ses sommets"""
-        # Dessiner le triangle
-        self.turtle.do_goto(points[0][0], points[0][1])
+        """dessine un triangle puis 3 triangles inversés aux milieux"""
+        # dessine le triangle
+        self.turtle.do_goto(*self.turtle.get_rotated_offset(points[0][0], points[0][1], self.turtle.get("start_angle")))
         
         for i in range(3):
             next_point = points[(i + 1) % 3]
-            
-            # Calculer angle et distance
-            dx = next_point[0] - points[i][0]
-            dy = next_point[1] - points[i][1]
-            distance = math.sqrt(dx * dx + dy * dy)
-            angle = math.degrees(math.atan2(dy, dx))
-            
-            # Orienter et tracer
-            self.turtle.do_setheading(angle)
-            self.turtle.do_forward(distance)
+            self.turtle.do_goto(*self.turtle.get_rotated_offset(next_point[0], next_point[1], self.turtle.get("start_angle")), penup=False, add_line=i==0)
             yield
         
-        if depth == 0:
+        if depth == 0: # cas de base
             return
         
-        # Taille réduite pour les triangles enfants
-        scale = 1/3
+        # calcule des milieux de chaque côté
+        mid_points = [
+            ((points[0][0] + points[1][0]) / 2, (points[0][1] + points[1][1]) / 2),
+            ((points[1][0] + points[2][0]) / 2, (points[1][1] + points[2][1]) / 2),
+            ((points[2][0] + points[0][0]) / 2, (points[2][1] + points[0][1]) / 2),
+        ]
         
-        # Centre du triangle parent
-        center_x = sum(p[0] for p in points) / 3
-        center_y = sum(p[1] for p in points) / 3
+        # 3 triangles enfants
+        child_triangles = [
+            [points[0], mid_points[0], mid_points[2]],
+            [mid_points[0], points[1], mid_points[1]],
+            [mid_points[2], mid_points[1], points[2]]
+        ]
         
-        # Pour chaque sommet, créer un triangle plus petit orienté vers l'intérieur
-        for i, vertex in enumerate(points):
-            # Direction vers le centre
-            dx = center_x - vertex[0]
-            dy = center_y - vertex[1]
-            dist = math.sqrt(dx*dx + dy*dy)
-            
-            # Offset vers l'intérieur
-            offset_factor = 0.2
-            child_center_x = vertex[0] + dx * offset_factor
-            child_center_y = vertex[1] + dy * offset_factor
-            
-            # Taille du triangle enfant
-            child_size = dist * scale * 2
-            child_height = child_size * math.sqrt(3) / 2
-            
-            # Angle de rotation pour orienter le triangle
-            base_angle = math.degrees(math.atan2(dy, dx))
-            
-            # Créer les 3 sommets du triangle enfant
-            child_points = []
-            for j in range(3):
-                angle = math.radians(base_angle + 90 + j * 120)
-                px = child_center_x + math.cos(angle) * child_size / math.sqrt(3)
-                py = child_center_y + math.sin(angle) * child_size / math.sqrt(3)
-                child_points.append((px, py))
-            
+        # appels récursifs
+        for child_points in child_triangles:
             yield from self.draw_corners_triangles_recursive(child_points, depth - 1)
 
+# _________________- Corners Carrés -_________________
+    def init_corners_squares(self, size: float):
+        """Carrés dans les coins, toujours à l'intérieur du parent"""
+        # position initiale
+        cx, cy = self.turtle.get("x"), self.turtle.get("y")
+        
+        # calcul du nombre de lignes théorique
+        self.turtle.lines_count_max = (4**(self.turtle.get("depth") + 1) - 1) // 3
+        
+        # appel récursif
+        yield from self.draw_corners_squares_recursive(cx, cy, size, self.turtle.get("depth"))
+
+    def draw_corners_squares_recursive(self, cx: float, cy: float, size: float, depth: int):
+        """Dessine un carré centré puis place des carrés plus petits dans ses coins"""
+        # dessine le carré
+        half = size / 2
+        corners = [ # coins du carrés
+            (cx - half, cy - half),
+            (cx + half, cy - half),
+            (cx + half, cy + half),
+            (cx - half, cy + half),
+        ]
+        
+        self.turtle.do_goto(*self.turtle.get_rotated_offset(corners[0][0], corners[0][1], self.turtle.get("start_angle")))
+        for i in range(4): # chaque côté
+            next_corner = corners[(i + 1) % 4]
+            self.turtle.do_goto(*self.turtle.get_rotated_offset(next_corner[0], next_corner[1], self.turtle.get("start_angle")), penup=False, add_line=i==0)
+            yield
+        
+        if depth == 0: # cas de base
+            return
+        
+        # taille des carrés enfants
+        child_size = size / 2.5
+        
+        # les enfants sont positionnés aux coins du parent
+        child_positions = [
+            (cx - half, cy - half),
+            (cx + half, cy - half),
+            (cx + half, cy + half),
+            (cx - half, cy + half),
+        ]
+        
+        # appels récursifs
+        for child_cx, child_cy in child_positions:
+            yield from self.draw_corners_squares_recursive(child_cx, child_cy, child_size, depth - 1)
 
     # _________________- Corners Cercles -_________________
     def init_corners_circles(self, size: float):
-        """Cercles dans les coins, toujours à l'intérieur du carré parent"""
-        if self.turtle.get("centered"):
-            cx, cy = 0, 0
-        else:
-            cx, cy = self.turtle.get("x"), self.turtle.get("y")
+        """Cercles packing - un grand cercle avec 4 petits cercles tangents"""
+        # position initiale
+        cx, cy = self.turtle.get("x"), self.turtle.get("y")
         
-        yield from self.draw_corners_circles_recursive(cx, cy, size, self.turtle.get("depth"))
+        # calcul du nombre théorique des lignes
+        self.turtle.lines_count_max = (4**(self.turtle.get("depth") + 1) - 1) / 3
+        
+        # appel récursif
+        yield from self.draw_corners_circles_recursive(cx, cy, size / 2, self.turtle.get("depth"))
 
-    def draw_corners_circles_recursive(self, cx: float, cy: float, size: float, depth: int):
-        """Dessine un carré avec un cercle inscrit, puis des cercles plus petits aux coins"""
-        # Dessiner le carré englobant
-        half = size / 2
-        self.turtle.do_goto(cx - half, cy - half)
-        self.turtle.do_setheading(0)
-        
-        for _ in range(4):
-            self.turtle.do_forward(size)
+    def draw_corners_circles_recursive(self, cx: float, cy: float, radius: float, depth: int):
+        """Dessine un cercle puis 4 cercles tangents plus petits autour"""
+        if depth == 0: # cas de base
+            self.turtle.draw_circle(*self.turtle.get_rotated_offset(cx, cy, self.turtle.get("start_angle")), radius, centered=True)
             yield
-            self.turtle.do_right(90)
-        
-        # Cercle inscrit dans le carré
-        radius = size / 2
-        self.turtle.draw_circle(cx, cy, radius, centered=True)
-        yield
-        
-        if depth == 0:
             return
         
-        # Cercles enfants aux coins
-        child_size = size / 3.5
-        offset = size / 2 - child_size / 2
+        # dessine le cercle principal
+        self.turtle.draw_circle(*self.turtle.get_rotated_offset(cx, cy, self.turtle.get("start_angle")), radius, centered=True)
+        yield
         
-        corners = [
-            (cx - offset, cy - offset),  # bas-gauche
-            (cx + offset, cy - offset),  # bas-droit
-            (cx - offset, cy + offset),  # haut-gauche
-            (cx + offset, cy + offset)   # haut-droit
-        ]
+        # calcul du rayon des cercles enfants
+        child_radius = radius / (1 + math.sqrt(2))
         
-        for corner_x, corner_y in corners:
-            yield from self.draw_corners_circles_recursive(corner_x, corner_y, child_size, depth - 1)
-
+        # distance du centre parent au centre enfant
+        distance = radius - child_radius
+        
+        # positions des 4 cercles enfants
+        angles = [45, 135, 225, 315]
+        for angle_deg in angles:
+            angle_rad = math.radians(angle_deg)
+            child_cx = cx + math.cos(angle_rad) * distance
+            child_cy = cy + math.sin(angle_rad) * distance
+            
+            yield from self.draw_corners_circles_recursive(child_cx, child_cy, child_radius, depth - 1) # appel récursif
 
     # _________________- Croix Récursive -_________________
     def init_cross_fractal(self, size: float):
         """Croix qui génère des croix plus petites à ses extrémités"""
-        if self.turtle.get("centered"):
-            cx, cy = 0, 0
-        else:
-            cx, cy = self.turtle.get("x"), self.turtle.get("y")
+        # position initiale
+        cx, cy = self.turtle.get("x"), self.turtle.get("y")
+
+        # calcul du nombre de lignes théorique
+        self.turtle.lines_count_max = 4 * (4**(self.turtle.get("depth") + 1) - 1) / 3
         
-        yield from self.draw_recursive_cross(cx, cy, size, 0, self.turtle.get("depth"))
+        # appel récursif
+        yield from self.draw_recursive_cross(cx, cy, size, self.turtle.get("start_angle"), self.turtle.get("depth"))
 
     def draw_recursive_cross(self, cx: float, cy: float, size: float, rotation: float, depth: int):
-        """Dessine une croix puis génère des croix plus petites aux 4 extrémités"""
-        import math
-        
-        # Dessiner la croix (4 branches)
+        """Dessine une croix puis génère des croix plus petites aux 4 extrémités"""     
+        # dessine la croix
         arm_length = size / 2
-        
         for i in range(4):
             angle = rotation + i * 90
             
             # Se positionner au centre
-            self.turtle.do_goto(cx, cy)
+            self.turtle.do_goto(*self.turtle.get_rotated_offset(cx, cy, angle))
             
             # Orienter et tracer la branche
             self.turtle.do_setheading(angle)
             self.turtle.do_forward(arm_length)
             yield
         
-        if depth == 0:
+        if depth == 0: # cas de base
             return
         
-        # Croix enfants aux extrémités
+        # croix enfants
         child_size = size * 0.4
         distance = arm_length * 0.7
         
-        for i in range(4):
+        for i in range(4): # chaque croix enfant
             angle = rotation + i * 90
             rad = math.radians(angle)
             
             child_x = cx + math.cos(rad) * distance
             child_y = cy + math.sin(rad) * distance
             
-            yield from self.draw_recursive_cross(child_x, child_y, child_size, rotation + 45, depth - 1)
+            yield from self.draw_recursive_cross(child_x, child_y, child_size, rotation + 45, depth - 1) # appel récursif
 
+   # _________________- Arbre Ternaire -_________________
+    def init_ternary_tree(self, size: float):
+        """Arbre ternaire - 3 branches à chaque nœud"""
+        # position intiale
+        cx, cy = self.turtle.get("x"), self.turtle.get("y")
+        
+        # centrage
+        if self.turtle.get("centered"):
+            cy += size * 0.4
+            self.turtle.do_goto(cx, cy)
+        
+        # calcul du nombre de lignes théorique
+        self.turtle.lines_count_max = ((3**(self.turtle.get("depth")) - 1) / 2)
+    
+        yield from self.draw_ternary_recursive(cx, cy, size * 0.4, -90, self.turtle.get("depth")) # appel récursif
+
+    def draw_ternary_recursive(self, x: float, y: float, length: float, angle: float, depth: int):
+        """Règle unique : branche qui se divise en 3"""       
+        if depth == 0: # cas de base
+            return
+        
+        # calcul de la position finale
+        rad = math.radians(angle) # angle en radians
+        end_x = x + math.cos(rad) * length
+        end_y = y + math.sin(rad) * length
+
+        # dessin de la branche
+        self.turtle.do_goto(x, y) # repositionnement
+        self.turtle.do_goto(end_x, end_y, penup=False)
+        yield
+        
+        # 3 branches enfants
+        child_length = length * 0.7
+        angles = [angle - 30, angle, angle + 30]
+        
+        for branch_angle in angles: # chaque branche enfant
+            yield from self.draw_ternary_recursive(end_x, end_y, child_length, branch_angle, depth - 1) # appel récursif
 
     # _________________- Pentagone Fractal -_________________
     def init_pentagon_fractal(self, size: float):
         """Pentagones dans les sommets, toujours à l'intérieur"""
-        import math
+        # position initiale
+        cx, cy = self.turtle.get("x"), self.turtle.get("y")
+
+        # normalisation
+        size /= 2
+
+        # calcul du nombre de lignes théorique
+        self.turtle.lines_count_max = 5 * (5**(self.turtle.get("depth") + 1) - 1) / 4
         
-        if self.turtle.get("centered"):
-            cx, cy = 0, 0
-        else:
-            cx, cy = self.turtle.get("x"), self.turtle.get("y")
-        
-        # Créer les 5 sommets du pentagone
+        # 5 sommets du pentagone
         points = []
         for i in range(5):
-            angle = math.radians(i * 72 - 90)  # -90 pour commencer en haut
+            angle = math.radians(i * 72 - 90 + self.turtle.get("start_angle"))
             x = cx + math.cos(angle) * size
             y = cy + math.sin(angle) * size
             points.append((x, y))
@@ -626,51 +653,50 @@ class Fractals:
 
     def draw_pentagon_recursive(self, points: list, depth: int):
         """Dessine un pentagone puis place des pentagones aux sommets"""
-        import math
-        
-        # Dessiner le pentagone
+        # placement au premier sommet
         self.turtle.do_goto(points[0][0], points[0][1])
         
+        # dessin du pentagone
         for i in range(5):
             next_point = points[(i + 1) % 5]
             
-            # Calculer angle et distance
+            # calcule angle et distance
             dx = next_point[0] - points[i][0]
             dy = next_point[1] - points[i][1]
             distance = math.sqrt(dx * dx + dy * dy)
             angle = math.degrees(math.atan2(dy, dx))
             
-            # Orienter et tracer
+            # orientation et tracer
             self.turtle.do_setheading(angle)
             self.turtle.do_forward(distance)
             yield
         
-        if depth == 0:
+        if depth == 0: # cas de base
             return
         
-        # Centre du pentagone
+        # centre du pentagone
         cx = sum(p[0] for p in points) / 5
         cy = sum(p[1] for p in points) / 5
         
-        # Taille réduite pour les enfants
+        # taille réduite pour les enfants
         scale = 0.35
         
-        # Créer un petit pentagone à chaque sommet
+        # génération des pentagones enfants
         for vertex in points:
-            # Direction vers l'intérieur
+            # direction vers l'intérieur
             dx = cx - vertex[0]
             dy = cy - vertex[1]
             dist = math.sqrt(dx*dx + dy*dy)
             
-            # Décalage vers l'intérieur
+            # décalage vers l'intérieur
             offset = 0.25
             child_cx = vertex[0] + dx * offset
             child_cy = vertex[1] + dy * offset
             
-            # Taille du pentagone enfant
+            # taille du pentagone enfant
             child_size = dist * scale
             
-            # Créer les sommets du pentagone enfant
+            # sommets du pentagone enfant
             child_points = []
             base_angle = math.atan2(dy, dx)
             for i in range(5):
@@ -679,24 +705,29 @@ class Fractals:
                 y = child_cy + math.sin(angle) * child_size
                 child_points.append((x, y))
             
+            # appel récursif
             yield from self.draw_pentagon_recursive(child_points, depth - 1)
 
     # _________________- Circle limit -_________________
     def init_circle_limit(self, size: float):
         """dessine un motif circle limit à la Escher"""
+        # normalisation
+        size *= 0.23
+
+        # position initiale
         cx, cy = self.turtle.get("x"), self.turtle.get("y")
         
-        # Cercle central
-        self.turtle.draw_circle(cx, cy, size / 2, centered=True, fill=self.turtle.get("filling"))
+        # cercle central
+        self.turtle.draw_circle(cx, cy, size, centered=True, fill=self.turtle.get("filling"))
         yield
         
-        # Lancement de la récursion avec plusieurs branches radiales
-        num_branches = 6  # nombre de branches principales
-        yield from self.draw_circle_limit_recursive(cx, cy, size / 2, self.turtle.get("depth"), num_branches)
+        # appel récursif
+        num_branches = 6 # nombre de branches principales
+        yield from self.draw_circle_limit_recursive(cx, cy, size, self.turtle.get("depth"), num_branches)
 
     def draw_circle_limit_recursive(self, cx: float, cy: float, initial_radius: float, depth: int, num_branches: int):
         """récursion circle limit : cercles qui s'insèrent entre les précédents"""
-        if depth == 0:
+        if depth == 0: # cas de base
             return
 
         # Calcul des anneaux concentriques depuis le centre initial
@@ -733,19 +764,23 @@ class Fractals:
     # _________________- Circle universe -_________________
     def init_circle_universe(self, size: float):
         """dessine un motif circle limit à la Escher"""
+        # normalisation
+        size *= 0.20
+
+        # position initiale
         cx, cy = self.turtle.get("x"), self.turtle.get("y")
         
-        # Cercle central
-        self.turtle.draw_circle(cx, cy, size / 2, centered=True, fill=self.turtle.get("filling"))
+        # cercle central
+        self.turtle.draw_circle(cx, cy, size, centered=True, fill=self.turtle.get("filling"))
         yield
         
-        # Lancement de la récursion avec plusieurs branches radiales
+        # appel récursif
         num_branches = 8  # nombre de branches principales
-        yield from self.draw_circle_limit_universe(cx, cy, size / 2, self.turtle.get("depth"), num_branches)
+        yield from self.draw_circle_limit_universe(cx, cy, size, self.turtle.get("depth"), num_branches)
 
     def draw_circle_limit_universe(self, cx: float, cy: float, initial_radius: float, depth: int, num_branches: int):
         """récursion circle limit : tous les cercles référencés au centre initial"""
-        if depth == 0:
+        if depth == 0: # cas de base
             return
 
         # Calcul des anneaux concentriques depuis le centre initial
@@ -776,70 +811,18 @@ class Fractals:
                 self.turtle.draw_circle(x, y, child_radius, centered=True, fill=self.turtle.get("filling"))
                 yield
 
-    # _________________- Arbre de Pythagore -_________________
-    def init_pythagoras_tree(self, size: float):
-        """arbre fractal basé sur le théorème de Pythagore"""
-        x, y = self.turtle.get("x"), self.turtle.get("y") # position intiale
-
-        if self.turtle.get("centered"):
-            x -= size / 2
-            y += size
-            self.turtle.do_goto(x, y)
-        
-        yield from self.draw_pythagoras_recursive(x, y, size, -135, self.turtle.get("depth"))
-
-    def draw_pythagoras_recursive(self, x: float, y: float, size: float, angle: float, depth: int):
-        """arbre de Pythagore avec carrés"""        
-        if depth == 0 or size < 2:
-            return
-        
-        # Sauvegarder état
-        old_x, old_y = self.turtle.get("x"), self.turtle.get("y")
-        old_angle = self.turtle.get("angle")
-        
-        # Dessiner le carré
-        self.turtle.do_goto(x, y)
-        self.turtle.do_setheading(angle)
-        
-        corners = [(x, y)]
-        for i in range(4):
-            self.turtle.do_forward(size)
-            corners.append((self.turtle.get("x"), self.turtle.get("y")))
-            yield
-            self.turtle.do_right(90)
-        
-        # Sommets du carré
-        top_left = corners[2]
-        top_right = corners[3]
-        
-        # Triangle au sommet
-        apex_x = (top_left[0] + top_right[0]) / 2 + math.cos(math.radians(angle)) * size / 2
-        apex_y = (top_left[1] + top_right[1]) / 2 + math.sin(math.radians(angle)) * size / 2
-        
-        self.turtle.do_goto(top_left[0], top_left[1])
-        self.turtle.do_goto(apex_x, apex_y)
-        yield
-        self.turtle.do_goto(top_right[0], top_right[1])
-        yield
-        
-        # Deux carrés enfants
-        new_size = size / math.sqrt(2)
-        
-        # Carré gauche
-        yield from self.draw_pythagoras_recursive(top_left[0], top_left[1], new_size, angle + 45, depth - 1)
-        
-        # Carré droit
-        yield from self.draw_pythagoras_recursive(top_right[0], top_right[1], new_size, angle - 45, depth - 1)
-        
-        # Restaurer
-        self.turtle.do_goto(old_x, old_y)
-        self.turtle.do_setheading(old_angle)
-
     # _________________- Mandala Fractal -_________________
     def init_mandala_fractal(self, size: float):
-        """mandala avec pétales fractals"""        
+        """mandala avec pétales fractals"""
+        # normalisation
+        size *= 0.66
+
+        # position initiale
         x, y = self.turtle.get("x"), self.turtle.get("y")
-        yield from self.draw_mandala_recursive(x, y, size, 0, self.turtle.get("depth"), 12)
+
+        # appel récursif
+        petals = 12 # nombre de petals
+        yield from self.draw_mandala_recursive(x, y, size, self.turtle.get("start_angle"), self.turtle.get("depth"), petals)
 
     def draw_mandala_recursive(self, cx: float, cy: float, radius: float, rotation: float, depth: int, petals: int):
         """mandala avec rotation et récursion"""        
@@ -873,43 +856,51 @@ class Fractals:
 
     # _________________- Hexaflake -_________________
     def init_hexaflake(self, size: float):
-        """flocon hexagonal fractal"""       
-        if self.turtle.get("centered"):
-            cx, cy = 0, 0
-        else:
-            cx, cy = self.turtle.get("x"), self.turtle.get("y")
+        """flocon hexagonal fractal"""
+        # normalisation
+        size *= 0.6
+
+        # position initiale
+        cx, cy = self.turtle.get("x"), self.turtle.get("y")
+
+        # calcul du nombre de lignes théorique
+        self.turtle.lines_count_max = 6 * 7**self.turtle.get("depth")
         
-        # Hexagone initial
+        # hexagone initial
         for i in range(6):
+            # angle actuel
             angle = i * 60
             x = cx + math.cos(math.radians(angle)) * size
             y = cy + math.sin(math.radians(angle)) * size
+
+            # prochain angle
             next_angle = (i + 1) * 60
             nx = cx + math.cos(math.radians(next_angle)) * size
             ny = cy + math.sin(math.radians(next_angle)) * size
             
+            # appel récursif
             yield from self.draw_hexaflake_recursive(x, y, nx, ny, self.turtle.get("depth"))
 
     def draw_hexaflake_recursive(self, x1: float, y1: float, x2: float, y2: float, depth: int, penup=False):
         """récursion hexaflake"""        
-        if depth == 0:
-            self.turtle.do_goto(x1, y1)
-            self.turtle.do_goto(x2, y2, penup=penup)
+        if depth == 0: # cas de base
+            self.turtle.do_goto(*self.turtle.get_rotated_offset(x1, y1, self.turtle.get("start_angle")))
+            self.turtle.do_goto(*self.turtle.get_rotated_offset(x2, y2, self.turtle.get("start_angle")), penup=penup)
             yield
             return
         
-        # Division en 3
+        # division en 3
         dx = (x2 - x1) / 3
         dy = (y2 - y1) / 3
         
         p1 = (x1 + dx, y1 + dy)
         p2 = (x1 + 2*dx, y1 + 2*dy)
         
-        # Hexagone central
+        # hexagone central
         length = math.sqrt(dx*dx + dy*dy)
         angle = math.atan2(dy, dx)
         
-        # 7 segments (hexagone protrusion)
+        # 7 segments
         hex_points = []
         for i in range(7):
             hex_angle = angle + math.radians(i * 60)
@@ -917,13 +908,119 @@ class Fractals:
             py = p1[1] + math.sin(hex_angle) * length
             hex_points.append((px, py))
         
-        # Récursion
+        # récursion
         yield from self.draw_hexaflake_recursive(x1, y1, p1[0], p1[1], depth - 1, penup=True)
         for i in range(6):
             yield from self.draw_hexaflake_recursive(hex_points[i][0], hex_points[i][1], hex_points[i+1][0], hex_points[i+1][1], depth - 1)
         yield from self.draw_hexaflake_recursive(p2[0], p2[1], x2, y2, depth - 1)
 
-# _________________- L'Œil du Chaos -_________________
+    # _________________- Arbre de Pythagore -_________________
+    def init_pythagoras_tree(self, size: float):
+        """arbre fractal basé sur le théorème de Pythagore"""
+        # normalisation
+        size *= 0.5
+
+        # position intiale
+        x, y = self.turtle.get("x"), self.turtle.get("y")
+
+        # calcul du nombre de lignes théorique
+        self.turtle.lines_count_max = 2**self.turtle.get("depth") - 1
+
+        # centrage
+        if self.turtle.get("centered"):
+            x -= size * 0.6
+            y += size * 1.5
+            self.turtle.do_goto(x, y)
+        
+        # appel récursif
+        yield from self.draw_pythagoras_recursive(x, y, size, -135 + self.turtle.get("start_angle"), self.turtle.get("depth"))
+
+    def draw_pythagoras_recursive(self, x: float, y: float, size: float, angle: float, depth: int):
+        """arbre de Pythagore avec carrés"""        
+        if depth == 0: # cas de base
+            return
+        
+        # dessin du carré
+        self.turtle.do_goto(x, y)
+        self.turtle.do_setheading(angle)
+        corners = [(x, y)]
+        for i in range(4):
+            self.turtle.do_forward(size, add_line=i==0)
+            corners.append((self.turtle.get("x"), self.turtle.get("y")))
+            yield
+            self.turtle.do_right(90)
+        
+        # sommets du carré
+        top_left = corners[2]
+        top_right = corners[3]
+        
+        # triangle au sommet
+        apex_x = (top_left[0] + top_right[0]) / 2 + math.cos(math.radians(angle)) * size / 2
+        apex_y = (top_left[1] + top_right[1]) / 2 + math.sin(math.radians(angle)) * size / 2
+        
+        self.turtle.do_goto(top_left[0], top_left[1])
+        self.turtle.do_goto(apex_x, apex_y)
+        yield
+        self.turtle.do_goto(top_right[0], top_right[1])
+        yield
+        
+        # deux carrés enfants
+        new_size = size / math.sqrt(2)
+        
+        # carré gauche
+        yield from self.draw_pythagoras_recursive(top_left[0], top_left[1], new_size, angle + 45, depth - 1)
+        
+        # carré droit
+        yield from self.draw_pythagoras_recursive(top_right[0], top_right[1], new_size, angle - 45, depth - 1)
+
+    # _________________- Croix de Fibonacci -_________________
+    def init_fibonacci_cross(self, size: float):
+        """Croix de Fibonacci - motif en spirale dorée"""
+        # normalisation
+        size *= 0.95
+
+        # position initiale
+        cx, cy = self.turtle.get("x"), self.turtle.get("y")
+        
+        # appel récursif
+        yield from self.draw_fibonacci_cross_recursive(cx, cy, size, 0, self.turtle.get("depth"))
+
+    def draw_fibonacci_cross_recursive(self, cx: float, cy: float, size: float, rotation: int, depth: int):
+        """Règle unique : 4 branches qui tournent selon le ratio d'or"""
+        if depth == 0: # cas de base
+            return
+        
+        # dessine une croix
+        arm_length = size / 2
+        for i in range(4):
+            angle = rotation + i * 90
+            rad = math.radians(angle)
+            
+            end_x = cx + math.cos(rad) * arm_length
+            end_y = cy + math.sin(rad) * arm_length
+            
+            self.turtle.do_goto(cx, cy)
+            self.turtle.do_goto(end_x, end_y, penup=False)
+            yield
+        
+        # ratio d'or
+        phi = 1.618033988749895
+        child_size = size / phi
+        child_distance = arm_length * 0.7
+        
+        # 4 croix enfants aux extrémités
+        for i in range(4):
+            angle = rotation + i * 90
+            rad = math.radians(angle)
+            
+            child_x = cx + math.cos(rad) * child_distance
+            child_y = cy + math.sin(rad) * child_distance
+            
+            child_rotation = (rotation + 90) % 360
+            
+            yield from self.draw_fibonacci_cross_recursive(child_x, child_y, child_size, child_rotation, depth - 1) # appel récursif
+
+    # _________________- L'Œil du Chaos -_________________
     def init_chaos_eye(self, size: float):
         """L'Œil du Chaos - fractal organique original"""
         import math
@@ -1942,89 +2039,3 @@ class Fractals:
                 child_y = y + j * child_size
                 
                 yield from self.draw_carpet_recursive(child_x, child_y, child_size, depth - 1)
-
-    # _________________- Croix de Fibonacci -_________________
-    def init_fibonacci_cross(self, size: float):
-        """Croix de Fibonacci - motif en spirale dorée"""
-        if self.turtle.get("centered"):
-            cx, cy = 0, 0
-        else:
-            cx, cy = self.turtle.get("x"), self.turtle.get("y")
-        
-        yield from self.draw_fibonacci_cross_recursive(cx, cy, size, 0, self.turtle.get("depth"))
-
-    def draw_fibonacci_cross_recursive(self, cx: float, cy: float, size: float, rotation: int, depth: int):
-        """Règle unique : 4 branches qui tournent selon le ratio d'or"""
-        import math
-        
-        if depth == 0 or size < 2:
-            return
-        
-        # Dessiner une croix
-        arm_length = size / 2
-        
-        for i in range(4):
-            angle = rotation + i * 90
-            rad = math.radians(angle)
-            
-            end_x = cx + math.cos(rad) * arm_length
-            end_y = cy + math.sin(rad) * arm_length
-            
-            self.turtle.do_goto(cx, cy)
-            self.turtle.do_goto(end_x, end_y, penup=False)
-            yield
-        
-        # Ratio d'or
-        phi = 1.618033988749895
-        child_size = size / phi
-        child_distance = arm_length * 0.7
-        
-        # 4 croix enfants aux extrémités, tournées selon Fibonacci
-        for i in range(4):
-            angle = rotation + i * 90
-            rad = math.radians(angle)
-            
-            child_x = cx + math.cos(rad) * child_distance
-            child_y = cy + math.sin(rad) * child_distance
-            
-            # Rotation de 90° pour créer l'effet spirale
-            child_rotation = (rotation + 90) % 360
-            
-            yield from self.draw_fibonacci_cross_recursive(child_x, child_y, child_size, child_rotation, depth - 1)
-
-
-    # _________________- Arbre Ternaire -_________________
-    def init_ternary_tree(self, size: float):
-        """Arbre ternaire - 3 branches à chaque nœud"""
-        if self.turtle.get("centered"):
-            cx, cy = 0, 0
-        else:
-            cx, cy = self.turtle.get("x"), self.turtle.get("y")
-        
-        start_y = cy + size / 2
-        
-        self.turtle.do_goto(cx, start_y)
-        yield from self.draw_ternary_recursive(cx, start_y, size * 0.4, -90, self.turtle.get("depth"))
-
-    def draw_ternary_recursive(self, x: float, y: float, length: float, angle: float, depth: int):
-        """Règle unique : branche qui se divise en 3"""
-        import math
-        
-        if depth == 0 or length < 2:
-            return
-        
-        # Dessiner la branche
-        rad = math.radians(angle)
-        end_x = x + math.cos(rad) * length
-        end_y = y + math.sin(rad) * length
-        
-        self.turtle.do_goto(x, y)
-        self.turtle.do_goto(end_x, end_y, penup=False)
-        yield
-        
-        # 3 branches enfants
-        child_length = length * 0.7
-        angles = [angle - 30, angle, angle + 30]
-        
-        for branch_angle in angles:
-            yield from self.draw_ternary_recursive(end_x, end_y, child_length, branch_angle, depth - 1)
